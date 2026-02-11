@@ -1,0 +1,380 @@
+{
+    "version": "1.0.0",
+    "description": "CAOS Agent Guardrails Policy - 38 Rules across 6 Categories",
+    "categories": {
+        "PHYSICAL": {
+            "name": "Regras Físicas (Safety)",
+            "description": "Proteção de ativos físicos e pessoas",
+            "weight": 1.0
+        },
+        "FINANCIAL": {
+            "name": "Regras Financeiras",
+            "description": "Controle de custos e budget",
+            "weight": 0.9
+        },
+        "CONTRACTUAL": {
+            "name": "Regras Contratuais",
+            "description": "Compliance com SLAs e contratos",
+            "weight": 0.8
+        },
+        "COMMUNICATION": {
+            "name": "Regras de Comunicação",
+            "description": "Brand assurance e stakeholder notification",
+            "weight": 0.7
+        },
+        "SECOPS": {
+            "name": "Regras SecOps",
+            "description": "Segurança operacional e input validation",
+            "weight": 1.0
+        },
+        "ROBUSTNESS": {
+            "name": "Regras de Robustez",
+            "description": "Resiliência e fallback",
+            "weight": 0.6
+        }
+    },
+    "guardrails": [
+        {
+            "id": "PHYS_001",
+            "category": "PHYSICAL",
+            "name": "Ativo em Manutenção",
+            "condition": "atlas_context.under_maintenance == true",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Ação vetada: ativo está em manutenção programada."
+        },
+        {
+            "id": "PHYS_002",
+            "category": "PHYSICAL",
+            "name": "Janela de Manutenção Ativa",
+            "condition": "atlas_context.maintenance_window_active == true",
+            "action": "REQUIRE_APPROVAL",
+            "severity": "HIGH",
+            "message": "Janela de manutenção ativa. Requer aprovação."
+        },
+        {
+            "id": "PHYS_003",
+            "category": "PHYSICAL",
+            "name": "Temperatura Crítica Alta",
+            "condition": "trigger.value > atlas_context.max_operating_temp * 1.2",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Temperatura excede 120% do limite. Shutdown imediato."
+        },
+        {
+            "id": "PHYS_004",
+            "category": "PHYSICAL",
+            "name": "Temperatura Alta",
+            "condition": "trigger.value > atlas_context.max_operating_temp",
+            "action": "ALERT",
+            "severity": "HIGH",
+            "message": "Temperatura excede limite operacional."
+        },
+        {
+            "id": "PHYS_005",
+            "category": "PHYSICAL",
+            "name": "Vibração Excessiva",
+            "condition": "trigger.payload.vibration > atlas_context.max_vibration",
+            "action": "REQUIRE_APPROVAL",
+            "severity": "HIGH",
+            "message": "Vibração excede limite. Verificar antes de agir."
+        },
+        {
+            "id": "PHYS_006",
+            "category": "PHYSICAL",
+            "name": "Pressão Crítica",
+            "condition": "trigger.payload.pressure > atlas_context.max_pressure * 1.1",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Pressão crítica detectada. Shutdown de emergência."
+        },
+        {
+            "id": "PHYS_007",
+            "category": "PHYSICAL",
+            "name": "Múltiplos Alertas Simultâneos",
+            "condition": "trigger.payload.concurrent_alerts > 3",
+            "action": "REQUIRE_APPROVAL",
+            "severity": "HIGH",
+            "message": "Múltiplos alertas simultâneos. Requer análise humana."
+        },
+        {
+            "id": "PHYS_008",
+            "category": "PHYSICAL",
+            "name": "Temperatura Absoluta Máxima",
+            "condition": "trigger.value > 110",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Temperatura absoluta excede 110°C. Risco de dano irreversível."
+        },
+        {
+            "id": "FIN_001",
+            "category": "FINANCIAL",
+            "name": "Budget Diário Excedido",
+            "condition": "daily_cost > llm_daily_cost_budget_usd",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Budget diário de LLM excedido. Operação vetada."
+        },
+        {
+            "id": "FIN_002",
+            "category": "FINANCIAL",
+            "name": "Token Budget Excedido",
+            "condition": "daily_tokens > llm_daily_token_budget",
+            "action": "DEGRADE",
+            "severity": "MEDIUM",
+            "message": "Budget de tokens excedido. Modo degradado ativado."
+        },
+        {
+            "id": "FIN_003",
+            "category": "FINANCIAL",
+            "name": "Custo de Ação Alto",
+            "condition": "estimated_cost > 1000",
+            "action": "REQUIRE_APPROVAL",
+            "severity": "HIGH",
+            "message": "Custo estimado > R$1000. Requer aprovação gerencial."
+        },
+        {
+            "id": "FIN_004",
+            "category": "FINANCIAL",
+            "name": "Custo de Ação Muito Alto",
+            "condition": "estimated_cost > 5000",
+            "action": "REQUIRE_APPROVAL",
+            "severity": "BLOCKING",
+            "message": "Custo estimado > R$5000. Requer aprovação diretoria."
+        },
+        {
+            "id": "FIN_005",
+            "category": "FINANCIAL",
+            "name": "Impacto Financeiro Oracle",
+            "condition": "oracle_forecast.financial_impact > 10000",
+            "action": "REQUIRE_APPROVAL",
+            "severity": "HIGH",
+            "message": "Impacto financeiro previsto > R$10000."
+        },
+        {
+            "id": "FIN_006",
+            "category": "FINANCIAL",
+            "name": "Rate Limit API",
+            "condition": "api_calls_per_minute > 100",
+            "action": "DEGRADE",
+            "severity": "MEDIUM",
+            "message": "Rate limit próximo. Reduzindo chamadas."
+        },
+        {
+            "id": "CONTR_001",
+            "category": "CONTRACTUAL",
+            "name": "Contrato Monitoring Only",
+            "condition": "atlas_context.contract_tier == 'MONITORING_ONLY'",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Contrato só permite monitoramento. Ação vetada."
+        },
+        {
+            "id": "CONTR_002",
+            "category": "CONTRACTUAL",
+            "name": "Ação Não Permitida",
+            "condition": "proposed_action.command.type not in atlas_context.allowed_actions",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Tipo de ação não permitido pelo contrato."
+        },
+        {
+            "id": "CONTR_003",
+            "category": "CONTRACTUAL",
+            "name": "SLA Response Time",
+            "condition": "processing_time_ms > atlas_context.sla_response_time_minutes * 60000",
+            "action": "ALERT",
+            "severity": "MEDIUM",
+            "message": "Tempo de resposta próximo do SLA."
+        },
+        {
+            "id": "CONTR_004",
+            "category": "CONTRACTUAL",
+            "name": "Contrato Básico - Limite Ações",
+            "condition": "atlas_context.contract_tier == 'BASIC' and daily_actions > 10",
+            "action": "REQUIRE_APPROVAL",
+            "severity": "MEDIUM",
+            "message": "Limite de ações diárias do contrato BASIC."
+        },
+        {
+            "id": "CONTR_005",
+            "category": "CONTRACTUAL",
+            "name": "Horário Fora do Expediente",
+            "condition": "current_hour < 6 or current_hour > 22",
+            "action": "REQUIRE_APPROVAL",
+            "severity": "LOW",
+            "message": "Ação fora do horário comercial."
+        },
+        {
+            "id": "CONTR_006",
+            "category": "CONTRACTUAL",
+            "name": "Contrato Expirado",
+            "condition": "atlas_context.contract_expired == true",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Contrato expirado. Renovar antes de agir."
+        },
+        {
+            "id": "COMM_001",
+            "category": "COMMUNICATION",
+            "name": "Stakeholder Notification Required",
+            "condition": "risk_level in ['HIGH', 'VETO']",
+            "action": "ALERT",
+            "severity": "MEDIUM",
+            "message": "Notificação obrigatória para stakeholders."
+        },
+        {
+            "id": "COMM_002",
+            "category": "COMMUNICATION",
+            "name": "Cliente VIP",
+            "condition": "atlas_context.contract_tier == 'PREMIUM'",
+            "action": "ALERT",
+            "severity": "LOW",
+            "message": "Cliente PREMIUM. Priorizar comunicação."
+        },
+        {
+            "id": "COMM_003",
+            "category": "COMMUNICATION",
+            "name": "Mensagem Muito Longa",
+            "condition": "len(proposed_action.justification) > 500",
+            "action": "LOG",
+            "severity": "LOW",
+            "message": "Justificativa muito longa. Considerar resumir."
+        },
+        {
+            "id": "COMM_004",
+            "category": "COMMUNICATION",
+            "name": "Canal de Notificação Indisponível",
+            "condition": "notification_channel_status == 'down'",
+            "action": "REQUIRE_APPROVAL",
+            "severity": "HIGH",
+            "message": "Canal de notificação indisponível."
+        },
+        {
+            "id": "COMM_005",
+            "category": "COMMUNICATION",
+            "name": "Múltiplas Notificações",
+            "condition": "notifications_last_hour > 10",
+            "action": "DEGRADE",
+            "severity": "LOW",
+            "message": "Muitas notificações recentes. Agregando."
+        },
+        {
+            "id": "SECOPS_001",
+            "category": "SECOPS",
+            "name": "Payload Inválido",
+            "condition": "trigger.payload.validation_failed == true",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Payload não passou validação. Possível ataque."
+        },
+        {
+            "id": "SECOPS_002",
+            "category": "SECOPS",
+            "name": "Source Desconhecido",
+            "condition": "trigger.source not in ['sentinel', 'oracle', 'manual']",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Fonte do trigger não reconhecida."
+        },
+        {
+            "id": "SECOPS_003",
+            "category": "SECOPS",
+            "name": "Event ID Inválido",
+            "condition": "not trigger.event_id.startswith('evt_')",
+            "action": "ALERT",
+            "severity": "MEDIUM",
+            "message": "Formato de event_id não padrão."
+        },
+        {
+            "id": "SECOPS_004",
+            "category": "SECOPS",
+            "name": "Timestamp Futuro",
+            "condition": "trigger.timestamp > current_time + 60",
+            "action": "VETO",
+            "severity": "HIGH",
+            "message": "Timestamp no futuro. Possível manipulação."
+        },
+        {
+            "id": "SECOPS_005",
+            "category": "SECOPS",
+            "name": "Timestamp Muito Antigo",
+            "condition": "trigger.timestamp < current_time - 3600",
+            "action": "ALERT",
+            "severity": "MEDIUM",
+            "message": "Evento com mais de 1 hora de atraso."
+        },
+        {
+            "id": "SECOPS_006",
+            "category": "SECOPS",
+            "name": "Injection Attempt",
+            "condition": "contains_injection_pattern(trigger.payload)",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Padrão de injection detectado. Bloqueado."
+        },
+        {
+            "id": "ROBUST_001",
+            "category": "ROBUSTNESS",
+            "name": "Oracle Timeout",
+            "condition": "oracle_response_time_ms > 3000",
+            "action": "DEGRADE",
+            "severity": "MEDIUM",
+            "message": "Oracle lento. Usando Fast-Track."
+        },
+        {
+            "id": "ROBUST_002",
+            "category": "ROBUSTNESS",
+            "name": "Atlas Indisponível",
+            "condition": "atlas_context == null",
+            "action": "DEGRADE",
+            "severity": "HIGH",
+            "message": "Atlas indisponível. Modo conservador."
+        },
+        {
+            "id": "ROBUST_003",
+            "category": "ROBUSTNESS",
+            "name": "LLM Fallback",
+            "condition": "llm_response_empty == true",
+            "action": "DEGRADE",
+            "severity": "HIGH",
+            "message": "LLM não respondeu. Usando regras hardcoded."
+        },
+        {
+            "id": "ROBUST_004",
+            "category": "ROBUSTNESS",
+            "name": "Retry Limit",
+            "condition": "retry_count > 3",
+            "action": "VETO",
+            "severity": "HIGH",
+            "message": "Limite de retries atingido. Abortando."
+        },
+        {
+            "id": "ROBUST_005",
+            "category": "ROBUSTNESS",
+            "name": "Circuit Breaker Open",
+            "condition": "circuit_breaker_status == 'open'",
+            "action": "VETO",
+            "severity": "HIGH",
+            "message": "Circuit breaker aberto. Sistema em recuperação."
+        },
+        {
+            "id": "ROBUST_006",
+            "category": "ROBUSTNESS",
+            "name": "Memory Pressure",
+            "condition": "memory_usage_percent > 90",
+            "action": "DEGRADE",
+            "severity": "MEDIUM",
+            "message": "Pressão de memória alta. Limitando operações."
+        },
+        {
+            "id": "ROBUST_007",
+            "category": "ROBUSTNESS",
+            "name": "Cascade Failure Detection",
+            "condition": "consecutive_failures > 5",
+            "action": "VETO",
+            "severity": "BLOCKING",
+            "message": "Múltiplas falhas consecutivas. Acionando fallback."
+        }
+    ]
+}

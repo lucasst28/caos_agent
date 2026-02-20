@@ -13,11 +13,51 @@ Where:
 Defaults: W_A=0.6, W_O=0.6, W_S=0.3 (calibrated per LaTeX doc §4.1)
 """
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
+
+import structlog
 
 from caos.config import get_settings
 from caos.schemas.enums import DecisionBand, RiskLevel
 from caos.schemas.risk import RiskDimensions, RiskWeights, VerdictWeights
+
+logger = structlog.get_logger(__name__)
+
+# =============================================
+# Tenant configuration loader
+# =============================================
+
+_TENANTS_FILE = Path(__file__).resolve().parent.parent / "safety" / "policies" / "tenants.json"
+_tenant_cache: dict | None = None
+
+
+def _load_tenant_config() -> dict:
+    """Load tenant overrides from tenants.json (cached)."""
+    global _tenant_cache
+    if _tenant_cache is None:
+        try:
+            _tenant_cache = json.loads(_TENANTS_FILE.read_text(encoding="utf-8"))
+            logger.info("tenant_config_loaded", tenants=list(_tenant_cache.keys()))
+        except Exception as e:
+            logger.warning("tenant_config_load_failed", error=str(e))
+            _tenant_cache = {}
+    return _tenant_cache
+
+
+def get_tenant_overrides(tenant_id: str | None) -> dict:
+    """Get merged config: default ← tenant overrides."""
+    cfg = _load_tenant_config()
+    defaults = cfg.get("default", {})
+    if not tenant_id or tenant_id not in cfg:
+        return defaults
+    tenant = cfg[tenant_id]
+    # Deep merge: tenant overrides default for each section
+    merged = {}
+    for section in ("verdict_weights", "risk_weights", "decision_thresholds"):
+        merged[section] = {**defaults.get(section, {}), **tenant.get(section, {})}
+    return merged
 
 
 @dataclass
@@ -41,33 +81,102 @@ class JudgeEngine:
     1. Auditability: The formula is deterministic and explainable
     2. Safety: The LLM can't override the math
     3. Calibration: Weights can be tuned without changing LLM behavior
+    
+    Supports per-tenant weight/threshold overrides via tenants.json.
     """
 
     def __init__(
         self,
         verdict_weights: VerdictWeights | None = None,
         risk_weights: RiskWeights | None = None,
+        tenant_id: str | None = None,
     ) -> None:
-        """Initialize the Judge with configurable weights."""
+        """Initialize the Judge with configurable weights.
+        
+        Args:
+            verdict_weights: Explicit verdict weights (overrides everything).
+            risk_weights: Explicit risk weights (overrides everything).
+            tenant_id: If set, loads per-tenant overrides from tenants.json.
+        """
         settings = get_settings()
         
+        # Try tenant overrides first, then fall back to global settings
+        t = get_tenant_overrides(tenant_id) if tenant_id else {}
+        vw = t.get("verdict_weights", {})
+        rw = t.get("risk_weights", {})
+        dt = t.get("decision_thresholds", {})
+
         self.verdict_weights = verdict_weights or VerdictWeights(
-            w_atlas=settings.weight_atlas,
-            w_oracle=settings.weight_oracle,
-            w_severity=settings.weight_severity,
+            w_atlas=vw.get("w_atlas", settings.weight_atlas),
+            w_oracle=vw.get("w_oracle", settings.weight_oracle),
+            w_severity=vw.get("w_severity", settings.weight_severity),
         )
         
         self.risk_weights = risk_weights or RiskWeights(
-            w_physical=settings.weight_risk_physical,
-            w_financial=settings.weight_risk_financial,
-            w_contractual=settings.weight_risk_contractual,
-            w_communication=settings.weight_risk_communication,
+            w_physical=rw.get("w_physical", settings.weight_risk_physical),
+            w_financial=rw.get("w_financial", settings.weight_risk_financial),
+            w_contractual=rw.get("w_contractual", settings.weight_risk_contractual),
+            w_communication=rw.get("w_communication", settings.weight_risk_communication),
         )
         
-        # Decision thresholds
-        self.threshold_blocked = settings.threshold_blocked
-        self.threshold_alert = settings.threshold_alert
-        self.threshold_suggest = settings.threshold_suggest
+        # Decision thresholds (tenant → global settings)
+        self.threshold_blocked = dt.get("blocked", settings.threshold_blocked)
+        self.threshold_alert = dt.get("alert", settings.threshold_alert)
+        self.threshold_suggest = dt.get("suggest", settings.threshold_suggest)
+        
+        if tenant_id:
+            logger.debug(
+                "judge_tenant_config",
+                tenant_id=tenant_id,
+                thresholds={"blocked": self.threshold_blocked, "alert": self.threshold_alert, "suggest": self.threshold_suggest},
+            )
+
+    @classmethod
+    def from_rlhf(cls, tenant_id: str | None = None) -> "JudgeEngine":
+        """Create a JudgeEngine with learned weights from RLHF posteriors.
+        
+        Uses posterior means (exploitation) or Thompson Sampling (exploration)
+        depending on the rlhf_exploration_mode setting.
+        
+        Falls back to default weights if RLHF is disabled or has no state.
+        """
+        from caos.config import get_settings
+        settings = get_settings()
+        
+        if not settings.rlhf_enabled:
+            return cls(tenant_id=tenant_id)
+        
+        try:
+            from caos.core.rlhf import get_rlhf_optimizer
+            optimizer = get_rlhf_optimizer()
+            
+            # Choose exploration vs exploitation
+            if settings.rlhf_exploration_mode:
+                w = optimizer.sample_weights()
+            else:
+                w = optimizer.get_current_weights()
+            
+            verdict_weights = VerdictWeights(
+                w_atlas=w["w_atlas"],
+                w_oracle=w["w_oracle"],
+                w_severity=w["w_severity"],
+            )
+            risk_weights = RiskWeights(
+                w_physical=w["w_physical"],
+                w_financial=w["w_financial"],
+                w_contractual=w["w_contractual"],
+                w_communication=w["w_communication"],
+            )
+            
+            logger.debug("judge_using_rlhf_weights", weights=w)
+            return cls(
+                verdict_weights=verdict_weights,
+                risk_weights=risk_weights,
+                tenant_id=tenant_id,
+            )
+        except Exception as e:
+            logger.warning("judge_rlhf_fallback", error=str(e))
+            return cls(tenant_id=tenant_id)
 
     def calculate_severity(self, risk_dimensions: RiskDimensions) -> float:
         """Calculate the Severity Score (S) from 4 risk dimensions.

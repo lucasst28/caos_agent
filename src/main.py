@@ -6,21 +6,31 @@ The cognitive processing is handled by LangGraph via Pub/Sub triggers.
 
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from pathlib import Path
 
 import structlog
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from caos import __version__
 from caos.config import get_settings
 
+# Set stdlib logging level to INFO so structlog captures info+ logs
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+
 # Configure structured logging
+from caos.observability.logs import LogCapturingProcessor
+
 structlog.configure(
     processors=[
         structlog.stdlib.filter_by_level,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
         structlog.processors.TimeStamper(fmt="iso"),
+        LogCapturingProcessor(),  # Capture logs for API
         structlog.processors.JSONRenderer(),
     ],
     wrapper_class=structlog.stdlib.BoundLogger,
@@ -64,9 +74,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     else:
         logger.info("pubsub_consumer_disabled", hint="Set PUBSUB_ENABLED=true to enable")
 
+    # Start HITL background timeout timer
+    from caos.api.feedback import start_hitl_timer, stop_hitl_timer
+    start_hitl_timer(interval_seconds=30.0)
+    logger.info("hitl_timer_enabled")
+
     yield
 
     # --- Shutdown ---
+    stop_hitl_timer()
+    logger.info("hitl_timer_stopped")
+
     if _pubsub_consumer is not None:
         _pubsub_consumer.stop()
         logger.info("pubsub_consumer_stopped")
@@ -106,13 +124,23 @@ from caos.api.events import router as events_router
 from caos.api.traces import router as traces_router
 from caos.api.feedback import router as feedback_router
 from caos.api.guardrails import router as guardrails_router
+from caos.api.dashboard import router as dashboard_router
 from caos.observability.metrics import router as metrics_router
+from caos.observability.logs import router as logs_router
+from caos.api.reasoning import router as reasoning_router
+from caos.api.audit import router as audit_router
+from caos.api.rlhf_api import router as rlhf_router
 
 app.include_router(events_router, prefix="/v1")
 app.include_router(traces_router, prefix="/v1")
 app.include_router(feedback_router, prefix="/v1")
 app.include_router(guardrails_router, prefix="/v1")
 app.include_router(metrics_router, prefix="/v1")
+app.include_router(logs_router, prefix="/v1")
+app.include_router(reasoning_router, prefix="/v1")
+app.include_router(audit_router, prefix="/v1")
+app.include_router(rlhf_router, prefix="/v1")
+app.include_router(dashboard_router)  # Root level: /stats, /clients, /circuit-breakers, /rules, /streams
 
 
 @app.get("/health")
@@ -129,4 +157,30 @@ async def root() -> dict[str, str]:
         "version": __version__,
         "description": "Centralized Autonomous Operating System",
         "docs": "/docs",
+        "dashboard": "/dashboard",
     }
+
+
+# === Serve Frontend Dashboard ===
+# Mount static assets first
+frontend_dir = Path(__file__).parent.parent / "frontend"
+if frontend_dir.exists():
+    app.mount(
+        "/dashboard/assets",
+        StaticFiles(directory=str(frontend_dir / "assets")),
+        name="dashboard-assets",
+    )
+    
+    @app.get("/dashboard")
+    async def dashboard():
+        """Serve the CAOS dashboard."""
+        return FileResponse(str(frontend_dir / "index.html"))
+    
+    @app.get("/dashboard/reasoning")
+    async def reasoning_page():
+        """Serve the CAOS reasoning page."""
+        return FileResponse(str(frontend_dir / "reasoning.html"))
+    
+    logger.info("frontend_dashboard_enabled", path=str(frontend_dir))
+else:
+    logger.warning("frontend_not_found", expected_path=str(frontend_dir))

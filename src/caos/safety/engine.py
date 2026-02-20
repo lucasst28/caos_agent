@@ -75,15 +75,65 @@ class GuardrailEngine:
     }
 
     def __init__(self, policy_path: str | Path | None = None) -> None:
-        """Initialize the engine with a policy file."""
+        """Initialize the engine with a policy file or directory of per-category files."""
         self.rules: list[GuardrailRule] = []
         self.categories: dict[str, dict[str, Any]] = {}
         
         if policy_path is None:
-            # Default to built-in policy
-            policy_path = Path(__file__).parent / "policies" / "guardrails.json"
+            # Default to built-in policies directory
+            policy_path = Path(__file__).parent / "policies"
         
-        self._load_policy(Path(policy_path))
+        policy_path = Path(policy_path)
+        if policy_path.is_dir():
+            self._load_policy_directory(policy_path)
+        else:
+            self._load_policy(policy_path)
+
+    def _load_policy_directory(self, directory: Path) -> None:
+        """Load guardrail rules from per-category JSON files in a directory.
+        
+        Falls back to the monolithic guardrails.json if no category files found.
+        Category files are named: physical.json, financial.json, etc.
+        """
+        category_files = sorted(directory.glob("*.json"))
+        # Filter out the monolithic file and __init__
+        cat_files = [f for f in category_files if f.name != "guardrails.json"]
+        
+        if not cat_files:
+            # Fallback to monolithic file
+            mono = directory / "guardrails.json"
+            if mono.exists():
+                self._load_policy(mono)
+            return
+        
+        for cat_file in cat_files:
+            try:
+                with open(cat_file) as f:
+                    data = json.load(f)
+                
+                cat_name = data.get("category", cat_file.stem.upper())
+                if "metadata" in data:
+                    self.categories[cat_name] = data["metadata"]
+                
+                for rule_data in data.get("rules", []):
+                    rule = GuardrailRule(
+                        id=rule_data["id"],
+                        category=rule_data["category"],
+                        name=rule_data["name"],
+                        condition=rule_data["condition"],
+                        action=GuardrailAction(rule_data["action"]),
+                        severity=GuardrailSeverity(rule_data["severity"]),
+                        message=rule_data["message"],
+                    )
+                    self.rules.append(rule)
+            except Exception as e:
+                logger.warning("guardrails_category_load_error", file=str(cat_file), error=str(e))
+        
+        logger.info(
+            "guardrails_policy_loaded",
+            rule_count=len(self.rules),
+            category_files=len(cat_files),
+        )
 
     def _load_policy(self, path: Path) -> None:
         """Load guardrail rules from JSON policy file."""
@@ -131,12 +181,114 @@ class GuardrailEngine:
             # On error, assume condition is not met (fail open for non-blocking)
             return False
 
+    # Metrics that represent temperature measurements
+    TEMPERATURE_METRICS = {
+        "temperature", "cabinet_temperature", "temp", "motor_temp",
+        "coolant_temp", "ambient_temp", "exhaust_temp",
+    }
+
+    def _is_temperature_metric(self, state: JudgeState) -> bool:
+        """Check if the trigger metric is a temperature measurement."""
+        trigger = state.get("trigger")
+        if not trigger or not trigger.metric:
+            return False
+        return trigger.metric.lower() in self.TEMPERATURE_METRICS
+
     def _build_context(self, state: JudgeState) -> dict[str, Any]:
-        """Build evaluation context from JudgeState."""
+        """Build evaluation context from JudgeState.
+        
+        Populates ALL variables referenced by guardrails.json rules to ensure
+        no rules are left as dead/inert.
+        """
+        import time as _time
+        from datetime import datetime, timezone
+
         trigger = state.get("trigger")
         atlas = state.get("atlas_context") or {}
         oracle = state.get("oracle_forecast") or {}
-        
+        proposed_action = state.get("proposed_action")
+
+        # --- Financial context (FIN_001-006) ---
+        # Pull live numbers from Circuit Breaker if available
+        daily_cost = 0.0
+        daily_tokens = 0
+        try:
+            from caos.safety.runtime import get_circuit_breaker
+            cb = get_circuit_breaker()
+            cb_status = cb.get_status()
+            daily_cost = cb_status.get("cost_used_usd", 0.0)
+            daily_tokens = cb_status.get("tokens_used", 0)
+        except Exception:
+            pass
+
+        from caos.config import get_settings
+        settings = get_settings()
+
+        # estimated_cost from proposed action or oracle forecast
+        estimated_cost = 0.0
+        if proposed_action and hasattr(proposed_action, "estimated_cost"):
+            estimated_cost = proposed_action.estimated_cost or 0.0
+        elif oracle and oracle.get("financial_impact"):
+            estimated_cost = float(oracle["financial_impact"])
+
+        # --- Contractual context (CONTR_003-005) ---
+        now_utc = datetime.now(timezone.utc)
+        current_hour = now_utc.hour
+        processing_time_ms = 0.0
+        started_at = state.get("processing_started_at")
+        if started_at:
+            try:
+                t0 = datetime.fromisoformat(started_at)
+                processing_time_ms = (now_utc - t0).total_seconds() * 1000
+            except Exception:
+                pass
+
+        # daily_actions — tracked via rate limiter if available
+        daily_actions = 0
+        try:
+            from caos.safety.runtime import get_rate_limiter
+            rl = get_rate_limiter()
+            daily_actions = rl.get_daily_count()
+        except Exception:
+            pass
+
+        # api_calls_per_minute — from rate limiter
+        api_calls_per_minute = 0
+        try:
+            from caos.safety.runtime import get_rate_limiter
+            rl = get_rate_limiter()
+            api_calls_per_minute = rl.get_requests_per_minute()
+        except Exception:
+            pass
+
+        # --- Communication context (COMM_003-005) ---
+        notifications_last_hour = 0
+        try:
+            from caos.safety.runtime import get_anti_spam
+            spam = get_anti_spam()
+            digests = spam.get_digest()
+            notifications_last_hour = sum(d.get("total_alerts", 0) for d in digests)
+        except Exception:
+            pass
+
+        # --- Robustness context (ROBUST_001, 003, 005) ---
+        oracle_response_time_ms = state.get("_oracle_response_time_ms", 0.0)
+        llm_response_empty = state.get("_llm_response_empty", False)
+        circuit_breaker_status = "closed"
+        try:
+            from caos.safety.runtime import get_circuit_breaker
+            cb = get_circuit_breaker()
+            if cb.is_tripped():
+                circuit_breaker_status = "open"
+        except Exception:
+            pass
+
+        retry_count = state.get("recycle_count", 0)
+        consecutive_failures = state.get("_consecutive_failures", 0)
+
+        # --- Timestamp context (SECOPS_004, 005) ---
+        current_time = _time.time()
+
         return {
             "trigger": trigger,
             "atlas_context": atlas,
@@ -144,7 +296,30 @@ class GuardrailEngine:
             "risk_level": state.get("risk_level"),
             "verdict_score": state.get("verdict_score", 0.0),
             "severity_score": state.get("severity_score", 0.0),
-            "proposed_action": state.get("proposed_action"),
+            "proposed_action": proposed_action,
+            # Metric-aware flag
+            "is_temperature_metric": self._is_temperature_metric(state),
+            # Financial (FIN_001-006)
+            "daily_cost": daily_cost,
+            "daily_tokens": daily_tokens,
+            "estimated_cost": estimated_cost,
+            "llm_daily_cost_budget_usd": settings.llm_daily_cost_budget_usd,
+            "llm_daily_token_budget": settings.llm_daily_token_budget,
+            "api_calls_per_minute": api_calls_per_minute,
+            # Contractual (CONTR_003-005)
+            "processing_time_ms": processing_time_ms,
+            "current_hour": current_hour,
+            "daily_actions": daily_actions,
+            # Communication (COMM_005)
+            "notifications_last_hour": notifications_last_hour,
+            # Robustness (ROBUST_001-007)
+            "oracle_response_time_ms": oracle_response_time_ms,
+            "llm_response_empty": llm_response_empty,
+            "circuit_breaker_status": circuit_breaker_status,
+            "retry_count": retry_count,
+            "consecutive_failures": consecutive_failures,
+            # Timestamps (SECOPS_004, 005)
+            "current_time": current_time,
         }
 
     def _safe_eval(self, condition: str, context: dict[str, Any]) -> bool:
@@ -153,9 +328,47 @@ class GuardrailEngine:
         Instead of using eval(), we use pattern matching for known conditions.
         This is more secure and predictable.
         
+        Supports:
+        - Compound conditions with 'and' / 'or'
+        - Comparison operators: ==, !=, >=, <=, >, <
+        - Membership: 'in', 'not in'
+        - Arithmetic: * (for threshold calculations)
+        
         Operator precedence matters: check multi-char operators (>=, <=, !=,
         'not in') BEFORE single-char ones (>, <, 'in').
         """
+        # Handle len() function calls: len(x.y) > N
+        import re as _re
+        len_match = _re.match(r'len\(([^)]+)\)\s*(>|<|>=|<=|==|!=)\s*(.+)', condition)
+        if len_match:
+            inner_path = len_match.group(1).strip()
+            op = len_match.group(2)
+            threshold_str = len_match.group(3).strip()
+            val = self._get_value(inner_path, context)
+            length = len(val) if val is not None and hasattr(val, '__len__') else 0
+            threshold = self._get_value(threshold_str, context)
+            try:
+                threshold = float(threshold)
+            except (TypeError, ValueError):
+                return False
+            if op == '>': return length > threshold
+            if op == '<': return length < threshold
+            if op == '>=': return length >= threshold
+            if op == '<=': return length <= threshold
+            if op == '==': return length == threshold
+            if op == '!=': return length != threshold
+            return False
+
+        # Handle compound 'and' conditions
+        if " and " in condition:
+            parts = condition.split(" and ")
+            return all(self._safe_eval(p.strip(), context) for p in parts)
+
+        # Handle compound 'or' conditions
+        if " or " in condition:
+            parts = condition.split(" or ")
+            return any(self._safe_eval(p.strip(), context) for p in parts)
+
         import re
 
         # 1. Handle "not in" BEFORE "in"

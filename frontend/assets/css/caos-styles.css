@@ -943,6 +943,14 @@ body {
     color: var(--sentinel-yellow);
 }
 
+.agent-log-tab[data-agent="oracle"].active {
+    color: var(--oracle-purple);
+}
+
+.agent-log-tab[data-agent="oracle"].active i {
+    color: var(--oracle-purple);
+}
+
 .agent-log-tab[data-agent="caos"].active {
     color: var(--caos-red);
 }
@@ -1023,6 +1031,32 @@ body {
     background: var(--bg-elevated);
     border-radius: 6px;
     font-size: 12px;
+    border-left: 3px solid transparent;
+}
+
+.log-entry[data-agent="atlas"] {
+    background: rgba(0, 195, 255, 0.06);
+    border-left-color: var(--atlas-blue);
+}
+
+.log-entry[data-agent="sentinel"] {
+    background: rgba(255, 201, 60, 0.06);
+    border-left-color: var(--sentinel-yellow);
+}
+
+.log-entry[data-agent="oracle"] {
+    background: rgba(124, 58, 237, 0.06);
+    border-left-color: var(--oracle-purple);
+}
+
+.log-entry[data-agent="caos"] {
+    background: rgba(255, 51, 102, 0.06);
+    border-left-color: var(--caos-red);
+}
+
+.log-entry[data-agent="system"] {
+    background: var(--bg-elevated);
+    border-left-color: var(--border-subtle);
 }
 
 .log-entry.hidden {
@@ -1051,6 +1085,11 @@ body {
 .log-agent-badge.sentinel {
     background: rgba(255, 201, 60, 0.15);
     color: var(--sentinel-yellow);
+}
+
+.log-agent-badge.oracle {
+    background: rgba(124, 58, 237, 0.15);
+    color: var(--oracle-purple);
 }
 
 .log-agent-badge.caos {

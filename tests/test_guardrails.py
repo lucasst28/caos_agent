@@ -29,6 +29,7 @@ def make_trigger(
         source=source,
         timestamp=datetime.now(timezone.utc),
         severity=severity,
+        metric="temperature",  # Added for reflex check
         payload={"temp": value} if value else {},
         context=TriggerContext(tenant_id="test_tenant", asset_id="CHILLER-01"),
         value=value,
@@ -130,7 +131,8 @@ class TestGuardrailEngine:
         """Engine should load rules from JSON."""
         engine = GuardrailEngine()
         
-        assert len(engine.rules) == 38
+        # Updated to 41 rules
+        assert len(engine.rules) == 41
         assert len(engine.categories) == 6
 
     def test_engine_has_all_categories(self):
@@ -191,6 +193,7 @@ class TestGuardrailEngine:
         engine = GuardrailEngine()
         physical_rules = engine.get_rules_by_category("PHYSICAL")
         
-        assert len(physical_rules) == 8  # PHYS_001 through PHYS_008
+        # Updated to 11 physical rules
+        assert len(physical_rules) == 11
         for rule in physical_rules:
             assert rule.category == "PHYSICAL"

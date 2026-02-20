@@ -1,0 +1,58 @@
+{
+  "_description": "Tenant-specific overrides for CAOS verdict weights, risk weights, and decision thresholds. Missing keys inherit from global Settings.",
+  "default": {
+    "verdict_weights": {
+      "w_atlas": 0.6,
+      "w_oracle": 0.6,
+      "w_severity": 0.3
+    },
+    "risk_weights": {
+      "w_physical": 0.35,
+      "w_financial": 0.25,
+      "w_contractual": 0.25,
+      "w_communication": 0.15
+    },
+    "decision_thresholds": {
+      "blocked": 0.0,
+      "alert": 0.3,
+      "suggest": 0.7
+    }
+  },
+  "beverage_cooler": {
+    "_description": "Coolers de bebida: peso alto em risco físico (temperatura) e contratual (SLA)",
+    "risk_weights": {
+      "w_physical": 0.40,
+      "w_financial": 0.20,
+      "w_contractual": 0.30,
+      "w_communication": 0.10
+    },
+    "decision_thresholds": {
+      "blocked": 0.0,
+      "alert": 0.25,
+      "suggest": 0.65
+    }
+  },
+  "industrial_hvac": {
+    "_description": "HVAC industrial: equilibrado, peso mais alto em financeiro",
+    "risk_weights": {
+      "w_physical": 0.30,
+      "w_financial": 0.35,
+      "w_contractual": 0.20,
+      "w_communication": 0.15
+    }
+  },
+  "cold_chain_logistics": {
+    "_description": "Cadeia de frio logística: peso máximo em contratual e físico",
+    "risk_weights": {
+      "w_physical": 0.40,
+      "w_financial": 0.15,
+      "w_contractual": 0.35,
+      "w_communication": 0.10
+    },
+    "decision_thresholds": {
+      "blocked": 0.0,
+      "alert": 0.20,
+      "suggest": 0.60
+    }
+  }
+}

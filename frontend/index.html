@@ -9,7 +9,7 @@
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="assets/css/caos-styles.css" />
+  <link rel="stylesheet" href="/dashboard/assets/css/caos-styles.css" />
 </head>
 
 <body>
@@ -51,6 +51,10 @@
       <a href="#" class="nav-item" data-section="logs">
         <i class="ph-bold ph-terminal"></i>
         <span>Logs</span>
+      </a>
+      <a href="/dashboard/reasoning" class="nav-item" data-section="reasoning">
+        <i class="ph-bold ph-brain"></i>
+        <span>Raciocínio</span>
       </a>
       <a href="#" class="nav-item" data-section="settings">
         <i class="ph-bold ph-gear"></i>
@@ -303,6 +307,10 @@
                 <button class="agent-log-tab" data-agent="sentinel">
                   <i class="ph-fill ph-eye"></i>
                   <span>Sentinel</span>
+                </button>
+                <button class="agent-log-tab" data-agent="oracle">
+                  <i class="ph-fill ph-brain"></i>
+                  <span>Oracle</span>
                 </button>
                 <button class="agent-log-tab" data-agent="caos">
                   <i class="ph-fill ph-shield-warning"></i>
@@ -2644,7 +2652,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="assets/js/caos-dashboard.js?v=9"></script>
+  <script src="/dashboard/assets/js/debug.js?v=1"></script>
+  <script src="/dashboard/assets/js/caos-dashboard.js?v=13"></script>
 </body>
 
 </html>

@@ -1,0 +1,109 @@
+{
+  "category": "PHYSICAL",
+  "metadata": {
+    "name": "Regras Físicas (Safety)",
+    "description": "Proteção de ativos físicos e pessoas",
+    "weight": 1.0
+  },
+  "rules": [
+    {
+      "id": "PHYS_001",
+      "category": "PHYSICAL",
+      "name": "Ativo em Manutenção",
+      "condition": "atlas_context.under_maintenance == true",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Ação vetada: ativo está em manutenção programada."
+    },
+    {
+      "id": "PHYS_002",
+      "category": "PHYSICAL",
+      "name": "Janela de Manutenção Ativa",
+      "condition": "atlas_context.maintenance_window_active == true",
+      "action": "REQUIRE_APPROVAL",
+      "severity": "HIGH",
+      "message": "Janela de manutenção ativa. Requer aprovação."
+    },
+    {
+      "id": "PHYS_003",
+      "category": "PHYSICAL",
+      "name": "Temperatura Crítica Alta",
+      "condition": "is_temperature_metric == true and trigger.value > atlas_context.max_operating_temp * 1.2",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Temperatura excede 120% do limite operacional. Shutdown imediato."
+    },
+    {
+      "id": "PHYS_004",
+      "category": "PHYSICAL",
+      "name": "Temperatura Alta",
+      "condition": "is_temperature_metric == true and trigger.value > atlas_context.max_operating_temp",
+      "action": "ALERT",
+      "severity": "HIGH",
+      "message": "Temperatura excede limite operacional."
+    },
+    {
+      "id": "PHYS_005",
+      "category": "PHYSICAL",
+      "name": "Vibração Excessiva",
+      "condition": "trigger.payload.vibration > atlas_context.max_vibration",
+      "action": "REQUIRE_APPROVAL",
+      "severity": "HIGH",
+      "message": "Vibração excede limite. Verificar antes de agir."
+    },
+    {
+      "id": "PHYS_006",
+      "category": "PHYSICAL",
+      "name": "Pressão Crítica",
+      "condition": "trigger.payload.pressure > atlas_context.max_pressure * 1.1",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Pressão crítica detectada. Shutdown de emergência."
+    },
+    {
+      "id": "PHYS_007",
+      "category": "PHYSICAL",
+      "name": "Múltiplos Alertas Simultâneos",
+      "condition": "trigger.payload.concurrent_alerts > 3",
+      "action": "REQUIRE_APPROVAL",
+      "severity": "HIGH",
+      "message": "Múltiplos alertas simultâneos. Requer análise humana."
+    },
+    {
+      "id": "PHYS_008",
+      "category": "PHYSICAL",
+      "name": "Temperatura Absoluta Máxima",
+      "condition": "is_temperature_metric == true and trigger.value > atlas_context.max_operating_temp * 1.1",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Temperatura excede 110% do limite operacional máximo. Risco de dano iminente."
+    },
+    {
+      "id": "GPS_001",
+      "category": "PHYSICAL",
+      "name": "Deslocamento GPS Significativo",
+      "condition": "trigger.payload.displacement_meters > 200",
+      "action": "REQUIRE_APPROVAL",
+      "severity": "HIGH",
+      "message": "Deslocamento GPS > 200m. Possível remoção não autorizada."
+    },
+    {
+      "id": "GPS_002",
+      "category": "PHYSICAL",
+      "name": "Deslocamento GPS Grande",
+      "condition": "trigger.payload.displacement_meters > 1000",
+      "action": "VETO",
+      "severity": "HIGH",
+      "message": "Deslocamento GPS > 1km. Provável remoção não autorizada. Acionar segurança."
+    },
+    {
+      "id": "GPS_003",
+      "category": "PHYSICAL",
+      "name": "Deslocamento GPS Massivo (Provável Furto)",
+      "condition": "trigger.payload.displacement_meters > 5000",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Deslocamento GPS > 5km. ALERTA MÁXIMO: provável furto/roubo do ativo."
+    }
+  ]
+}

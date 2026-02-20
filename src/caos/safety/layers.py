@@ -52,6 +52,29 @@ class ReflexLayer:
     They are the first line of defense for critical situations.
     """
 
+    # Métricas que representam temperatura (para diferenciar de GPS, pressão, etc.)
+    TEMPERATURE_METRICS = {
+        "temperature", "cabinet_temperature", "temp", "motor_temp",
+        "coolant_temp", "ambient_temp", "exhaust_temp",
+    }
+
+    # Métricas de deslocamento GPS
+    GPS_METRICS = {
+        "gps_displacement", "displacement", "gps_distance", "location_change",
+    }
+
+    def _is_temperature_metric(self, metric: str | None) -> bool:
+        """Check if the metric represents a temperature measurement."""
+        if not metric:
+            return False
+        return metric.lower() in self.TEMPERATURE_METRICS
+
+    def _is_gps_metric(self, metric: str | None) -> bool:
+        """Check if the metric represents GPS displacement."""
+        if not metric:
+            return False
+        return metric.lower() in self.GPS_METRICS
+
     def check(self, state: JudgeState) -> ReflexResult:
         """Execute reflex checks - must be fast!"""
         start = datetime.now(timezone.utc)
@@ -60,25 +83,79 @@ class ReflexLayer:
         if not trigger:
             return ReflexResult(triggered=False, latency_ms=0.0)
         
-        # Check 1: Absolute temperature limit (PHYS_008)
         value = trigger.value
-        if value is not None and value > 110:
+        metric = trigger.metric
+
+        # Check 1: Absolute temperature limit (PHYS_008)
+        # Dynamic: limit = atlas.max_operating_temp * 1.1 (10% buffer) OR 110.0 default
+        atlas = state.get("atlas_context") or {}
+        max_temp = atlas.get("max_operating_temp")
+        limit = float(max_temp) * 1.1 if max_temp else 110.0
+
+        if (value is not None and value > limit
+                and self._is_temperature_metric(metric)):
             latency = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+
+            # Context-aware: planned defrost with relocated products
+            # In this case, the temperature exceedance is EXPECTED and products are safe.
+            # Let the LLM evaluate the nuance (e.g., stuck heater relay).
+            telemetry = atlas.get("telemetry_extension") or atlas.get("current_state") or {}
+            defrost_active = telemetry.get("defrost_mode_active", False)
+            products_safe = telemetry.get("products_relocated", False)
+            if defrost_active and products_safe:
+                logger.info(
+                    "reflex_defrost_bypass",
+                    rule_id="PHYS_008_DEFROST",
+                    value=value,
+                    limit=limit,
+                    defrost=True,
+                    products_relocated=True,
+                    latency_ms=latency,
+                )
+                # Return non-triggered so LLM can reason about the situation
+                return ReflexResult(
+                    triggered=False,
+                    rule_id="PHYS_008_DEFROST",
+                    message=f"Temp {value}°C > limite {limit:.1f}°C, mas degelo ativo + produtos realocados. LLM avaliará.",
+                    latency_ms=latency,
+                )
+
             logger.warning(
                 "reflex_triggered",
                 rule_id="PHYS_008",
                 value=value,
+                limit=limit,
+                metric=metric,
                 latency_ms=latency,
             )
             return ReflexResult(
                 triggered=True,
                 rule_id="PHYS_008",
                 action=GuardrailAction.VETO,
-                message=f"Temperatura absoluta {value}°C excede limite de segurança.",
+                message=f"Temperatura humana {value}°C excede limite de segurança ({limit:.1f}°C).",
+                latency_ms=latency,
+            )
+
+        # Check 2: GPS massive displacement (> 5000m = likely theft)
+        if (value is not None and self._is_gps_metric(metric)
+                and value > 5000):
+            latency = (datetime.now(timezone.utc) - start).total_seconds() * 1000
+            logger.warning(
+                "reflex_triggered",
+                rule_id="GPS_003",
+                value=value,
+                metric=metric,
+                latency_ms=latency,
+            )
+            return ReflexResult(
+                triggered=True,
+                rule_id="GPS_003",
+                action=GuardrailAction.VETO,
+                message=f"Deslocamento GPS {value:.0f}m excede 5km. Provável furto/roubo.",
                 latency_ms=latency,
             )
         
-        # Check 2: Critical severity (fast-track response)
+        # Check 3: Critical severity + under maintenance
         if trigger.severity == Severity.CRITICAL:
             atlas = state.get("atlas_context") or {}
             if atlas.get("under_maintenance"):
@@ -96,7 +173,7 @@ class ReflexLayer:
                     latency_ms=latency,
                 )
         
-        # Check 3: Source validation (SecOps)
+        # Check 4: Source validation (SecOps)
         if trigger.source.value not in ["sentinel", "oracle", "manual"]:
             latency = (datetime.now(timezone.utc) - start).total_seconds() * 1000
             logger.warning(

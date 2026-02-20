@@ -1,0 +1,44 @@
+
+version: '3.8'
+
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - chaos_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  caos-agent:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - VERTEX_AI_MODEL=${VERTEX_AI_MODEL:-gemini-2.0-flash-exp}
+      - LOG_LEVEL=INFO
+      - RAG_PERSISTENCE_PATH=/data/rag
+    volumes:
+      - rag_data:/data/rag
+      - .:/app  # Hot reload for dev
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - chaos_net
+
+volumes:
+  redis_data:
+  rag_data:
+
+networks:
+  chaos_net:

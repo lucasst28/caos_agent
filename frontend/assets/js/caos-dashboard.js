@@ -7,7 +7,7 @@
 // CONFIGURATION
 // ============================================================================
 const CONFIG = {
-    apiUrl: localStorage.getItem('caos_api_url') || 'http://localhost:8001',
+    apiUrl: localStorage.getItem('caos_api_url') || 'http://localhost:8080',
     sentinelApiUrl: localStorage.getItem('sentinel_api_url') || 'http://localhost:8002',
     sentinelTenant: localStorage.getItem('sentinel_tenant') || 'client',
     pollInterval: parseInt(localStorage.getItem('caos_poll_interval')) || 3000,
@@ -167,6 +167,8 @@ function addRemoteLog(logData) {
         agent = 'atlas';
     } else if (source.includes('sentinel') || msg.includes('sentinel')) {
         agent = 'sentinel';
+    } else if (source.includes('oracle') || msg.includes('oracle') || msg.includes('predict') || msg.includes('forecast')) {
+        agent = 'oracle';
     } else if (source.includes('caos') || source.includes('supervisor') || msg.includes('validat') || msg.includes('approved') || msg.includes('blocked')) {
         agent = 'caos';
     }
@@ -353,24 +355,102 @@ function updateAgentStatus(agent, isActive) {
 
 async function fetchLogs() {
     try {
-        const remoteLogs = await fetchAPI('/alerts?limit=50');
-        if (Array.isArray(remoteLogs)) {
-            // Process generally oldest to newest so they appear in correct order if bulk added?
-            // "unshift" adds to top. So we want to unshift the OLDER ones first? 
-            // No, unshift adds key to index 0. 
-            // If we receive [Newest, ..., Oldest] from backend (xrevrange).
-            // We should process Oldest first? 
-            // Actually, if we just iterate and unshift, the last one processed (Oldest) ends up at top. That's wrong.
-            // We want Newest at top.
-            // So we should Iterate filtered logs in Reverse (Oldest -> Newest) and unshift them?
-            // OR: Iterate Newest -> Oldest (standard API response) and unshift.
-            // If I have [A, B] (A is newer).
-            // Unshift A -> [A]
-            // Unshift B -> [B, A] -> B is atop. WRONG. A should be atop.
-
-            // Correct: Process Oldest -> Newest
-            // API returns Newest -> Oldest. So reverse it.
-            remoteLogs.reverse().forEach(log => addRemoteLog(log));
+        // Fetch logs from CAOS backend (note the trailing slash)
+        const response = await fetch(`${CONFIG.apiUrl}/v1/logs/?limit=100`, {
+            headers: { 'Accept': 'application/json' },
+            signal: AbortSignal.timeout(5000),
+        });
+        
+        if (!response.ok) {
+            console.warn('Failed to fetch logs:', response.status);
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.logs && Array.isArray(data.logs)) {
+            // Process logs from backend
+            // Logs come newest first from the API
+            data.logs.forEach(log => {
+                // Create a unique ID for this log
+                const logId = `${log.timestamp}_${log.event}_${log.level}`;
+                
+                if (knownLogIds.has(logId)) return;
+                knownLogIds.add(logId);
+                
+                // Map log level to frontend type
+                let type = 'info';
+                const level = (log.level || 'info').toLowerCase();
+                switch (level) {
+                    case 'error':
+                    case 'critical':
+                        type = 'error';
+                        break;
+                    case 'warning':
+                    case 'warn':
+                        type = 'warning';
+                        break;
+                    case 'info':
+                        // Check if it's a success event
+                        if (log.event && (log.event.includes('success') || log.event.includes('completed'))) {
+                            type = 'success';
+                        } else {
+                            type = 'info';
+                        }
+                        break;
+                    case 'debug':
+                        type = 'info';
+                        break;
+                    default:
+                        type = 'info';
+                }
+                
+                // Determine agent from log context or logger name
+                let agent = 'system';
+                const loggerName = (log.logger_name || '').toLowerCase();
+                const event = (log.event || '').toLowerCase();
+                const message = (log.message || '').toLowerCase();
+                
+                if (loggerName.includes('atlas') || event.includes('atlas') || message.includes('atlas')) {
+                    agent = 'atlas';
+                } else if (loggerName.includes('sentinel') || event.includes('sentinel') || message.includes('sentinel')) {
+                    agent = 'sentinel';
+                } else if (loggerName.includes('oracle') || event.includes('oracle') || message.includes('oracle')) {
+                    agent = 'oracle';
+                } else if (loggerName.includes('care') || event.includes('care') || message.includes('care')) {
+                    agent = 'care';
+                } else if (loggerName.includes('caos') || event.includes('caos') || event.includes('trigger') || event.includes('verdict')) {
+                    agent = 'caos';
+                }
+                
+                // Format timestamp
+                let timeStr = formatTimeWithSeconds();
+                if (log.timestamp) {
+                    try {
+                        timeStr = formatTimeWithSeconds(new Date(log.timestamp));
+                    } catch (e) {
+                        console.error('Invalid timestamp:', log.timestamp);
+                    }
+                }
+                
+                // Add to logs array
+                logs.unshift({
+                    time: timeStr,
+                    type,
+                    message: log.message || log.event || 'Sem mensagem',
+                    id: logId,
+                    agent,
+                });
+            });
+            
+            // Trim logs if exceeding max
+            if (logs.length > CONFIG.maxLogs) {
+                logs.splice(CONFIG.maxLogs);
+            }
+            
+            renderLogs();
+            renderFullLogs();
+            updateLogsCount();
         }
     } catch (error) {
         console.warn('Failed to fetch logs:', error);
@@ -980,6 +1060,12 @@ function updateClock() {
 function setupNavigation() {
     $$('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
+            // Allow real links (like /dashboard/reasoning) to navigate normally
+            const href = item.getAttribute('href');
+            if (href && href !== '#') {
+                return; // Let the browser navigate
+            }
+
             e.preventDefault();
 
             const section = item.dataset.section;
@@ -1972,25 +2058,69 @@ window.changePerPage = changePerPage;
 // INITIALIZATION
 // ============================================================================
 function init() {
-    console.log('CAOS Dashboard initializing...');
-    console.log('API URL:', CONFIG.apiUrl);
-    console.log('Poll Interval:', CONFIG.pollInterval);
+    console.log('🚀 CAOS Dashboard initializing...');
+    console.log('📍 API URL:', CONFIG.apiUrl);
+    console.log('⏱️  Poll Interval:', CONFIG.pollInterval);
+    console.log('📄 Document ready state:', document.readyState);
 
     // Clock
     updateClock();
     setInterval(updateClock, 1000);
+    console.log('✅ Clock started');
 
     // Setup event handlers
-    setupNavigation();
-    setupSettings();
-    setupLogFilters();
-    setupRefresh();
-    setupKeyboardShortcuts();
-    setupClientSelector();
-    setupStreamModal();
+    try {
+        setupNavigation();
+        console.log('✅ Navigation setup');
+    } catch (e) {
+        console.error('❌ Navigation setup failed:', e);
+    }
+    
+    try {
+        setupSettings();
+        console.log('✅ Settings setup');
+    } catch (e) {
+        console.error('❌ Settings setup failed:', e);
+    }
+    
+    try {
+        setupLogFilters();
+        console.log('✅ Log filters setup');
+    } catch (e) {
+        console.error('❌ Log filters setup failed:', e);
+    }
+    
+    try {
+        setupRefresh();
+        console.log('✅ Refresh setup');
+    } catch (e) {
+        console.error('❌ Refresh setup failed:', e);
+    }
+    
+    try {
+        setupKeyboardShortcuts();
+        console.log('✅ Keyboard shortcuts setup');
+    } catch (e) {
+        console.error('❌ Keyboard shortcuts setup failed:', e);
+    }
+    
+    try {
+        setupClientSelector();
+        console.log('✅ Client selector setup');
+    } catch (e) {
+        console.error('❌ Client selector setup failed:', e);
+    }
+    
+    try {
+        setupStreamModal();
+        console.log('✅ Stream modal setup');
+    } catch (e) {
+        console.error('❌ Stream modal setup failed:', e);
+    }
 
     // Load clients list
     loadClients();
+    console.log('✅ Clients loading');
 
     // Initial log
     addLog('Dashboard inicializado', 'info');
@@ -1998,10 +2128,18 @@ function init() {
 
     // Start polling
     startPolling();
+    console.log('✅ Polling started');
+    
+    console.log('🎉 Initialization complete!');
 }
 
 // Start
-document.addEventListener('DOMContentLoaded', init);
+console.log('📝 Registering DOMContentLoaded listener...');
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🔔 DOMContentLoaded event fired!');
+    init();
+});
+console.log('✅ Listener registered');
 
 
 // ============================================================================
@@ -4023,6 +4161,7 @@ window.toggleRule = toggleRule;
 window.editRule = editRule;
 window.showInfoPopup = showInfoPopup;
 window.closeInfoPopup = closeInfoPopup;
+window.toggleChartInterval = toggleChartInterval;
 
 // Consumer Health Info Popup
 async function showConsumerHealthInfo() {

@@ -36,6 +36,7 @@ class AssetContext(TypedDict, total=False):
     # Maintenance status
     under_maintenance: bool
     maintenance_window_active: bool
+    location: str | None
 
 
 class OraclePrediction(TypedDict, total=False):
@@ -69,6 +70,7 @@ class JudgeState(TypedDict, total=False):
     
     # === Layer 1 - Sense (Perception) ===
     atlas_context: AssetContext | None  # Digital Twin + Manuals + Contracts
+    sentinel_alert: dict[str, Any] | None  # Enriched alert from Sentinel
     
     # === Layer 2 - Oracle (Optional Simulation) ===
     oracle_forecast: OraclePrediction | None
@@ -90,17 +92,28 @@ class JudgeState(TypedDict, total=False):
     
     # Explanation
     reasoning_trace: list[str]  # Chain-of-Thought steps
+    llm_analysis: dict[str, Any] | None  # Parsed LLM response (risk dims + action + justification)
     
     # === Layer 4 - Guardrails (Validation) ===
     guardrail_violations: list[str]  # List of IDs (e.g., PHYS_001)
     guardrails_checked: list[str]  # All guardrails that were evaluated
+    guardrail_penalty: float  # Accumulated penalty from violations (Fix #4)
     
     # === Layer 5 - Act (Output) ===
     proposed_action: ActionSchema | None  # Final action for CARE
     requires_human_approval: bool
     audit_issues: list[str] | None  # Layer 2 audit findings (if any)
     
+    # === Recycle (re-planning after veto) ===
+    recycle_count: int  # Number of cortex re-plans (max 1)
+    
     # === Metadata ===
     processing_started_at: str
     processing_completed_at: str | None
     error: str | None
+    sense_blocked: bool  # True if sense_node blocked the request early
+
+    # === Private cortex flags (for guardrail context enrichment) ===
+    _llm_response_empty: bool
+    _oracle_response_time_ms: float
+    _consecutive_failures: int

@@ -23,7 +23,7 @@ class BaseClient:
             timeout: Request timeout in seconds
             headers: Additional headers to include
         """
-        self.base_url = base_url.rstrip("/")
+        self.base_url = base_url
         self.timeout = timeout
         self.headers = headers or {}
         self._client: httpx.AsyncClient | None = None

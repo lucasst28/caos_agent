@@ -100,6 +100,13 @@ async def trigger_event(request: ManualTriggerRequest) -> EventResponse:
         # Calculate processing time
         processing_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
+        # Store full reasoning chain for the reasoning page
+        from caos.api.reasoning import store_reasoning_from_state
+        try:
+            store_reasoning_from_state(final_state, processing_time)
+        except Exception:
+            pass  # Don't fail the request if reasoning store fails
+
         # Extract action info
         action = final_state.get("proposed_action")
         action_id = None

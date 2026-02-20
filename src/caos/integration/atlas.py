@@ -48,27 +48,64 @@ class AtlasClient(BaseClient):
         
         try:
             response = await self.get(
-                f"/v1/tenants/{tenant_id}/assets/{asset_id}/context"
+                f"v1/tenants/{tenant_id}/assets/{asset_id}/context"
             )
             
             # Map response to AssetContext
+            # Support both nested (production Atlas) and flat (simulator) response formats
+            if "digital_twin" in response:
+                # Production Atlas format
+                current_state = response.get("digital_twin", {}).get("state", {})
+                max_temp = response.get("specs", {}).get("max_temp")
+                min_temp = response.get("specs", {}).get("min_temp")
+                max_pressure = response.get("specs", {}).get("max_pressure")
+                max_vib = response.get("specs", {}).get("max_vibration")
+                manuals = response.get("manuals", [])
+                contract_id = response.get("contract", {}).get("id")
+                contract_tier = response.get("contract", {}).get("tier")
+                allowed_actions = response.get("contract", {}).get("allowed_actions", [])
+                sla_minutes = response.get("contract", {}).get("sla_minutes")
+                under_maint = response.get("maintenance", {}).get("active", False)
+                maint_window = response.get("maintenance", {}).get("window_active", False)
+            else:
+                # Simulator flat format
+                current_state = response.get("current_state", {})
+                max_temp = response.get("max_operating_temp")
+                min_temp = response.get("min_operating_temp")
+                max_pressure = response.get("max_pressure")
+                max_vib = response.get("max_vibration")
+                manuals = response.get("manual_excerpts", [])
+                contract_id = response.get("contract_id")
+                contract_tier = response.get("contract_tier")
+                allowed_actions = response.get("allowed_actions", [])
+                sla_minutes = response.get("sla_response_time_minutes")
+                under_maint = response.get("under_maintenance", False)
+                maint_window = response.get("maintenance_window_active", False)
+
             context: AssetContext = {
-                "current_state": response.get("digital_twin", {}).get("state", {}),
-                "last_updated": response.get("digital_twin", {}).get("updated_at"),
-                "max_operating_temp": response.get("specs", {}).get("max_temp"),
-                "min_operating_temp": response.get("specs", {}).get("min_temp"),
-                "max_pressure": response.get("specs", {}).get("max_pressure"),
-                "max_vibration": response.get("specs", {}).get("max_vibration"),
-                "manual_excerpts": response.get("manuals", []),
-                "contract_id": response.get("contract", {}).get("id"),
-                "contract_tier": response.get("contract", {}).get("tier"),
-                "allowed_actions": response.get("contract", {}).get("allowed_actions", []),
-                "sla_response_time_minutes": response.get("contract", {}).get("sla_minutes"),
-                "under_maintenance": response.get("maintenance", {}).get("active", False),
-                "maintenance_window_active": response.get("maintenance", {}).get(
-                    "window_active", False
-                ),
+                "current_state": current_state,
+                "last_updated": response.get("last_updated"),
+                "max_operating_temp": max_temp,
+                "min_operating_temp": min_temp,
+                "max_pressure": max_pressure,
+                "max_vibration": max_vib,
+                "manual_excerpts": manuals,
+                "contract_id": contract_id,
+                "contract_tier": contract_tier,
+                "allowed_actions": allowed_actions,
+                "sla_response_time_minutes": sla_minutes,
+                "under_maintenance": under_maint,
+                "maintenance_window_active": maint_window,
+                "location": response.get("location"),
             }
+
+            # Include real_data from simulator if available
+            if "real_data" in response:
+                context["real_data"] = response["real_data"]
+
+            # Include simulation_data (for scenarios like Freezer)
+            if "simulation_data" in response:
+                context["simulation_data"] = response["simulation_data"]
             
             logger.info(
                 "atlas_context_received",

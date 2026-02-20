@@ -59,19 +59,19 @@ class TestGuardrailsAPI:
     """Test guardrails API endpoints."""
 
     def test_list_guardrails(self, client):
-        """Should list all 38 guardrails."""
+        """Should list all 41 guardrails."""
         response = client.get("/v1/guardrails/")
         assert response.status_code == 200
         data = response.json()
-        assert data["total"] == 38
-        assert len(data["guardrails"]) == 38
+        assert data["total"] == 41
+        assert len(data["guardrails"]) == 41
 
     def test_list_guardrails_by_category(self, client):
         """Should filter guardrails by category."""
         response = client.get("/v1/guardrails/?category=PHYSICAL")
         assert response.status_code == 200
         data = response.json()
-        assert data["total"] == 8
+        assert data["total"] == 11
         for g in data["guardrails"]:
             assert g["category"] == "PHYSICAL"
 
@@ -80,7 +80,7 @@ class TestGuardrailsAPI:
         response = client.get("/v1/guardrails/stats")
         assert response.status_code == 200
         data = response.json()
-        assert data["total_rules"] == 38
+        assert data["total_rules"] == 41
         assert "PHYSICAL" in data["by_category"]
         assert "BLOCKING" in data["by_severity"]
 
@@ -117,10 +117,19 @@ class TestFeedbackAPI:
         assert response.status_code == 201
         data = response.json()
         assert data["approved"] is True
-        assert data["status"] == "recorded"
+        assert data["status"] == "recorded_and_learned"
 
     def test_approve_action(self, client):
         """Should process approval."""
+        # Inject pending action first
+        from caos.api.feedback import submit_for_approval
+        submit_for_approval({
+            "action_id": "act_test001",
+            "event_id": "evt_test001",
+            "asset_id": "TEST-ASSET-01",
+            "risk_level": "HIGH"
+        })
+        
         response = client.post(
             "/v1/feedback/approve",
             json={
@@ -135,6 +144,15 @@ class TestFeedbackAPI:
 
     def test_reject_action(self, client):
         """Should process rejection."""
+        # Inject pending action first
+        from caos.api.feedback import submit_for_approval
+        submit_for_approval({
+            "action_id": "act_test002",
+            "event_id": "evt_test002",
+            "asset_id": "TEST-ASSET-02",
+            "risk_level": "HIGH"
+        })
+
         response = client.post(
             "/v1/feedback/approve",
             json={

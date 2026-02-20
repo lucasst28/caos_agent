@@ -40,11 +40,38 @@ def should_call_oracle(state: JudgeState) -> Literal["oracle", "cortex"]:
 def should_recycle(state: JudgeState) -> Literal["cortex", "act"]:
     """Conditional edge: decide if we need to re-plan after guardrail check.
     
-    If guardrails vetoed the action, we could recycle back to cortex
-    for re-planning. For now, we go straight to act (which will be blocked).
+    If guardrails vetoed the action AND we haven't recycled yet,
+    return to cortex for re-planning with tighter constraints.
+    Max 1 recycle to prevent infinite loops (Livelock prevention).
     """
-    # For MVP, we don't recycle - we just report the veto
-    # In future, could implement re-planning logic
+    recycle_count = state.get("recycle_count", 0)
+    violations = state.get("guardrail_violations", [])
+    risk_level = state.get("risk_level")
+    
+    # Never recycle if sense_node already blocked
+    if state.get("sense_blocked"):
+        return "act"
+    
+    # Hard safety cap — never recycle more than once
+    if recycle_count > 1:
+        logger.warning(
+            "brain_recycle_cap_reached",
+            recycle_count=recycle_count,
+        )
+        return "act"
+    
+    # Recycle if: vetoed + first attempt + violations exist
+    if (violations
+            and recycle_count < 1
+            and risk_level is not None
+            and risk_level.value == "VETO"):
+        logger.info(
+            "brain_recycle",
+            recycle_count=recycle_count,
+            violations=violations,
+        )
+        return "cortex"
+    
     return "act"
 
 
@@ -180,9 +207,37 @@ async def process_trigger(trigger_data: dict) -> JudgeState:
     )
     
     try:
-        # Run the brain
+        # Run the brain with SO_007 execution timeout (5 min hard cap)
+        import asyncio
         brain = get_brain()
-        final_state = await brain.ainvoke(initial_state)
+        try:
+            final_state = await asyncio.wait_for(
+                brain.ainvoke(initial_state),
+                timeout=300.0,  # 5 minutes
+            )
+        except asyncio.TimeoutError:
+            logger.error(
+                "brain_execution_timeout",
+                event_id=trigger.event_id,
+                timeout_seconds=300,
+            )
+            metrics.record_error()
+            # Build a minimal BLOCKED state
+            from caos.schemas.enums import DecisionBand, RiskLevel
+            # Release backpressure slot on timeout
+            from caos.safety.runtime import get_backpressure_guard, get_asset_mutex
+            get_backpressure_guard().release()
+            get_asset_mutex().release(trigger.context.asset_id)
+            final_state = {
+                **initial_state,
+                "verdict_score": -1.0,
+                "decision_band": DecisionBand.BLOCKED,
+                "risk_level": RiskLevel.VETO,
+                "guardrail_violations": ["SO_007"],
+                "reasoning_trace": ["TIMEOUT: Pipeline excedeu 5 minutos (SO_007)"],
+                "error": "Execution timeout (SO_007)",
+                "sense_blocked": True,
+            }
     except Exception:
         metrics.record_error()
         raise

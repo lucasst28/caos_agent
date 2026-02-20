@@ -32,6 +32,7 @@ class OracleClient(BaseClient):
         asset_id: str,
         metric: str = "failure_probability",
         horizon_hours: int = 24,
+        current_value: float | None = None,
     ) -> OraclePrediction | None:
         """Get prediction for an asset.
         
@@ -40,6 +41,7 @@ class OracleClient(BaseClient):
             asset_id: Asset identifier
             metric: Metric to predict
             horizon_hours: Prediction horizon
+            current_value: Current metric value for baseline
             
         Returns:
             OraclePrediction or None if unavailable
@@ -53,20 +55,21 @@ class OracleClient(BaseClient):
         
         try:
             response = await self.post(
-                f"/v1/predict",
+                "v1/predict",
                 data={
                     "tenant_id": tenant_id,
                     "asset_id": asset_id,
                     "metric": metric,
                     "horizon_hours": horizon_hours,
+                    "current_value": current_value,
                 },
             )
             
             prediction: OraclePrediction = {
-                "forecast_metric": response.get("metric", metric),
-                "predicted_value": response.get("value", 0.0),
+                "forecast_metric": response.get("forecast_metric", metric),
+                "predicted_value": response.get("predicted_value", 0.0),
                 "confidence": response.get("confidence", 0.0),
-                "horizon_hours": response.get("horizon", horizon_hours),
+                "horizon_hours": response.get("horizon_hours", horizon_hours),
                 "financial_impact": response.get("financial_impact"),
                 "recommendation": response.get("recommendation"),
             }

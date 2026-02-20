@@ -74,6 +74,10 @@ async def oracle_node(state: JudgeState) -> dict[str, Any]:
     Returns:
         Updated state with oracle_forecast populated
     """
+    # Short-circuit if sense_node already blocked this request
+    if state.get("sense_blocked"):
+        return {}
+
     trigger = state["trigger"]
     
     logger.info(
@@ -103,6 +107,7 @@ async def oracle_node(state: JudgeState) -> dict[str, Any]:
             tenant_id=trigger.context.tenant_id,
             asset_id=trigger.context.asset_id,
             metric=trigger.metric or "failure_probability",
+            current_value=trigger.value,
         )
         
         if oracle_forecast is None:
@@ -115,6 +120,35 @@ async def oracle_node(state: JudgeState) -> dict[str, Any]:
                 "is_fast_track": True,  # Fallback to fast-track
             }
         
+        # === Input Validation (doc §5.2.1) ===
+        # Confidence < 0.75 → ignore prediction (unreliable)
+        confidence = oracle_forecast.get("confidence", 0.0)
+        if confidence < 0.75:
+            logger.warning(
+                "oracle_low_confidence_ignored",
+                event_id=trigger.event_id,
+                confidence=confidence,
+                threshold=0.75,
+            )
+            return {
+                "oracle_forecast": None,
+                "is_fast_track": True,
+            }
+        
+        # Horizon > 7 days → ignore (too far out to be actionable)
+        horizon_hours = oracle_forecast.get("horizon_hours", 0)
+        if horizon_hours > 168:  # 7 * 24
+            logger.warning(
+                "oracle_horizon_too_far",
+                event_id=trigger.event_id,
+                horizon_hours=horizon_hours,
+                max_hours=168,
+            )
+            return {
+                "oracle_forecast": None,
+                "is_fast_track": True,
+            }
+        
         logger.info(
             "oracle_node_complete",
             event_id=trigger.event_id,
@@ -124,6 +158,9 @@ async def oracle_node(state: JudgeState) -> dict[str, Any]:
         
         from caos.observability.metrics import get_metrics
         get_metrics().record_oracle(bypassed=False)
+
+        from caos.safety.runtime import get_fail_safe
+        get_fail_safe().report_service_up("oracle")
         
         return {
             "oracle_forecast": oracle_forecast,
@@ -136,6 +173,8 @@ async def oracle_node(state: JudgeState) -> dict[str, Any]:
             event_id=trigger.event_id,
             error=str(e),
         )
+        from caos.safety.runtime import get_fail_safe
+        get_fail_safe().report_service_down("oracle", str(e))
         return {
             "oracle_forecast": None,
             "is_fast_track": True,  # Fallback to fast-track

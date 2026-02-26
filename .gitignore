@@ -74,3 +74,7 @@ Thumbs.db
 *.sql
 *.log
 .caos_reasoning.json
+
+# LaTeX build artifacts
+docs/reports/*.aux
+docs/reports/*.log

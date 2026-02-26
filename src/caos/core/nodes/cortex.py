@@ -376,18 +376,64 @@ def build_context_prompt(state: JudgeState) -> str:
         from caos.core.nodes.guardrails import get_guardrail_engine
         engine = get_guardrail_engine()
         severity_val = trigger.severity.value
-        relevant = [
-            g for g in engine.guardrails
-            if g.get("severity") in ("BLOCKING", "HIGH")
-            or severity_val in ("CRITICAL", "HIGH")
-        ][:8]  # Limit to top 8 to avoid context bloat
+        contract_tier = atlas.get("contract_tier", "")
+        under_maint = atlas.get("under_maintenance", False)
+
+        # Select guardrails relevant to this specific scenario
+        relevant = []
+        for g in engine.guardrails:
+            gid = g.get("id", "")
+            gsev = g.get("severity", "")
+            gcat = g.get("category", "")
+
+            # Always include BLOCKING guardrails
+            if gsev == "BLOCKING":
+                relevant.append(g)
+            # Include HIGH severity for CRITICAL/HIGH events
+            elif gsev == "HIGH" and severity_val in ("CRITICAL", "HIGH"):
+                relevant.append(g)
+            # Include contractual guardrails when contract data is present
+            elif gcat == "CONTRACTUAL" and contract_tier:
+                relevant.append(g)
+            # Include maintenance guardrails when asset is under maintenance
+            elif under_maint and ("maintenance" in g.get("condition", "").lower() or "loto" in gid.lower()):
+                relevant.append(g)
+
+        # Deduplicate and limit
+        seen = set()
+        unique = []
+        for g in relevant:
+            gid = g.get("id")
+            if gid not in seen:
+                seen.add(gid)
+                unique.append(g)
+        relevant = unique[:15]
+
         if relevant:
             parts.append("\n## ⚠️ Guardrails Ativos (respeitar obrigatoriamente)")
+            parts.append("Estas são regras de segurança que NÃO podem ser violadas. Considere-as na sua análise:")
+            # Group by category for clarity
+            from collections import defaultdict
+            by_cat = defaultdict(list)
             for g in relevant:
-                parts.append(
-                    f"- [{g.get('id', '?')}] {g.get('description', 'N/A')} "
-                    f"(severity: {g.get('severity', '?')}, action: {g.get('action', '?')})"
-                )
+                by_cat[g.get("category", "OTHER")].append(g)
+            cat_labels = {
+                "PHYSICAL": "🛡️ Físicas (Safety)",
+                "FINANCIAL": "💰 Financeiras",
+                "CONTRACTUAL": "📋 Contratuais",
+                "COMMUNICATION": "📣 Comunicação",
+                "SECOPS": "🔒 SecOps",
+                "ROBUSTNESS": "⚙️ Robustez",
+            }
+            for cat, gs in by_cat.items():
+                parts.append(f"\n### {cat_labels.get(cat, cat)}")
+                for g in gs:
+                    parts.append(
+                        f"- **[{g.get('id', '?')}] {g.get('name', 'N/A')}**: "
+                        f"{g.get('message', 'Sem descrição')} "
+                        f"(ação: {g.get('action', '?')}, severidade: {g.get('severity', '?')}, "
+                        f"condição: `{g.get('condition', 'N/A')}`)"
+                    )
     except Exception:
         pass  # Guardrails injection is best-effort
 

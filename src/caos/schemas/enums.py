@@ -59,6 +59,7 @@ class ActionType(str, Enum):
     MAINTENANCE = "maintenance"
     SETPOINT = "setpoint"
     READ = "read"
+    OBSERVE = "observe"
 
 
 class GuardrailAction(str, Enum):

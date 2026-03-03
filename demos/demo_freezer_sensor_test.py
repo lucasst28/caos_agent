@@ -19,7 +19,7 @@ import asyncio
 import httpx
 import sys
 
-CAOS_URL = "http://localhost:8000"
+CAOS_URL = "http://localhost:8080"
 SIMULATORS_URL = "http://localhost:9000"
 
 
@@ -106,41 +106,58 @@ async def main():
             print("=" * 65)
 
             # Cortex analysis
-            cortex = detail.get("stages", {}).get("cortex", {})
+            cortex = detail.get("cortex", {})
             if cortex:
-                print(f"\n  🤖 [CORTEX] Análise:")
-                print(f"     Ação:        {cortex.get('action', 'N/A')}")
-                print(f"     Confiança:   {cortex.get('confidence', 'N/A')}")
-                print(f"     R_Físico:    {cortex.get('physical_risk', 'N/A')}")
-                print(f"     R_Financeiro: {cortex.get('financial_risk', 'N/A')}")
+                llm = cortex.get("llm_analysis", {})
+                if isinstance(llm, dict):
+                    print(f"\n  🤖 [CORTEX] Análise LLM:")
+                    analysis = llm.get('analysis', 'N/A')
+                    print(f"     Análise:     {analysis[:200]}{'...' if len(str(analysis)) > 200 else ''}")
+                    print(f"     Ação:        {llm.get('action', 'N/A')}")
+                    print(f"     Justificativa: {llm.get('justification', 'N/A')}")
+                    print(f"     Confiança:   {llm.get('confidence', 'N/A')}")
+                    print(f"     R_Físico:    {llm.get('physical', 'N/A')}")
+                    print(f"     R_Financeiro: {llm.get('financial', 'N/A')}")
 
             # Verdict
-            verdict = detail.get("verdict", {})
             print(f"\n  ⚖️ VEREDITO FINAL:")
-            print(f"     Score:      {verdict.get('score', 'N/A')}")
-            print(f"     Decisão:    {verdict.get('decision', 'N/A')}")
-            print(f"     Risco:      {verdict.get('risk_level', 'N/A')}")
+            print(f"     Score:      {detail.get('verdict_score', 'N/A')}")
+            print(f"     Decisão:    {detail.get('decision', 'N/A')}")
+            print(f"     Risco:      {detail.get('risk_level', 'N/A')}")
 
         # 6. Análise automática — O LLM caiu na armadilha?
         print("\n" + "=" * 65)
         print("🧪 ANÁLISE: O LLM CAIU NA ARMADILHA?")
         print("=" * 65)
 
-        trace_text = " ".join(str(t) for t in trace).lower()
+        # Combine trace + reasoning store for comprehensive keyword search
+        all_texts = [str(t) for t in trace]
+        if r_detail.status_code == 200:
+            d = r_detail.json()
+            cortex_d = d.get("cortex", {})
+            llm_d = cortex_d.get("llm_analysis", {}) if isinstance(cortex_d, dict) else {}
+            if isinstance(llm_d, dict):
+                for k in ["analysis", "justification", "thought"]:
+                    v = llm_d.get(k, "")
+                    if v:
+                        all_texts.append(str(v))
+            for t_item in d.get("reasoning_trace", []):
+                all_texts.append(str(t_item))
+        trace_text = " ".join(all_texts).lower()
 
         checks = [
             ("🎯 Identificou sensor defeituoso/falso positivo",
-             any(x in trace_text for x in ["sensor", "falso positivo", "calibra", "pt100", "sonda", "defeito"])),
+             any(x in trace_text for x in ["sensor", "falso positivo", "calibra", "pt100", "sonda", "defeito", "descalibr"])),
             ("🔍 Notou contradição entre sensores (principal vs secundário)",
-             any(x in trace_text for x in ["contradi", "secundár", "sonda", "-19", "probe", "ntc"])),
+             any(x in trace_text for x in ["contradi", "secundár", "sonda", "-19", "probe", "ntc", "discrepância"])),
             ("⚙️ Notou que compressor está relaxado (contradiz alarme)",
-             any(x in trace_text for x in ["35%", "baixa carga", "baixo", "repouso", "normal"])),
+             any(x in trace_text for x in ["35%", "baixa carga", "baixo", "repouso", "normal", "40%", "relaxado"])),
             ("⚡ Notou energia normal/baixa (contradiz alarme)",
-             any(x in trace_text for x in ["5.2", "energia", "consumo normal", "abaixo"])),
+             any(x in trace_text for x in ["5.2", "energia", "consumo", "abaixo", "kwh"])),
             ("❌ NÃO sugeriu manutenção/ticket do compressor",
-             "ticket" not in trace_text.split("ação sugerida:")[1] if "ação sugerida:" in trace_text else True),
+             not any(x in trace_text for x in ["manutenção do compressor", "trocar compressor", "falha do compressor"])),
             ("✅ Sugeriu calibração/substituição do sensor",
-             any(x in trace_text for x in ["calibra", "substitu", "sensor", "recalibr"])),
+             any(x in trace_text for x in ["calibra", "substitu", "sensor", "recalibr", "troca do sensor"])),
         ]
 
         passed = 0

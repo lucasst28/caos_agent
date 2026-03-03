@@ -137,6 +137,20 @@ Você DEVE justificar cada score de risco com DADOS CONCRETOS. Não atribua scor
 - **SEGURANÇA**: Siga as Âncoras de Risco. Se R_Físico > 0.8, seja conservador
 - **PENSAMENTO CRÍTICO**: Se dados apontam para causa operacional, o risco técnico é BAIXO mesmo que a temperatura esteja elevada
 
+## Ações Disponíveis
+- **shutdown**: Desligamento de emergência (apenas falhas críticas com risco imediato)
+- **maintenance**: Escalonar para equipe de manutenção (falhas técnicas confirmadas)
+- **setpoint**: Ajuste de parâmetro operacional
+- **ticket**: Criar ticket para análise posterior
+- **notification**: Notificar gestor/operador imediatamente
+- **observe**: AGUARDAR e REAVALIAR após 30 minutos. Use quando:
+  - A causa raiz é OPERACIONAL (ex: aberturas de porta em horário de pico) ou AMBIENTAL (ex: clima quente)
+  - O equipamento está funcionando NORMALMENTE (compressor ok, corrente ok, sem falhas)
+  - A situação deve se AUTO-RESOLVER quando o fator operacional cessar (ex: fim do pico)
+  - NÃO há risco imediato de perda de produto (temperatura ainda dentro da margem de segurança)
+  - Exemplo: "Portas abertas 15x/hora em pico + clima 35°C → aguardar fim do pico e reavaliar"
+- **read**: Apenas observar passivamente (sem agenda de reavaliação)
+
 ## Formato de Resposta (Decisão Final)
 PENSAMENTO: [Raciocínio em camadas, mostrando cada etapa da investigação]
 ANÁLISE: [Diagnóstico final com causa raiz identificada]
@@ -145,7 +159,7 @@ RISCO_FISICO: [0.0-1.0] | JUSTIFICATIVA_RF: [Por que este score, com dados]
 RISCO_FINANCEIRO: [0.0-1.0] | JUSTIFICATIVA_RFIN: [Por que este score — cite valores em R$]
 RISCO_CONTRATUAL: [0.0-1.0] | JUSTIFICATIVA_RC: [Por que este score — cite SLA e penalidades]
 RISCO_COMUNICACAO: [0.0-1.0] | JUSTIFICATIVA_RK: [Quem precisa ser notificado e por quê]
-AÇÃO: [tipo de ação]
+AÇÃO: [tipo de ação: shutdown|maintenance|setpoint|ticket|notification|observe|read]
 JUSTIFICATIVA: [Justificativa detalhada com evidências cruzadas]
 
 ## Formato de Resposta (Inquérito Agêntico)
@@ -602,6 +616,17 @@ def parse_llm_response(response_text: str) -> dict[str, Any]:
     # Ensure analysis falls back to thought if empty
     if not result.get("analysis") and result.get("thought"):
         result["analysis"] = result["thought"]
+
+    # Ensure justification falls back to analysis summary if empty
+    if not result.get("justification") or result["justification"].strip() == "":
+        analysis = result.get("analysis", "")
+        action = result.get("action", "notification")
+        if analysis:
+            # Take first 300 chars of analysis as justification
+            summary = analysis[:300].rstrip()
+            if len(analysis) > 300:
+                summary += "..."
+            result["justification"] = f"Ação recomendada: {action}. {summary}"
 
     return result
 

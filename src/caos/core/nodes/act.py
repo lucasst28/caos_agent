@@ -37,7 +37,8 @@ ALWAYS_HIGH_ACTIONS = {
     "factory_reset", "credential_rotate",
 }
 ALWAYS_LOW_ACTIONS = {
-    "emergency_stop", "read", "status_check", "log_only",
+    "emergency_stop", "read", "status_check", "log_only", "notification",
+    "observe",
 }
 
 
@@ -56,8 +57,10 @@ def apply_risk_override(action_type: ActionType, risk_level: RiskLevel) -> RiskL
     return risk_level
 
 
-def determine_workflow(decision_band: DecisionBand, risk_level: RiskLevel) -> str:
+def determine_workflow(decision_band: DecisionBand, risk_level: RiskLevel, action_type: ActionType | None = None) -> str:
     """Determine which Cloud Workflow to execute."""
+    if action_type == ActionType.OBSERVE:
+        return "ObserveWorkflow"
     if decision_band == DecisionBand.BLOCKED:
         return "BlockedActionWorkflow"
     elif risk_level == RiskLevel.HIGH:
@@ -115,14 +118,22 @@ def determine_action_type(state: JudgeState) -> ActionType:
             "reiniciar": ActionType.SETPOINT,
             "nenhuma": ActionType.READ,
             "none": ActionType.READ,
+            "observe": ActionType.OBSERVE,
+            "observar": ActionType.OBSERVE,
+            "aguardar": ActionType.OBSERVE,
+            "monitorar": ActionType.OBSERVE,
+            "reavaliar": ActionType.OBSERVE,
         }
         llm_action = llm_action_map.get(llm_action_str)
         
         if llm_action is not None:
-            # Validate against Atlas allowed_actions
+            # Skip allowed_actions validation for inherently safe actions
+            safe_action = llm_action.value.lower() in ALWAYS_LOW_ACTIONS
+            
+            # Validate against Atlas allowed_actions (only for risky actions)
             atlas = state.get("atlas_context") or {}
             allowed = atlas.get("allowed_actions", [])
-            if not allowed or llm_action.value in allowed:
+            if safe_action or not allowed or llm_action.value in allowed:
                 # Safety check: LLM cannot recommend SHUTDOWN for LOW severity
                 if llm_action == ActionType.SHUTDOWN and severity.value == "LOW":
                     llm_action = ActionType.SETPOINT
@@ -191,8 +202,9 @@ async def act_node(state: JudgeState) -> dict[str, Any]:
     risk_level = state.get("risk_level", RiskLevel.HIGH)
     
     # Determine workflow and action type
-    workflow_name = determine_workflow(decision_band, risk_level)
     action_type = determine_action_type(state)
+    workflow_name = determine_workflow(decision_band, risk_level, action_type)
+
     
     # Apply risk overrides for safety-critical actions (doc §4.1.3)
     original_risk = risk_level
@@ -205,7 +217,7 @@ async def act_node(state: JudgeState) -> dict[str, Any]:
             overridden_risk=risk_level.value,
         )
         # Re-determine workflow after override
-        workflow_name = determine_workflow(decision_band, risk_level)
+        workflow_name = determine_workflow(decision_band, risk_level, action_type)
     
     # Build the command
     command = ActionCommand(
@@ -223,6 +235,12 @@ async def act_node(state: JudgeState) -> dict[str, Any]:
     if oracle and oracle.get("financial_impact"):
         estimated_cost = float(oracle["financial_impact"])
     
+    # Determine if human approval is needed
+    # Actions in ALWAYS_LOW_ACTIONS are inherently safe → no approval
+    requires_approval = state.get("requires_human_approval", True)
+    if action_type.value.lower() in ALWAYS_LOW_ACTIONS:
+        requires_approval = False
+    
     # Build the action schema
     action = ActionSchema(
         action_id=f"act_{uuid.uuid4().hex[:8]}",
@@ -235,13 +253,15 @@ async def act_node(state: JudgeState) -> dict[str, Any]:
         command=command,
         guardrails_passed=state.get("guardrails_checked", []),
         guardrails_violated=state.get("guardrail_violations", []),
-        requires_approval=state.get("requires_human_approval", True),
+        requires_approval=requires_approval,
         estimated_cost=estimated_cost,
         justification=f"Decisão: {decision_band.value}. Risco: {risk_level.value}.",
         confidence=abs(state.get("verdict_score", 0.0)),
         reasoning_trace=state.get("reasoning_trace", []),
     )
     
+    # Sync back to state so EventResponse picks up the resolved value
+    state["requires_human_approval"] = action.requires_approval
     logger.info(
         "act_node_complete",
         event_id=state["trigger"].event_id,
@@ -303,8 +323,38 @@ async def act_node(state: JudgeState) -> dict[str, Any]:
     except Exception as e:
         logger.error("rlhf_record_error", action_id=action.action_id, error=str(e))
     
+    # === OBSERVE: Schedule re-evaluation instead of acting (doc §OBSERVE) ===
+    if action_type == ActionType.OBSERVE:
+        try:
+            from caos.core.observer import get_observer, ObservationTask
+            observer = get_observer()
+            obs_task = ObservationTask(
+                observation_id=f"obs_{uuid.uuid4().hex[:8]}",
+                event_id=state["trigger"].event_id,
+                asset_id=state["trigger"].context.asset_id,
+                tenant_id=state["trigger"].context.tenant_id,
+                metric=state["trigger"].metric or "temperature",
+                original_value=state["trigger"].value or 0.0,
+                threshold=state.get("atlas_context", {}).get("max_operating_temp"),
+                delay_minutes=30,
+                original_reasoning=state.get("reasoning_trace", []),
+            )
+            observer.schedule(obs_task)
+            state.get("reasoning_trace", []).append(
+                f"👁️ OBSERVE: Reavaliação agendada em {obs_task.delay_minutes}min "
+                f"(obs_id: {obs_task.observation_id})"
+            )
+            logger.info(
+                "observe_scheduled",
+                action_id=action.action_id,
+                observation_id=obs_task.observation_id,
+                delay_minutes=obs_task.delay_minutes,
+            )
+        except Exception as e:
+            logger.error("observe_schedule_failed", error=str(e))
+
     # === HITL: Submit for approval if needed (doc §8.2) ===
-    if action.requires_approval:
+    elif action.requires_approval:
         submit_for_approval({
             "action_id": action.action_id,
             "event_id": state["trigger"].event_id,

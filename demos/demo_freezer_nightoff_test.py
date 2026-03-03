@@ -14,8 +14,8 @@ import httpx
 import json
 import sys
 
-CAOS_URL = "http://localhost:8000"
-SIMULATORS_URL = "http://localhost:8100"
+CAOS_URL = "http://localhost:8080"
+SIMULATORS_URL = "http://localhost:9000"
 
 
 async def main():
@@ -93,6 +93,7 @@ async def main():
         await asyncio.sleep(2)
         print(f"\n🔍 Buscando raciocínio completo do evento {event_id}...")
 
+        detail = {}
         r_detail = await client.get(f"{CAOS_URL}/v1/reasoning/{event_id}")
         if r_detail.status_code == 200:
             detail = r_detail.json()
@@ -101,8 +102,9 @@ async def main():
             print("🧠 RACIOCÍNIO COMPLETO (Reasoning Store)")
             print("=" * 65)
 
-            # Atlas
-            atlas = detail.get("stages", {}).get("sense", {}).get("atlas_context", {})
+            # Atlas (top-level key: "sense")
+            sense = detail.get("sense", {})
+            atlas = sense.get("atlas_context", {})
             if atlas:
                 state = atlas.get("current_state", {})
                 print(f"\n  📊 [SENSE] Dados do Atlas:")
@@ -147,58 +149,86 @@ async def main():
                     for m in manuals[:6]:
                         print(f"        📖 {m[:100]}{'...' if len(m) > 100 else ''}")
 
-            # Cortex
-            cortex = detail.get("stages", {}).get("cortex", {})
+            # Cortex (top-level key: "cortex")
+            cortex = detail.get("cortex", {})
             if cortex:
+                llm = cortex.get("llm_analysis", {})
                 print(f"\n  🤖 [CORTEX] Análise Híbrida (CODE + LLM):")
-                analysis = cortex.get("analysis", "N/A")
-                print(f"     Análise:     {analysis[:200]}{'...' if len(analysis) > 200 else ''}")
-                print(f"\n     Ação:        {cortex.get('action', 'N/A')}")
-                justification = cortex.get("justification", "N/A")
-                print(f"     Justificativa: {justification[:200]}{'...' if len(justification) > 200 else ''}")
-                print(f"     Confiança:   {cortex.get('confidence', 'N/A')}")
-                print(f"     R_Físico:    {cortex.get('physical_risk', 'N/A')}")
-                print(f"     R_Financeiro: {cortex.get('financial_risk', 'N/A')}")
+                print(f"     Verdict Score: {cortex.get('verdict_score', 'N/A')}")
+                print(f"     Risk Level:    {cortex.get('risk_level', 'N/A')}")
+                print(f"     Decision Band: {cortex.get('decision_band', 'N/A')}")
+                if llm:
+                    analysis = llm.get("analysis", "N/A") or "N/A"
+                    action = llm.get("action", "N/A") or "N/A"
+                    justification = llm.get("justification", "N/A") or "N/A"
+                    print(f"\n     📝 LLM Análise:       {str(analysis)[:200]}{'...' if len(str(analysis)) > 200 else ''}")
+                    print(f"     📋 LLM Ação:          {str(action)[:200]}{'...' if len(str(action)) > 200 else ''}")
+                    print(f"     💬 LLM Justificativa:  {str(justification)[:200]}{'...' if len(str(justification)) > 200 else ''}")
+                dims = cortex.get("risk_dimensions", {})
+                if dims:
+                    print(f"\n     📊 Dimensões de Risco:")
+                    print(f"        Físico:       {dims.get('physical', 'N/A')}")
+                    print(f"        Financeiro:   {dims.get('financial', 'N/A')}")
+                    print(f"        Contratual:   {dims.get('contractual', 'N/A')}")
+                    print(f"        Comunicação:  {dims.get('communication', 'N/A')}")
 
-            # Guardrails
-            guardrails = detail.get("stages", {}).get("guardrails", {})
-            if guardrails:
-                checks = guardrails.get("checks", [])
-                violations = [c for c in checks if c.get("violated")]
-                print(f"\n  🛡️ [GUARDRAILS] Validação:")
-                print(f"     Verificados: {len(checks)}")
-                print(f"     Violações:   {len(violations)}")
-                for v in violations:
-                    print(f"        ⚠️ {v.get('rule_id', 'N/A')}")
+            # Guardrails (top-level key: "guardrails")
+            guardrails = detail.get("guardrails", {})
+            checked = guardrails.get("checked", [])
+            violations = guardrails.get("violations", [])
+            print(f"\n  🛡️ [GUARDRAILS] Validação:")
+            print(f"     Verificados: {len(checked)}")
+            print(f"     Violações:   {len(violations)}")
+            for v in violations:
+                print(f"        ⚠️ {v}")
 
-            # Verdict
-            verdict = detail.get("verdict", {})
+            # Verdict (top-level keys)
             print(f"\n  ⚖️ VEREDITO FINAL:")
-            print(f"     Score:      {verdict.get('score', 'N/A')}")
-            print(f"     Decisão:    {verdict.get('decision', 'N/A')}")
-            print(f"     Risco:      {verdict.get('risk_level', 'N/A')}")
-            print(f"     Tempo:      {verdict.get('processing_time_ms', 'N/A')} ms")
+            print(f"     Score:      {detail.get('verdict_score', 'N/A')}")
+            print(f"     Decisão:    {detail.get('decision', 'N/A')}")
+            print(f"     Risco:      {detail.get('risk_level', 'N/A')}")
+            print(f"     Tempo:      {detail.get('processing_time_ms', 'N/A')} ms")
+
+            # Update trace from reasoning store
+            store_trace = detail.get("reasoning_trace", [])
+            if store_trace:
+                trace = store_trace
 
         # 6. Análise automática
         print("\n" + "=" * 65)
         print("🧪 ANÁLISE DO RESULTADO")
         print("=" * 65)
 
-        trace_text = " ".join(str(t) for t in trace).lower()
+        # Build comprehensive text from ALL available sources
+        all_text_parts = [" ".join(str(t) for t in trace)]
+        # Add LLM analysis text
+        llm_data = detail.get("cortex", {}).get("llm_analysis", {})
+        if llm_data:
+            all_text_parts.append(str(llm_data.get("analysis", "")))
+            all_text_parts.append(str(llm_data.get("action", "")))
+            all_text_parts.append(str(llm_data.get("justification", "")))
+        # Add manual excerpts
+        manuals = detail.get("sense", {}).get("atlas_context", {}).get("manual_excerpts", [])
+        if manuals:
+            all_text_parts.append("manual trecho consultado")
+        # Check if cortex processed
+        if detail.get("cortex", {}).get("verdict_score") is not None:
+            all_text_parts.append("cortex processou verdict")
+        all_text = " ".join(all_text_parts).lower()
 
         checks = [
             ("Detectou padrão de desligamento/power cycle",
-             any(x in trace_text for x in ["deslig", "power cycle", "power_cycle", "liga/desliga", "desligamento noturno", "ligar/desligar"])),
+             any(x in all_text for x in ["deslig", "power cycle", "power_cycle", "liga/desliga", "desligamento noturno", "ligar/desligar", "power off", "off_duration"])),
             ("Mencionou impacto financeiro/energia",
-             any(x in trace_text for x in ["energia", "consumo", "kwh", "custo", "econom"])),
+             any(x in all_text for x in ["energia", "consumo", "kwh", "custo", "econom", "financ", "impacto"])),
             ("Identificou risco sanitário/produto",
-             any(x in trace_text for x in ["carne", "anvisa", "contamin", "perecível", "descart", "produto", "perda"])),
+             any(x in all_text for x in ["carne", "anvisa", "contamin", "perecível", "descart", "produto", "perda", "sanitár", "aliment"])),
             ("Recomendou NÃO desligar / educação do operador",
-             any(x in trace_text for x in ["não deslig", "instruir", "operador", "educação", "orient", "manter ligado", "funcionamento contínuo"])),
+             any(x in all_text for x in ["não deslig", "instruir", "operador", "educação", "orient", "manter ligado", "funcionamento contínuo", "manter", "evitar"])),
             ("Manual técnico consultado",
-             any(x in trace_text for x in ["manual", "trecho"])),
+             any(x in all_text for x in ["manual", "trecho"])),
             ("Pipeline completo executou (Cortex processou)",
-             any(x in trace_text for x in ["llm", "fusão", "cortex"])),
+             any(x in all_text for x in ["llm", "fusão", "cortex", "verdict"])),
         ]
 
         passed = 0

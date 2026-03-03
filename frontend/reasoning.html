@@ -129,6 +129,85 @@
       }
     }
 
+    @keyframes timelineFill {
+      from {
+        height: 0;
+        opacity: 0;
+      }
+
+      to {
+        height: 100%;
+        opacity: 0.25;
+      }
+    }
+
+    @keyframes orbitPulse {
+      0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+
+      100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    @keyframes gaugeNeedleIn {
+      from {
+        transform: translateX(-50%) rotate(-90deg);
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes gradientShift {
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    @keyframes glowPulse {
+
+      0%,
+      100% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes scaleIn {
+      from {
+        transform: scale(0);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes connectorFlow {
+      0% {
+        stroke-dashoffset: 20;
+      }
+
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+
     /* --- Base --- */
     body {
       display: flex;
@@ -412,7 +491,7 @@
     .pipeline {
       display: flex;
       align-items: stretch;
-      gap: 4px;
+      gap: 0;
       margin-bottom: 36px;
       position: relative;
     }
@@ -421,6 +500,12 @@
       flex: 1;
       position: relative;
       animation: fadeInUp 0.45s ease both;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .pipeline-step:hover {
+      transform: translateY(-4px);
+      z-index: 2;
     }
 
     .pipeline-step:nth-child(1) {
@@ -462,7 +547,6 @@
       overflow: hidden;
     }
 
-    /* Shimmer effect on headers */
     .pipeline-step-header::after {
       content: '';
       position: absolute;
@@ -470,70 +554,106 @@
       left: -200%;
       width: 200%;
       height: 100%;
-      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.03) 50%, transparent 100%);
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.04) 50%, transparent 100%);
       animation: shimmer 4s ease-in-out infinite;
     }
 
     .pipeline-step-header i {
       font-size: 18px;
-      filter: drop-shadow(0 0 4px currentColor);
+      filter: drop-shadow(0 0 6px currentColor);
     }
 
+    /* Pipeline connector arrows */
     .pipeline-arrow {
-      width: 28px;
+      width: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--text-muted);
-      font-size: 16px;
       flex-shrink: 0;
-      align-self: flex-start;
-      padding-top: 16px;
+      align-self: stretch;
+      position: relative;
     }
 
-    .pipeline-arrow i {
-      animation: flowArrow 1.8s ease-in-out infinite;
+    .pipeline-arrow svg {
+      width: 32px;
+      height: 24px;
     }
 
+    .pipeline-arrow svg line {
+      stroke: rgba(255, 255, 255, 0.15);
+      stroke-width: 2;
+      stroke-dasharray: 6 4;
+      animation: connectorFlow 1s linear infinite;
+    }
+
+    .pipeline-arrow svg polygon {
+      fill: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Step color themes */
     .step-trigger .pipeline-step-header {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
       color: var(--text-primary);
       border-bottom: 2px solid rgba(255, 255, 255, 0.15);
     }
 
+    .step-trigger:hover {
+      box-shadow: 0 8px 32px rgba(255, 255, 255, 0.06);
+    }
+
     .step-sense .pipeline-step-header {
-      background: linear-gradient(135deg, rgba(0, 195, 255, 0.15), rgba(0, 195, 255, 0.05));
+      background: linear-gradient(135deg, rgba(0, 195, 255, 0.15), rgba(0, 195, 255, 0.03));
       color: var(--atlas-blue);
-      border-bottom: 2px solid rgba(0, 195, 255, 0.35);
+      border-bottom: 2px solid rgba(0, 195, 255, 0.4);
+    }
+
+    .step-sense:hover {
+      box-shadow: 0 8px 32px rgba(0, 195, 255, 0.12);
     }
 
     .step-oracle .pipeline-step-header {
-      background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(124, 58, 237, 0.05));
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(124, 58, 237, 0.03));
       color: var(--oracle-purple);
-      border-bottom: 2px solid rgba(124, 58, 237, 0.35);
+      border-bottom: 2px solid rgba(124, 58, 237, 0.4);
+    }
+
+    .step-oracle:hover {
+      box-shadow: 0 8px 32px rgba(124, 58, 237, 0.12);
     }
 
     .step-cortex .pipeline-step-header {
-      background: linear-gradient(135deg, rgba(255, 51, 102, 0.15), rgba(255, 51, 102, 0.05));
+      background: linear-gradient(135deg, rgba(255, 51, 102, 0.15), rgba(255, 51, 102, 0.03));
       color: var(--caos-red);
-      border-bottom: 2px solid rgba(255, 51, 102, 0.35);
+      border-bottom: 2px solid rgba(255, 51, 102, 0.4);
+    }
+
+    .step-cortex:hover {
+      box-shadow: 0 8px 32px rgba(255, 51, 102, 0.12);
     }
 
     .step-guardrails .pipeline-step-header {
-      background: linear-gradient(135deg, rgba(255, 201, 60, 0.15), rgba(255, 201, 60, 0.05));
+      background: linear-gradient(135deg, rgba(255, 201, 60, 0.15), rgba(255, 201, 60, 0.03));
       color: var(--sentinel-yellow);
-      border-bottom: 2px solid rgba(255, 201, 60, 0.35);
+      border-bottom: 2px solid rgba(255, 201, 60, 0.4);
+    }
+
+    .step-guardrails:hover {
+      box-shadow: 0 8px 32px rgba(255, 201, 60, 0.12);
     }
 
     .step-act .pipeline-step-header {
-      background: linear-gradient(135deg, rgba(0, 245, 181, 0.15), rgba(0, 245, 181, 0.05));
+      background: linear-gradient(135deg, rgba(0, 245, 181, 0.15), rgba(0, 245, 181, 0.03));
       color: var(--care-green);
-      border-bottom: 2px solid rgba(0, 245, 181, 0.35);
+      border-bottom: 2px solid rgba(0, 245, 181, 0.4);
+    }
+
+    .step-act:hover {
+      box-shadow: 0 8px 32px rgba(0, 245, 181, 0.12);
     }
 
     .pipeline-step-body {
-      background: rgba(21, 28, 36, 0.7);
-      backdrop-filter: blur(8px);
+      background: rgba(21, 28, 36, 0.85);
+      backdrop-filter: blur(12px);
       border: 1px solid var(--border-normal);
       border-top: none;
       border-radius: 0 0 14px 14px;
@@ -542,6 +662,52 @@
       font-size: 12px;
       line-height: 1.7;
       color: var(--text-secondary);
+      transition: border-color 0.3s ease;
+    }
+
+    .pipeline-step:hover .pipeline-step-body {
+      border-color: var(--border-strong);
+    }
+
+    /* Status badge on pipeline steps */
+    .pipeline-step-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 800;
+      z-index: 3;
+      animation: scaleIn 0.3s ease both;
+    }
+
+    .pipeline-step-badge.badge-ok {
+      background: rgba(0, 245, 181, 0.2);
+      color: var(--care-green);
+      border: 1px solid rgba(0, 245, 181, 0.3);
+    }
+
+    .pipeline-step-badge.badge-warn {
+      background: rgba(255, 201, 60, 0.2);
+      color: var(--sentinel-yellow);
+      border: 1px solid rgba(255, 201, 60, 0.3);
+    }
+
+    .pipeline-step-badge.badge-error {
+      background: rgba(255, 51, 102, 0.2);
+      color: var(--caos-red);
+      border: 1px solid rgba(255, 51, 102, 0.3);
+    }
+
+    .pipeline-step-badge.badge-skip {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      border: 1px solid var(--border-normal);
     }
 
     .step-bypassed {
@@ -579,7 +745,7 @@
       font-weight: 700;
       font-size: 14px;
       color: var(--caos-red);
-      background: rgba(255, 51, 102, 0.04);
+      background: linear-gradient(135deg, rgba(255, 51, 102, 0.06), rgba(124, 58, 237, 0.03));
     }
 
     .reasoning-trace-header i {
@@ -592,7 +758,7 @@
       position: relative;
     }
 
-    /* Vertical timeline line */
+    /* Vertical timeline line — animated */
     .reasoning-trace-body::before {
       content: '';
       position: absolute;
@@ -601,52 +767,92 @@
       bottom: 20px;
       width: 2px;
       background: linear-gradient(to bottom, var(--caos-red), var(--oracle-purple), var(--care-green));
-      opacity: 0.2;
+      opacity: 0.25;
       border-radius: 1px;
+      animation: timelineFill 1s ease 0.5s both;
     }
 
     .trace-step {
       display: flex;
       align-items: flex-start;
       gap: 14px;
-      padding: 12px 0;
+      padding: 14px 12px;
       position: relative;
       border-bottom: none;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      margin: 2px 0;
+    }
+
+    .trace-step:hover {
+      background: rgba(255, 255, 255, 0.02);
     }
 
     .trace-step+.trace-step {
-      border-top: 1px solid var(--border-subtle);
+      border-top: none;
     }
 
+    /* Colored step numbers based on type */
     .trace-step-num {
-      width: 30px;
-      height: 30px;
-      background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
-      border: 2px solid var(--border-strong);
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 11px;
       font-weight: 800;
-      color: var(--text-secondary);
       flex-shrink: 0;
       position: relative;
       z-index: 1;
       transition: all 0.3s ease;
     }
 
-    .trace-step:hover .trace-step-num {
-      border-color: var(--caos-red);
+    .trace-step-num.trace-warn {
+      background: linear-gradient(135deg, rgba(255, 201, 60, 0.2), rgba(255, 201, 60, 0.08));
+      border: 2px solid rgba(255, 201, 60, 0.35);
+      color: var(--sentinel-yellow);
+    }
+
+    .trace-step-num.trace-error {
+      background: linear-gradient(135deg, rgba(255, 51, 102, 0.2), rgba(255, 51, 102, 0.08));
+      border: 2px solid rgba(255, 51, 102, 0.35);
       color: var(--caos-red);
-      box-shadow: 0 0 12px rgba(255, 51, 102, 0.2);
+    }
+
+    .trace-step-num.trace-success {
+      background: linear-gradient(135deg, rgba(0, 245, 181, 0.2), rgba(0, 245, 181, 0.08));
+      border: 2px solid rgba(0, 245, 181, 0.35);
+      color: var(--care-green);
+    }
+
+    .trace-step-num.trace-info {
+      background: linear-gradient(135deg, rgba(0, 195, 255, 0.2), rgba(0, 195, 255, 0.08));
+      border: 2px solid rgba(0, 195, 255, 0.35);
+      color: var(--atlas-blue);
+    }
+
+    .trace-step-num.trace-default {
+      background: linear-gradient(135deg, var(--bg-elevated), var(--bg-card));
+      border: 2px solid var(--border-strong);
+      color: var(--text-secondary);
+    }
+
+    /* Step icon inside number */
+    .trace-step-num i {
+      font-size: 14px;
+    }
+
+    .trace-step:hover .trace-step-num {
+      transform: scale(1.1);
+      box-shadow: 0 0 16px rgba(255, 51, 102, 0.15);
     }
 
     .trace-step-text {
       color: var(--text-primary);
       font-size: 13px;
       line-height: 1.7;
-      padding-top: 5px;
+      padding-top: 6px;
       flex: 1;
       transition: all 0.2s ease;
     }
@@ -671,14 +877,14 @@
       border: 1px solid var(--border-normal);
       border-radius: 16px;
       overflow: hidden;
-      transition: all 0.3s ease;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       animation: fadeInUp 0.5s ease 0.4s both;
     }
 
     .detail-card:hover {
-      border-color: var(--border-strong);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.14);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      transform: translateY(-3px);
     }
 
     .detail-card-header {
@@ -695,7 +901,7 @@
 
     .detail-card-header i {
       font-size: 18px;
-      filter: drop-shadow(0 0 4px currentColor);
+      filter: drop-shadow(0 0 6px currentColor);
     }
 
     .detail-card-header::before {
@@ -769,9 +975,11 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      padding: 8px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      padding: 9px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.025);
       transition: all 0.15s ease;
+      border-radius: 6px;
+      margin: 0 -8px;
     }
 
     .detail-row:last-child {
@@ -779,20 +987,17 @@
     }
 
     .detail-row:hover {
-      background: rgba(255, 255, 255, 0.02);
-      margin: 0 -8px;
-      padding: 8px 8px;
-      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.025);
     }
 
     .detail-label {
       color: var(--text-muted);
-      font-size: 12px;
-      font-weight: 500;
+      font-size: 11px;
+      font-weight: 600;
       min-width: 130px;
       flex-shrink: 0;
       text-transform: uppercase;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.7px;
     }
 
     .detail-value {
@@ -800,7 +1005,8 @@
       font-size: 12px;
       text-align: right;
       word-break: break-word;
-      font-weight: 500;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
     }
 
     .detail-value.value-good {
@@ -997,32 +1203,64 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 20px;
+      gap: 24px;
       padding: 100px 20px;
       text-align: center;
       animation: fadeIn 0.6s ease 0.3s both;
     }
 
     .empty-state-icon {
-      width: 80px;
-      height: 80px;
-      border-radius: 24px;
+      width: 96px;
+      height: 96px;
+      border-radius: 28px;
       background: linear-gradient(135deg, rgba(255, 51, 102, 0.1), rgba(124, 58, 237, 0.08));
       border: 1px solid rgba(255, 51, 102, 0.15);
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+    }
+
+    /* Orbiting ring around empty icon */
+    .empty-state-icon::before {
+      content: '';
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 1px dashed rgba(255, 51, 102, 0.15);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation: orbitPulse 12s linear infinite;
+    }
+
+    .empty-state-icon::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--caos-red);
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 0 12px rgba(255, 51, 102, 0.5);
+      animation: orbitPulse 12s linear infinite;
     }
 
     .empty-state i {
-      font-size: 36px;
+      font-size: 40px;
       color: var(--text-muted);
     }
 
     .empty-state h3 {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 700;
-      color: var(--text-secondary);
+      background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       letter-spacing: -0.3px;
     }
 
@@ -1041,6 +1279,843 @@
       color: var(--atlas-blue);
       border: 1px solid var(--border-normal);
       font-weight: 500;
+    }
+
+    .empty-state-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(255, 51, 102, 0.15), rgba(124, 58, 237, 0.1));
+      border: 1px solid rgba(255, 51, 102, 0.25);
+      color: var(--caos-red);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-decoration: none;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .empty-state-cta:hover {
+      background: linear-gradient(135deg, rgba(255, 51, 102, 0.22), rgba(124, 58, 237, 0.15));
+      border-color: rgba(255, 51, 102, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(255, 51, 102, 0.15);
+    }
+
+    .empty-state-cta i {
+      font-size: 16px;
+      color: var(--caos-red);
+    }
+
+    /* ============================================
+       VERDICT GAUGE (SVG Radial)
+       ============================================ */
+    .verdict-gauge-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 0;
+    }
+
+    .verdict-gauge-svg {
+      width: 200px;
+      height: 120px;
+      overflow: visible;
+    }
+
+    .gauge-track {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.05);
+      stroke-width: 14;
+      stroke-linecap: round;
+    }
+
+    .gauge-fill {
+      fill: none;
+      stroke-width: 14;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      filter: url(#gauge-glow);
+    }
+
+    .gauge-needle-line {
+      stroke: var(--text-primary);
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-origin: 100px 100px;
+    }
+
+    .gauge-needle-dot {
+      fill: var(--text-primary);
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+    }
+
+    .gauge-value-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      fill: var(--text-primary);
+      text-anchor: middle;
+    }
+
+    .gauge-label-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 600;
+      fill: var(--text-muted);
+      text-anchor: middle;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .gauge-decision-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      text-anchor: middle;
+      letter-spacing: 1px;
+    }
+
+    /* ============================================
+       RADAR CHART (Risk Dimensions)
+       ============================================ */
+    .radar-chart-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0;
+    }
+
+    .radar-chart-svg {
+      width: 180px;
+      height: 180px;
+    }
+
+    .radar-grid {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.06);
+      stroke-width: 1;
+    }
+
+    .radar-axis {
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 1;
+    }
+
+    .radar-shape {
+      fill: rgba(255, 51, 102, 0.12);
+      stroke: var(--caos-red);
+      stroke-width: 2;
+      transition: all 0.6s ease;
+    }
+
+    .radar-shape:hover {
+      fill: rgba(255, 51, 102, 0.2);
+    }
+
+    .radar-dot {
+      fill: var(--caos-red);
+      filter: drop-shadow(0 0 4px rgba(255, 51, 102, 0.5));
+      transition: r 0.3s ease;
+    }
+
+    .radar-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      fill: var(--text-secondary);
+      text-anchor: middle;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ============================================
+       FORMULA BREAKDOWN ENHANCED
+       ============================================ */
+    .formula-block {
+      margin-top: 20px;
+      padding: 22px 24px;
+      border-radius: 14px;
+      background:
+        linear-gradient(rgba(255, 51, 102, 0.03), rgba(255, 51, 102, 0.01)),
+        repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(255, 255, 255, 0.015) 23px, rgba(255, 255, 255, 0.015) 24px),
+        repeating-linear-gradient(90deg, transparent, transparent 23px, rgba(255, 255, 255, 0.015) 23px, rgba(255, 255, 255, 0.015) 24px);
+      border: 1px solid rgba(255, 51, 102, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .formula-block::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--caos-red), var(--oracle-purple), var(--atlas-blue));
+      opacity: 0.5;
+    }
+
+    .formula-section {
+      margin-bottom: 16px;
+    }
+
+    .formula-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .formula-title {
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+    }
+
+    .formula-line {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      line-height: 2.2;
+      color: var(--text-primary);
+    }
+
+    .formula-line .var-physical {
+      color: var(--caos-red);
+    }
+
+    .formula-line .var-financial {
+      color: var(--sentinel-yellow);
+    }
+
+    .formula-line .var-contractual {
+      color: var(--oracle-purple);
+    }
+
+    .formula-line .var-communication {
+      color: var(--atlas-blue);
+    }
+
+    .formula-line .var-result {
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .formula-penalty-box {
+      margin-top: 8px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: rgba(255, 201, 60, 0.06);
+      border: 1px solid rgba(255, 201, 60, 0.15);
+    }
+
+    .formula-penalty-label {
+      color: var(--sentinel-yellow);
+      font-weight: 700;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ============================================
+       LLM ANALYSIS SECTION
+       ============================================ */
+    .llm-analysis-section {
+      margin-top: 24px;
+      border-top: 1px solid var(--border-normal);
+      padding-top: 20px;
+    }
+
+    .llm-analysis-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .llm-analysis-header .llm-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(0, 195, 255, 0.1), rgba(124, 58, 237, 0.08));
+      border: 1px solid rgba(0, 195, 255, 0.2);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--atlas-blue);
+      letter-spacing: 0.3px;
+    }
+
+    .llm-analysis-header .llm-badge i {
+      font-size: 14px;
+    }
+
+    .llm-analysis-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .llm-block {
+      padding: 18px 20px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid var(--border-subtle);
+      transition: all 0.2s ease;
+    }
+
+    .llm-block:hover {
+      background: rgba(255, 255, 255, 0.025);
+      border-color: var(--border-normal);
+    }
+
+    .llm-block-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 10px;
+    }
+
+    .llm-block-label i {
+      font-size: 14px;
+      opacity: 0.6;
+    }
+
+    .llm-block-value {
+      color: var(--text-primary);
+      font-size: 13px;
+      line-height: 1.8;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .llm-block-value.value-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(0, 195, 255, 0.08), rgba(0, 195, 255, 0.03));
+      border: 1px solid rgba(0, 195, 255, 0.15);
+      color: var(--atlas-blue);
+      font-weight: 600;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 12px;
+    }
+
+    /* ============================================
+       GUARDRAIL ITEMS
+       ============================================ */
+    .guardrail-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .guardrail-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.01);
+      transition: all 0.2s ease;
+    }
+
+    .guardrail-item:hover {
+      background: rgba(255, 255, 255, 0.025);
+      border-color: var(--border-normal);
+    }
+
+    .guardrail-item.g-passed {
+      border-left: 3px solid rgba(0, 245, 181, 0.3);
+    }
+
+    .guardrail-item.g-violated {
+      border-left: 3px solid rgba(255, 51, 102, 0.4);
+      background: rgba(255, 51, 102, 0.03);
+    }
+
+    .guardrail-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .guardrail-icon.gi-passed {
+      background: rgba(0, 245, 181, 0.12);
+      color: var(--care-green);
+      border: 1px solid rgba(0, 245, 181, 0.2);
+    }
+
+    .guardrail-icon.gi-violated {
+      background: rgba(255, 51, 102, 0.12);
+      color: var(--caos-red);
+      border: 1px solid rgba(255, 51, 102, 0.2);
+    }
+
+    .guardrail-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .guardrail-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .guardrail-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .guardrail-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .guardrail-badges {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .guardrail-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .guardrail-badge.gb-severity {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      border: 1px solid var(--border-normal);
+    }
+
+    .guardrail-badge.gb-blocking {
+      background: rgba(255, 51, 102, 0.1);
+      color: var(--caos-red);
+      border: 1px solid rgba(255, 51, 102, 0.2);
+    }
+
+    .guardrail-badge.gb-action {
+      background: rgba(0, 195, 255, 0.08);
+      color: var(--atlas-blue);
+      border: 1px solid rgba(0, 195, 255, 0.15);
+    }
+
+    .guardrail-message {
+      margin-top: 6px;
+      font-size: 11px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .guardrail-category-tag {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 3px;
+      background: rgba(124, 58, 237, 0.08);
+      color: var(--oracle-purple);
+      border: 1px solid rgba(124, 58, 237, 0.15);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* ============================================
+       DECISION BANNER
+       ============================================ */
+    .decision-banner {
+      padding: 24px 28px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      animation: fadeInUp 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .decision-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      pointer-events: none;
+    }
+
+    .decision-banner.banner-blocked {
+      background: linear-gradient(135deg, rgba(255, 51, 102, 0.12), rgba(255, 51, 102, 0.03));
+      border: 1px solid rgba(255, 51, 102, 0.25);
+    }
+
+    .decision-banner.banner-alert {
+      background: linear-gradient(135deg, rgba(255, 201, 60, 0.1), rgba(255, 201, 60, 0.02));
+      border: 1px solid rgba(255, 201, 60, 0.2);
+    }
+
+    .decision-banner.banner-suggest {
+      background: linear-gradient(135deg, rgba(0, 195, 255, 0.1), rgba(0, 195, 255, 0.02));
+      border: 1px solid rgba(0, 195, 255, 0.2);
+    }
+
+    .decision-banner.banner-execute {
+      background: linear-gradient(135deg, rgba(0, 245, 181, 0.1), rgba(0, 245, 181, 0.02));
+      border: 1px solid rgba(0, 245, 181, 0.2);
+    }
+
+    .decision-banner-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .banner-blocked .decision-banner-icon {
+      background: rgba(255, 51, 102, 0.15);
+      color: var(--caos-red);
+      border: 1px solid rgba(255, 51, 102, 0.3);
+    }
+
+    .banner-alert .decision-banner-icon {
+      background: rgba(255, 201, 60, 0.12);
+      color: var(--sentinel-yellow);
+      border: 1px solid rgba(255, 201, 60, 0.25);
+    }
+
+    .banner-suggest .decision-banner-icon {
+      background: rgba(0, 195, 255, 0.12);
+      color: var(--atlas-blue);
+      border: 1px solid rgba(0, 195, 255, 0.25);
+    }
+
+    .banner-execute .decision-banner-icon {
+      background: rgba(0, 245, 181, 0.12);
+      color: var(--care-green);
+      border: 1px solid rgba(0, 245, 181, 0.25);
+    }
+
+    .decision-banner-content {
+      flex: 1;
+    }
+
+    .decision-banner-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .decision-banner-title h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .decision-banner-decision {
+      font-size: 12px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .banner-blocked .decision-banner-decision {
+      background: rgba(255, 51, 102, 0.15);
+      color: var(--caos-red);
+    }
+
+    .banner-alert .decision-banner-decision {
+      background: rgba(255, 201, 60, 0.15);
+      color: var(--sentinel-yellow);
+    }
+
+    .banner-suggest .decision-banner-decision {
+      background: rgba(0, 195, 255, 0.15);
+      color: var(--atlas-blue);
+    }
+
+    .banner-execute .decision-banner-decision {
+      background: rgba(0, 245, 181, 0.15);
+      color: var(--care-green);
+    }
+
+    .decision-banner-subtitle {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .decision-banner-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .decision-banner-score {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .banner-blocked .decision-banner-score {
+      color: var(--caos-red);
+    }
+
+    .banner-alert .decision-banner-score {
+      color: var(--sentinel-yellow);
+    }
+
+    .banner-suggest .decision-banner-score {
+      color: var(--atlas-blue);
+    }
+
+    .banner-execute .decision-banner-score {
+      color: var(--care-green);
+    }
+
+    .decision-banner-time {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ============================================
+       TIMELINE BAR
+       ============================================ */
+    .timeline-bar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      height: 32px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      margin-bottom: 20px;
+      animation: fadeInUp 0.5s ease 0.1s both;
+    }
+
+    .timeline-segment {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      transition: all 0.3s ease;
+      cursor: default;
+      position: relative;
+      min-width: 60px;
+    }
+
+    .timeline-segment:hover {
+      filter: brightness(1.2);
+    }
+
+    .timeline-segment i {
+      font-size: 11px;
+    }
+
+    .timeline-segment .tl-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .timeline-segment .tl-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .timeline-segment.ts-trigger {
+      background: rgba(255, 51, 102, 0.25);
+    }
+
+    .timeline-segment.ts-sense {
+      background: rgba(0, 195, 255, 0.25);
+    }
+
+    .timeline-segment.ts-oracle {
+      background: rgba(124, 58, 237, 0.25);
+    }
+
+    .timeline-segment.ts-cortex {
+      background: rgba(255, 201, 60, 0.25);
+    }
+
+    .timeline-segment.ts-guardrails {
+      background: rgba(0, 245, 181, 0.2);
+    }
+
+    .timeline-segment.ts-act {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* ============================================
+       NARRATIVE CARD
+       ============================================ */
+    .narrative-card {
+      background: rgba(21, 28, 36, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-normal);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      animation: fadeInUp 0.5s ease 0.2s both;
+    }
+
+    .narrative-card-header {
+      padding: 14px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, rgba(0, 195, 255, 0.08), rgba(124, 58, 237, 0.05));
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--atlas-blue);
+    }
+
+    .narrative-card-body {
+      padding: 20px 24px;
+    }
+
+    .narrative-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .narrative-step {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .narrative-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+      border: 1px solid var(--border-normal);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-secondary);
+    }
+
+    .narrative-step-text {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      padding-top: 3px;
+    }
+
+    .narrative-step-text strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .narrative-step-text .n-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .n-value.n-red {
+      background: rgba(255, 51, 102, 0.1);
+      color: var(--caos-red);
+    }
+
+    .n-value.n-yellow {
+      background: rgba(255, 201, 60, 0.1);
+      color: var(--sentinel-yellow);
+    }
+
+    .n-value.n-blue {
+      background: rgba(0, 195, 255, 0.1);
+      color: var(--atlas-blue);
+    }
+
+    .n-value.n-green {
+      background: rgba(0, 245, 181, 0.1);
+      color: var(--care-green);
+    }
+
+    .n-value.n-purple {
+      background: rgba(124, 58, 237, 0.1);
+      color: var(--oracle-purple);
+    }
+
+    .narrative-step-connector {
+      width: 2px;
+      height: 12px;
+      background: var(--border-normal);
+      margin-left: 13px;
+    }
+
+    /* ============================================
+       PIPELINE ANNOTATIONS
+       ============================================ */
+    .pipeline-annotation {
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 2px 6px;
+      letter-spacing: 0.3px;
+      opacity: 0.7;
     }
 
     /* Full width card */
@@ -1592,33 +2667,17 @@
         <div class="event-summary" id="event-summary"></div>
       </div>
 
-      <!-- Demo Trigger Panel -->
-      <div class="demo-panel" id="demo-panel">
-        <button class="demo-panel-toggle" onclick="toggleDemoPanel()">
-          <div class="demo-panel-toggle-left">
-            <i class="ph-fill ph-play-circle"></i>
-            <span>Disparar Cenário Demo</span>
-            <span class="demo-badge">Live</span>
-          </div>
-          <i class="ph-bold ph-caret-down chevron"></i>
-        </button>
-        <div class="demo-panel-body">
-          <div class="demo-scenarios" id="demo-scenarios"></div>
-          <div class="demo-processing" id="demo-processing">
-            <div class="demo-processing-spinner"></div>
-            <span class="demo-processing-text">Processando pipeline CAOS...</span>
-          </div>
-          <div class="demo-result" id="demo-result"></div>
-          <div class="demo-hint">
-            <i class="ph-bold ph-info"></i>
-            Clique em um cenário para disparar um alerta real pelo pipeline completo. O resultado será exibido
-            automaticamente abaixo.
-          </div>
-        </div>
-      </div>
+      <!-- Decision banner -->
+      <div id="decision-banner-container"></div>
+
+      <!-- Timeline bar -->
+      <div id="timeline-container"></div>
 
       <!-- Pipeline visualization -->
       <div id="pipeline-container"></div>
+
+      <!-- Narrative card -->
+      <div id="narrative-container"></div>
 
       <!-- Detail cards -->
       <div id="detail-container"></div>
@@ -1631,6 +2690,11 @@
         <h3>Nenhum evento selecionado</h3>
         <p>Dispare um alerta via <code>/v1/events/trigger</code> e selecione o evento acima para visualizar a linha de
           raciocínio completa do CAOS.</p>
+        <button class="empty-state-cta"
+          onclick="document.getElementById('demo-panel').classList.add('expanded'); document.getElementById('demo-panel').scrollIntoView({behavior:'smooth'})">
+          <i class="ph-fill ph-play-circle"></i>
+          Disparar Cenário Demo
+        </button>
       </div>
 
     </div>
@@ -1692,7 +2756,10 @@
       function renderReasoning(entry) {
         document.getElementById('empty-state').style.display = 'none';
         renderSummary(entry);
+        renderDecisionBanner(entry);
+        renderTimeline(entry);
         renderPipeline(entry);
+        renderNarrativeCard(entry);
         renderDetails(entry);
       }
 
@@ -1716,9 +2783,168 @@
       `;
       }
 
+      // ── Decision Banner ──
+      function renderDecisionBanner(entry) {
+        const container = document.getElementById('decision-banner-container');
+        const decision = (entry.decision || 'UNKNOWN').toLowerCase();
+        const bannerClass = 'banner-' + ({ 'blocked': 'blocked', 'alert': 'alert', 'suggest': 'suggest', 'execute': 'execute' }[decision] || 'alert');
+
+        const icons = { blocked: 'ph-fill ph-prohibit', alert: 'ph-fill ph-warning-diamond', suggest: 'ph-fill ph-lightbulb', execute: 'ph-fill ph-check-circle' };
+        const titles = { blocked: 'Ação Bloqueada', alert: 'Alerta Emitido', suggest: 'Sugestão de Ação', execute: 'Ação Executada' };
+
+        const icon = icons[decision] || icons.alert;
+        const title = titles[decision] || 'Decisão';
+        const score = entry.verdict_score !== null ? entry.verdict_score.toFixed(3) : 'N/A';
+        const time = entry.processing_time_ms ? entry.processing_time_ms.toFixed(0) + 'ms' : 'N/A';
+
+        // Build subtitle with contextual info
+        const assetId = entry.trigger?.asset_id || '?';
+        const metric = entry.trigger?.metric || '?';
+        const value = entry.trigger?.value ?? '?';
+        const severity = entry.trigger?.severity || '?';
+        const subtitle = `O CAOS recebeu um alerta <strong>${severity}</strong> de <strong>${metric} = ${value}</strong> no ativo <strong>${assetId}</strong> e decidiu: <strong>${(entry.decision || 'N/A').toUpperCase()}</strong>.`;
+
+        container.innerHTML = `
+        <div class="decision-banner ${bannerClass}">
+          <div class="decision-banner-icon"><i class="${icon}"></i></div>
+          <div class="decision-banner-content">
+            <div class="decision-banner-title">
+              <h3>${title}</h3>
+              <span class="decision-banner-decision">${(entry.decision || 'N/A').toUpperCase()}</span>
+            </div>
+            <div class="decision-banner-subtitle">${subtitle}</div>
+          </div>
+          <div class="decision-banner-meta">
+            <div class="decision-banner-score">${score}</div>
+            <div class="decision-banner-time"><i class="ph-bold ph-timer"></i> ${time}</div>
+          </div>
+        </div>`;
+      }
+
+      // ── Timeline Bar ──
+      function renderTimeline(entry) {
+        const container = document.getElementById('timeline-container');
+        const totalMs = entry.processing_time_ms || 1;
+
+        // Estimate step durations from reasoning trace timestamps or distribute proportionally
+        const steps = [
+          { key: 'trigger', label: 'Trigger', icon: 'ph-fill ph-lightning', cls: 'ts-trigger', pct: 5 },
+          { key: 'sense', label: 'Sense', icon: 'ph-fill ph-eye', cls: 'ts-sense', pct: 15 },
+          { key: 'oracle', label: 'Oracle', icon: 'ph-fill ph-brain', cls: 'ts-oracle', pct: entry.oracle?.bypassed ? 5 : 25 },
+          { key: 'cortex', label: 'Cortex', icon: 'ph-fill ph-shield-warning', cls: 'ts-cortex', pct: entry.cortex?.llm_analysis ? 40 : 30 },
+          { key: 'guardrails', label: 'Guard.', icon: 'ph-fill ph-shield-check', cls: 'ts-guardrails', pct: 10 },
+          { key: 'act', label: 'Act', icon: 'ph-fill ph-paper-plane-tilt', cls: 'ts-act', pct: 5 },
+        ];
+
+        // Normalize percentages
+        const totalPct = steps.reduce((s, st) => s + st.pct, 0);
+
+        let html = '<div class="timeline-bar">';
+        steps.forEach(s => {
+          const pct = (s.pct / totalPct * 100).toFixed(1);
+          const ms = (s.pct / totalPct * totalMs).toFixed(0);
+          html += `<div class="timeline-segment ${s.cls}" style="flex:${s.pct}" title="${s.label}: ~${ms}ms">
+            <i class="${s.icon}"></i>
+            <span class="tl-label">${s.label}</span>
+            <span class="tl-time">~${ms}ms</span>
+          </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+      }
+
+      // ── Narrative Card ──
+      function renderNarrativeCard(entry) {
+        const container = document.getElementById('narrative-container');
+        const decision = (entry.decision || 'UNKNOWN').toUpperCase();
+        const c = entry.cortex || {};
+        const g = entry.guardrails || {};
+        const a = entry.act || {};
+        const trigger = entry.trigger || {};
+        const atlas = entry.sense?.atlas_context || {};
+
+        const nv = (val, cls) => `<span class="n-value ${cls}">${val}</span>`;
+
+        const stepsNarrative = [];
+
+        // Step 1: Trigger received
+        stepsNarrative.push(`O <strong>Sentinel</strong> detectou um alerta ${nv(trigger.severity || '?', 'n-red')} no ativo ${nv(trigger.asset_id || '?', 'n-blue')}: métrica <strong>${trigger.metric || '?'}</strong> atingiu ${nv(trigger.value ?? '?', 'n-red')}.`);
+
+        // Step 2: Context gathering
+        const contractTier = atlas.contract_tier || '?';
+        const maxTemp = atlas.max_operating_temp;
+        let senseText = `O <strong>Atlas</strong> enriqueceu o contexto: contrato ${nv(contractTier, 'n-purple')}`;
+        if (maxTemp) senseText += `, temperatura máxima operacional ${nv(maxTemp + '°C', 'n-yellow')}`;
+        senseText += '.';
+        stepsNarrative.push(senseText);
+
+        // Step 3: Oracle prediction
+        if (entry.oracle?.bypassed) {
+          stepsNarrative.push(`O <strong>Oracle</strong> foi ${nv('ignorado', 'n-purple')} (fast-track por severidade alta/baixa).`);
+        } else {
+          const forecast = entry.oracle?.forecast;
+          if (forecast?.predicted_value !== undefined) {
+            stepsNarrative.push(`O <strong>Oracle</strong> previu ${nv((forecast.predicted_value * 100).toFixed(1) + '%', 'n-purple')} de probabilidade de falha` +
+              (forecast.financial_impact ? ` com impacto financeiro de ${nv('R$' + forecast.financial_impact.toLocaleString('pt-BR'), 'n-yellow')}` : '') + '.');
+          } else {
+            stepsNarrative.push(`O <strong>Oracle</strong> não retornou predição para este cenário.`);
+          }
+        }
+
+        // Step 4: Cortex decision
+        const sevScore = c.severity_score !== undefined ? c.severity_score.toFixed(2) : '?';
+        const verdictScore = c.verdict_score !== undefined ? c.verdict_score.toFixed(3) : '?';
+        const riskLevel = c.risk_level || '?';
+        const method = c.llm_analysis ? 'LLM (Gemini) + Código' : 'Código apenas';
+        stepsNarrative.push(`O <strong>Cortex</strong> calculou severidade ${nv('S=' + sevScore, 'n-yellow')} e verdict ${nv('V=' + verdictScore, 'n-blue')} via <strong>${method}</strong>. Nível de risco: ${nv(riskLevel, riskLevel === 'HIGH' || riskLevel === 'CRITICAL' ? 'n-red' : 'n-yellow')}.`);
+
+        // Step 5: Guardrails
+        const violations = g.violations || [];
+        const checked = g.checked || [];
+        if (violations.length > 0) {
+          const violNames = violations.map(v => { const info = GUARDRAIL_INFO[v]; return info ? info.name : v; });
+          stepsNarrative.push(`Os <strong>Guardrails</strong> verificaram ${nv(checked.length + ' regras', 'n-green')} e encontraram ${nv(violations.length + ' violação(ões)', 'n-red')}: ${violNames.join(', ')}. Penalidade aplicada ao Verdict Score.`);
+        } else {
+          stepsNarrative.push(`Os <strong>Guardrails</strong> verificaram ${nv(checked.length + ' regras', 'n-green')} — ${nv('Todas aprovadas', 'n-green')}, sem penalidade.`);
+        }
+
+        // Step 6: Final decision
+        const decColor = { BLOCKED: 'n-red', ALERT: 'n-yellow', SUGGEST: 'n-blue', EXECUTE: 'n-green' }[decision] || 'n-blue';
+        let actText = `Decisão final: ${nv(decision, decColor)}.`;
+        if (a.workflow_name) actText += ` Workflow ${nv(a.workflow_name, 'n-blue')} despachado para o CARE.`;
+        if (a.requires_approval) actText += ` ${nv('Aprovação humana necessária', 'n-yellow')}.`;
+        stepsNarrative.push(actText);
+
+        let html = `
+        <div class="narrative-card">
+          <div class="narrative-card-header">
+            <i class="ph-fill ph-book-open-text"></i> Por que esta decisão?
+          </div>
+          <div class="narrative-card-body">
+            <div class="narrative-steps">`;
+
+        stepsNarrative.forEach((text, i) => {
+          html += `
+              <div class="narrative-step">
+                <div class="narrative-step-num">${i + 1}</div>
+                <div class="narrative-step-text">${text}</div>
+              </div>`;
+          if (i < stepsNarrative.length - 1) {
+            html += '<div class="narrative-step-connector"></div>';
+          }
+        });
+
+        html += `
+            </div>
+          </div>
+        </div>`;
+        container.innerHTML = html;
+      }
+
       function renderPipeline(entry) {
         const container = document.getElementById('pipeline-container');
         const oracleBypassed = entry.oracle?.bypassed === true;
+        const gViolations = (entry.guardrails?.violations || []).length;
 
         const steps = [
           {
@@ -1726,6 +2952,7 @@
             label: 'Trigger',
             icon: 'ph-fill ph-lightning',
             cls: 'step-trigger',
+            badge: 'ok',
             summary: `${entry.trigger?.asset_id || '?'} • ${entry.trigger?.severity || '?'} • ${entry.trigger?.metric || '?'} = ${entry.trigger?.value ?? '?'}`
           },
           {
@@ -1733,6 +2960,7 @@
             label: 'Sense',
             icon: 'ph-fill ph-eye',
             cls: 'step-sense',
+            badge: 'ok',
             summary: buildSenseSummary(entry)
           },
           {
@@ -1740,6 +2968,7 @@
             label: 'Oracle',
             icon: 'ph-fill ph-brain',
             cls: 'step-oracle' + (oracleBypassed ? ' step-bypassed' : ''),
+            badge: oracleBypassed ? 'skip' : 'ok',
             summary: oracleBypassed
               ? 'Bypass (fast-track)'
               : buildOracleSummary(entry)
@@ -1749,6 +2978,7 @@
             label: 'Cortex',
             icon: 'ph-fill ph-shield-warning',
             cls: 'step-cortex',
+            badge: 'ok',
             summary: buildCortexSummary(entry)
           },
           {
@@ -1756,6 +2986,7 @@
             label: 'Guardrails',
             icon: 'ph-fill ph-shield-check',
             cls: 'step-guardrails',
+            badge: gViolations > 0 ? 'error' : 'ok',
             summary: buildGuardrailsSummary(entry)
           },
           {
@@ -1763,17 +2994,23 @@
             label: 'Act',
             icon: 'ph-fill ph-paper-plane-tilt',
             cls: 'step-act',
+            badge: 'ok',
             summary: buildActSummary(entry)
           }
         ];
 
+        const badgeIcons = { ok: '✓', warn: '⚠', error: '✗', skip: '⊘' };
+        const svgArrow = `<svg viewBox="0 0 32 24"><line x1="2" y1="12" x2="24" y2="12"/><polygon points="22,7 30,12 22,17"/></svg>`;
+        const annotations = ['Alerta', 'Contexto', 'Predição', 'Verdict', 'Validação'];
+
         let html = '<div class="pipeline">';
         steps.forEach((step, i) => {
           if (i > 0) {
-            html += '<div class="pipeline-arrow"><i class="ph-bold ph-caret-right"></i></div>';
+            html += `<div class="pipeline-arrow"><div class="pipeline-annotation">${annotations[i - 1] || ''}</div>${svgArrow}</div>`;
           }
           html += `
           <div class="pipeline-step ${step.cls}">
+            <div class="pipeline-step-badge badge-${step.badge}">${badgeIcons[step.badge]}</div>
             <div class="pipeline-step-header">
               <i class="${step.icon}"></i>
               ${step.label}
@@ -1876,15 +3113,36 @@
         });
       }
 
+      function classifyTraceStep(text) {
+        const t = text.toLowerCase();
+        if (t.includes('violação') || t.includes('violation') || t.includes('penalty') || t.includes('blocked') || t.includes('guardrail penalty')) return 'error';
+        if (t.includes('⚠') || t.includes('discrepância') || t.includes('indisponível') || t.includes('fallback') || t.includes('warn')) return 'warn';
+        if (t.includes('✓') || t.includes('aprovado') || t.includes('execute') || t.includes('passed')) return 'success';
+        if (t.includes('verdict') || t.includes('suggest') || t.includes('score')) return 'info';
+        return 'default';
+      }
+
+      function traceStepIcon(type) {
+        const icons = {
+          error: 'ph-bold ph-x',
+          warn: 'ph-bold ph-warning',
+          success: 'ph-bold ph-check',
+          info: 'ph-bold ph-chart-bar',
+          default: 'ph-bold ph-hash'
+        };
+        return icons[type] || icons.default;
+      }
+
       function renderReasoningTrace(entry) {
         const trace = entry.reasoning_trace || [];
         if (trace.length === 0) return '';
 
         let steps = '';
         trace.forEach((step, i) => {
+          const type = classifyTraceStep(step);
           steps += `
           <div class="trace-step">
-            <div class="trace-step-num">${i + 1}</div>
+            <div class="trace-step-num trace-${type}"><i class="${traceStepIcon(type)}"></i></div>
             <div class="trace-step-text">${escapeHtml(step)}</div>
           </div>
         `;
@@ -2016,6 +3274,132 @@
       `;
       }
 
+      // SVG Gauge helper
+      function buildVerdictGaugeSVG(score, decision) {
+        const clampedScore = Math.max(0, Math.min(1, score || 0));
+        const cx = 100, cy = 95, r = 70;
+        const arcLength = Math.PI * r; // semicircle
+        const offset = arcLength * (1 - clampedScore);
+
+        // Needle: compute endpoint using trigonometry (angle in radians)
+        // 0 = left (180°), 1 = right (0°), so angle goes from PI to 0
+        const needleRad = Math.PI * (1 - clampedScore);
+        const needleLen = 55;
+        const nx = cx + needleLen * Math.cos(needleRad);
+        const ny = cy - needleLen * Math.sin(needleRad);
+
+        const decisionColors = {
+          'BLOCKED': '#FF3366',
+          'ALERT': '#FFC93C',
+          'SUGGEST': '#00C3FF',
+          'EXECUTE': '#00F5B5'
+        };
+        const strokeColor = decisionColors[decision] || '#00C3FF';
+
+        return `
+        <div class="verdict-gauge-container">
+          <svg class="verdict-gauge-svg" viewBox="0 0 200 165">
+            <defs>
+              <filter id="gauge-glow">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <linearGradient id="gauge-gradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#FF3366"/>
+                <stop offset="33%" stop-color="#FFC93C"/>
+                <stop offset="66%" stop-color="#00C3FF"/>
+                <stop offset="100%" stop-color="#00F5B5"/>
+              </linearGradient>
+            </defs>
+            <!-- Track -->
+            <path class="gauge-track" d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}" />
+            <!-- Fill -->
+            <path class="gauge-fill" d="M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}"
+              stroke="url(#gauge-gradient)"
+              stroke-dasharray="${arcLength}"
+              stroke-dashoffset="${offset}" />
+            <!-- Needle (computed endpoint, no CSS transform) -->
+            <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}"
+              stroke="rgba(255,255,255,0.9)" stroke-width="2.5" stroke-linecap="round" />
+            <!-- Center dot -->
+            <circle cx="${cx}" cy="${cy}" r="5" fill="rgba(255,255,255,0.95)"
+              filter="drop-shadow(0 0 4px rgba(255,255,255,0.5))" />
+            <!-- Score labels at bottom of arc -->
+            <text x="${cx - r - 4}" y="${cy + 16}" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,0.3)" text-anchor="middle">0</text>
+            <text x="${cx + r + 4}" y="${cy + 16}" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,0.3)" text-anchor="middle">1</text>
+            <!-- Value + Decision -->
+            <text class="gauge-value-text" x="${cx}" y="${cy + 34}">${score !== undefined ? score.toFixed(3) : 'N/A'}</text>
+            <text class="gauge-label-text" x="${cx}" y="${cy + 50}">Verdict Score</text>
+            <text class="gauge-decision-text" x="${cx}" y="${cy + 66}" fill="${strokeColor}">${decision || 'N/A'}</text>
+          </svg>
+        </div>`;
+      }
+
+      // SVG Radar chart helper
+      function buildRadarChartSVG(rd) {
+        const dims = [
+          { key: 'physical', label: 'Físico', val: rd.physical || 0 },
+          { key: 'financial', label: 'Financ.', val: rd.financial || 0 },
+          { key: 'contractual', label: 'Contrat.', val: rd.contractual || 0 },
+          { key: 'communication', label: 'Comunic.', val: rd.communication || 0 }
+        ];
+        const cx = 90, cy = 90, maxR = 65;
+        const n = dims.length;
+        const angleStep = (2 * Math.PI) / n;
+
+        function polarToCart(angle, r) {
+          return { x: cx + r * Math.cos(angle - Math.PI / 2), y: cy + r * Math.sin(angle - Math.PI / 2) };
+        }
+
+        // Grid levels
+        let gridHtml = '';
+        [0.25, 0.5, 0.75, 1.0].forEach(level => {
+          const points = dims.map((_, i) => {
+            const p = polarToCart(i * angleStep, maxR * level);
+            return `${p.x},${p.y}`;
+          }).join(' ');
+          gridHtml += `<polygon class="radar-grid" points="${points}" />`;
+        });
+
+        // Axes
+        let axesHtml = '';
+        dims.forEach((_, i) => {
+          const p = polarToCart(i * angleStep, maxR);
+          axesHtml += `<line class="radar-axis" x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" />`;
+        });
+
+        // Data shape
+        const dataPoints = dims.map((d, i) => {
+          const p = polarToCart(i * angleStep, maxR * d.val);
+          return { x: p.x, y: p.y };
+        });
+        const shapePoints = dataPoints.map(p => `${p.x},${p.y}`).join(' ');
+
+        // Dots
+        let dotsHtml = '';
+        dataPoints.forEach(p => {
+          dotsHtml += `<circle class="radar-dot" cx="${p.x}" cy="${p.y}" r="3" />`;
+        });
+
+        // Labels
+        let labelsHtml = '';
+        dims.forEach((d, i) => {
+          const p = polarToCart(i * angleStep, maxR + 16);
+          labelsHtml += `<text class="radar-label" x="${p.x}" y="${p.y}" dominant-baseline="central">${d.label}</text>`;
+        });
+
+        return `
+        <div class="radar-chart-container">
+          <svg class="radar-chart-svg" viewBox="0 0 180 180">
+            ${gridHtml}
+            ${axesHtml}
+            <polygon class="radar-shape" points="${shapePoints}" />
+            ${dotsHtml}
+            ${labelsHtml}
+          </svg>
+        </div>`;
+      }
+
       function renderCortexDetail(entry) {
         const c = entry.cortex || {};
         const rd = c.risk_dimensions || {};
@@ -2025,10 +3409,25 @@
         if (usedLlm && c.llm_analysis) {
           const llm = c.llm_analysis;
           llmSection = `
-          <div class="section-label label-caos" style="margin-top:20px;">Análise LLM (Gemini)</div>
-          ${detailRow('Análise', llm.analysis || 'N/A')}
-          ${detailRow('Ação sugerida', llm.action || 'N/A', 'value-info')}
-          ${detailRow('Justificativa', llm.justification || 'N/A')}
+          <div class="llm-analysis-section">
+            <div class="llm-analysis-header">
+              <span class="llm-badge"><i class="ph-fill ph-sparkle"></i> Análise LLM (Gemini)</span>
+            </div>
+            <div class="llm-analysis-cards">
+              <div class="llm-block">
+                <div class="llm-block-label"><i class="ph-bold ph-magnifying-glass"></i> Análise</div>
+                <div class="llm-block-value">${escapeHtml(llm.analysis || 'N/A')}</div>
+              </div>
+              <div class="llm-block">
+                <div class="llm-block-label"><i class="ph-bold ph-arrow-right"></i> Ação Sugerida</div>
+                <div class="llm-block-value value-action">${escapeHtml(llm.action || 'N/A')}</div>
+              </div>
+              <div class="llm-block">
+                <div class="llm-block-label"><i class="ph-bold ph-chat-text"></i> Justificativa</div>
+                <div class="llm-block-value">${escapeHtml(llm.justification || 'N/A')}</div>
+              </div>
+            </div>
+          </div>
         `;
         }
 
@@ -2046,21 +3445,20 @@
                 ${riskBar('R_Fin — Financeiro', rd.financial || 0, 'risk-financial')}
                 ${riskBar('R_C — Contratual', rd.contractual || 0, 'risk-contractual')}
                 ${riskBar('R_K — Comunicação', rd.communication || 0, 'risk-communication')}
+                ${buildRadarChartSVG(rd)}
               </div>
               <div>
                 <div class="section-label" style="color:var(--text-secondary);">Scores & Classificação</div>
+                ${buildVerdictGaugeSVG(c.verdict_score, c.decision_band)}
                 ${detailRow('Atlas Score (A)', c.atlas_score !== undefined ? c.atlas_score.toFixed(2) : 'N/A', 'value-info')}
                 ${detailRow('Oracle Score (O)', c.oracle_score !== undefined ? c.oracle_score.toFixed(2) : 'N/A', 'value-purple')}
                 ${detailRow('Severity Score (S)', c.severity_score !== undefined ? c.severity_score.toFixed(2) : 'N/A', 'value-warn')}
-                ${detailRow('Verdict Score (V)', c.verdict_score !== undefined ? c.verdict_score.toFixed(3) : 'N/A', verdictClass(c.verdict_score))}
-                ${detailRow('Decisão', c.decision_band || 'N/A', decisionClass(c.decision_band))}
                 ${detailRow('Nível de Risco', c.risk_level || 'N/A', riskLevelClass(c.risk_level))}
                 ${detailRow('Método', usedLlm ? 'LLM (Gemini) + Código' : 'Código apenas', usedLlm ? 'value-good' : 'value-warn')}
               </div>
               </div>
             </div>
             ${(() => {
-            // Enhancement #3: Formula Breakdown
             const A = c.atlas_score;
             const O = c.oracle_score;
             const S = c.severity_score;
@@ -2070,42 +3468,42 @@
             const wf = 0.35, wfin = 0.25, wc = 0.25, wk = 0.15;
             const wa = 0.6, wo = 0.6, ws = 0.3;
 
-            const sCalc = `${wf}×${(rd.physical || 0).toFixed(2)} + ${wfin}×${(rd.financial || 0).toFixed(2)} + ${wc}×${(rd.contractual || 0).toFixed(2)} + ${wk}×${(rd.communication || 0).toFixed(2)}`;
+            const sCalc = `<span class="var-physical">${wf}×${(rd.physical || 0).toFixed(2)}</span> + <span class="var-financial">${wfin}×${(rd.financial || 0).toFixed(2)}</span> + <span class="var-contractual">${wc}×${(rd.contractual || 0).toFixed(2)}</span> + <span class="var-communication">${wk}×${(rd.communication || 0).toFixed(2)}</span>`;
             const vNum = `${wa}×${A.toFixed(2)} + ${wo}×${(O || 1).toFixed(2)} − ${ws}×(1+${S.toFixed(2)})`;
 
-            // Check if guardrail penalty was applied (V differs from cortex verdict)
             const finalV = entry.verdict_score;
             const penaltyApplied = finalV !== undefined && Math.abs(finalV - V) > 0.001;
             let penaltyLine = '';
             if (penaltyApplied && V !== 0) {
               const penalty = (V / finalV) - 1;
               penaltyLine = `
-                  <div style="margin-top:6px;padding:10px 14px;border-radius:10px;background:rgba(255,201,60,0.06);border:1px solid rgba(255,201,60,0.15);">
-                    <span style="color:var(--sentinel-yellow);font-weight:700;font-size:11px;">⛑️ GUARDRAIL PENALTY</span>
-                    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-primary);margin-top:4px;">
-                      V<sub>final</sub> = ${V.toFixed(3)} / (1 + ${penalty.toFixed(3)}) = <span style="color:var(--caos-red);font-weight:700;">${finalV.toFixed(3)}</span>
+                  <div class="formula-penalty-box">
+                    <div class="formula-penalty-label">⛑️ GUARDRAIL PENALTY</div>
+                    <div class="formula-line" style="margin-top:4px;">
+                      V<sub>final</sub> = ${V.toFixed(3)} / (1 + ${penalty.toFixed(3)}) = <span class="var-result" style="color:var(--caos-red);">${finalV.toFixed(3)}</span>
                     </div>
                   </div>`;
             }
 
             return `
-              <div style="margin-top:20px;padding:18px 20px;border-radius:14px;background:rgba(255,51,102,0.04);border:1px solid rgba(255,51,102,0.1);">
+              <div class="formula-block">
                 <div class="section-label label-caos" style="margin-bottom:12px;">📐 Cálculo Detalhado</div>
-                <div style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2.2;">
-                  <div style="color:var(--text-muted);font-size:11px;margin-bottom:2px;">Severity Score</div>
-                  <div style="color:var(--text-primary);">
+                <div class="formula-section">
+                  <div class="formula-title">Severity Score</div>
+                  <div class="formula-line">
                     S = W<sub>F</sub>×R<sub>F</sub> + W<sub>Fin</sub>×R<sub>Fin</sub> + W<sub>C</sub>×R<sub>C</sub> + W<sub>K</sub>×R<sub>K</sub>
                   </div>
-                  <div style="color:var(--text-secondary);">
-                    S = ${sCalc} = <span style="color:var(--sentinel-yellow);font-weight:700;">${S.toFixed(3)}</span>
+                  <div class="formula-line" style="color:var(--text-secondary);">
+                    S = ${sCalc} = <span class="var-result" style="color:var(--sentinel-yellow);">${S.toFixed(3)}</span>
                   </div>
-
-                  <div style="color:var(--text-muted);font-size:11px;margin-top:10px;margin-bottom:2px;">Verdict Score</div>
-                  <div style="color:var(--text-primary);">
+                </div>
+                <div class="formula-section">
+                  <div class="formula-title">Verdict Score</div>
+                  <div class="formula-line">
                     V = (W<sub>A</sub>×A + W<sub>O</sub>×O − W<sub>S</sub>×(1+S)) / (1 + P<sub>G</sub>)
                   </div>
-                  <div style="color:var(--text-secondary);">
-                    V = (${vNum}) / 1 = <span style="color:var(--caos-red);font-weight:700;">${V.toFixed(3)}</span>
+                  <div class="formula-line" style="color:var(--text-secondary);">
+                    V = (${vNum}) / 1 = <span class="var-result" style="color:var(--caos-red);">${V.toFixed(3)}</span>
                   </div>
                   ${penaltyLine}
                 </div>
@@ -2117,36 +3515,109 @@
       `;
       }
 
+      // Guardrail descriptions dictionary (from policy files)
+      const GUARDRAIL_INFO = {
+        'PHYS_001': { name: 'Ativo em Manutenção', cat: 'PHYSICAL', sev: 'BLOCKING', act: 'VETO', msg: 'Ação vetada: ativo está em manutenção programada.' },
+        'PHYS_002': { name: 'Janela de Manutenção', cat: 'PHYSICAL', sev: 'HIGH', act: 'REQUIRE_APPROVAL', msg: 'Janela de manutenção ativa. Requer aprovação.' },
+        'PHYS_003': { name: 'Temp. Crítica Alta', cat: 'PHYSICAL', sev: 'BLOCKING', act: 'VETO', msg: 'Temperatura excede 120% do limite operacional. Shutdown imediato.' },
+        'PHYS_004': { name: 'Temperatura Alta', cat: 'PHYSICAL', sev: 'HIGH', act: 'ALERT', msg: 'Temperatura excede limite operacional.' },
+        'PHYS_005': { name: 'Vibração Excessiva', cat: 'PHYSICAL', sev: 'HIGH', act: 'REQUIRE_APPROVAL', msg: 'Vibração excede limite. Verificar antes de agir.' },
+        'PHYS_006': { name: 'Pressão Crítica', cat: 'PHYSICAL', sev: 'BLOCKING', act: 'VETO', msg: 'Pressão crítica detectada. Shutdown de emergência.' },
+        'PHYS_007': { name: 'Alertas Simultâneos', cat: 'PHYSICAL', sev: 'HIGH', act: 'REQUIRE_APPROVAL', msg: 'Múltiplos alertas simultâneos. Requer análise humana.' },
+        'PHYS_008': { name: 'Temp. Absoluta Máx.', cat: 'PHYSICAL', sev: 'BLOCKING', act: 'VETO', msg: 'Temperatura excede 110% do limite operacional máximo.' },
+        'GPS_001': { name: 'Deslocamento GPS', cat: 'PHYSICAL', sev: 'HIGH', act: 'REQUIRE_APPROVAL', msg: 'Deslocamento GPS > 200m. Possível remoção não autorizada.' },
+        'GPS_002': { name: 'GPS Grande', cat: 'PHYSICAL', sev: 'HIGH', act: 'VETO', msg: 'Deslocamento GPS > 1km. Provável remoção não autorizada.' },
+        'GPS_003': { name: 'GPS Furto', cat: 'PHYSICAL', sev: 'BLOCKING', act: 'VETO', msg: 'Deslocamento GPS > 5km. ALERTA MÁXIMO: provável furto/roubo.' },
+        'FIN_001': { name: 'Budget Diário', cat: 'FINANCIAL', sev: 'BLOCKING', act: 'VETO', msg: 'Budget diário de LLM excedido. Operação vetada.' },
+        'FIN_002': { name: 'Token Budget', cat: 'FINANCIAL', sev: 'MEDIUM', act: 'DEGRADE', msg: 'Budget de tokens excedido. Modo degradado ativado.' },
+        'FIN_003': { name: 'Custo Alto', cat: 'FINANCIAL', sev: 'HIGH', act: 'REQUIRE_APPROVAL', msg: 'Custo estimado > R$1000. Requer aprovação gerencial.' },
+        'FIN_004': { name: 'Custo Muito Alto', cat: 'FINANCIAL', sev: 'BLOCKING', act: 'REQUIRE_APPROVAL', msg: 'Custo estimado > R$5000. Requer aprovação diretoria.' },
+        'FIN_005': { name: 'Impacto Oracle', cat: 'FINANCIAL', sev: 'HIGH', act: 'REQUIRE_APPROVAL', msg: 'Impacto financeiro previsto > R$10000.' },
+        'FIN_006': { name: 'Rate Limit API', cat: 'FINANCIAL', sev: 'MEDIUM', act: 'DEGRADE', msg: 'Rate limit próximo. Reduzindo chamadas.' },
+        'CONTR_001': { name: 'Monitoring Only', cat: 'CONTRACTUAL', sev: 'BLOCKING', act: 'VETO', msg: 'Contrato só permite monitoramento. Ação vetada.' },
+        'CONTR_002': { name: 'Ação Não Permitida', cat: 'CONTRACTUAL', sev: 'BLOCKING', act: 'VETO', msg: 'Tipo de ação não permitido pelo contrato.' },
+        'CONTR_003': { name: 'SLA Response Time', cat: 'CONTRACTUAL', sev: 'MEDIUM', act: 'ALERT', msg: 'Tempo de resposta próximo do SLA.' },
+        'CONTR_004': { name: 'Limite Ações BASIC', cat: 'CONTRACTUAL', sev: 'MEDIUM', act: 'REQUIRE_APPROVAL', msg: 'Limite de ações diárias do contrato BASIC.' },
+        'CONTR_005': { name: 'Fora do Expediente', cat: 'CONTRACTUAL', sev: 'LOW', act: 'REQUIRE_APPROVAL', msg: 'Ação fora do horário comercial.' },
+        'CONTR_006': { name: 'Contrato Expirado', cat: 'CONTRACTUAL', sev: 'BLOCKING', act: 'VETO', msg: 'Contrato expirado. Renovar antes de agir.' },
+        'COMM_001': { name: 'Notif. Stakeholders', cat: 'COMMUNICATION', sev: 'MEDIUM', act: 'ALERT', msg: 'Notificação obrigatória para stakeholders.' },
+        'COMM_002': { name: 'Cliente VIP', cat: 'COMMUNICATION', sev: 'LOW', act: 'ALERT', msg: 'Cliente PREMIUM. Priorizar comunicação.' },
+        'COMM_003': { name: 'Mensagem Longa', cat: 'COMMUNICATION', sev: 'LOW', act: 'LOG', msg: 'Justificativa muito longa. Considerar resumir.' },
+        'COMM_004': { name: 'Canal Indisponível', cat: 'COMMUNICATION', sev: 'HIGH', act: 'REQUIRE_APPROVAL', msg: 'Canal de notificação indisponível.' },
+        'COMM_005': { name: 'Notificações Excessivas', cat: 'COMMUNICATION', sev: 'LOW', act: 'DEGRADE', msg: 'Muitas notificações recentes. Agregando.' },
+        'ROBUST_001': { name: 'Oracle Timeout', cat: 'ROBUSTNESS', sev: 'MEDIUM', act: 'DEGRADE', msg: 'Oracle lento. Usando Fast-Track.' },
+        'ROBUST_002': { name: 'Atlas Indisponível', cat: 'ROBUSTNESS', sev: 'HIGH', act: 'DEGRADE', msg: 'Atlas indisponível. Modo conservador.' },
+        'ROBUST_003': { name: 'LLM Fallback', cat: 'ROBUSTNESS', sev: 'HIGH', act: 'DEGRADE', msg: 'LLM não respondeu. Usando regras hardcoded.' },
+        'ROBUST_004': { name: 'Retry Limit', cat: 'ROBUSTNESS', sev: 'HIGH', act: 'VETO', msg: 'Limite de retries atingido. Abortando.' },
+        'ROBUST_005': { name: 'Circuit Breaker', cat: 'ROBUSTNESS', sev: 'HIGH', act: 'VETO', msg: 'Circuit breaker aberto. Sistema em recuperação.' },
+        'ROBUST_006': { name: 'Memory Pressure', cat: 'ROBUSTNESS', sev: 'MEDIUM', act: 'DEGRADE', msg: 'Pressão de memória alta. Limitando operações.' },
+        'ROBUST_007': { name: 'Cascade Failure', cat: 'ROBUSTNESS', sev: 'BLOCKING', act: 'VETO', msg: 'Múltiplas falhas consecutivas. Acionando fallback.' },
+        'SECOPS_001': { name: 'Payload Inválido', cat: 'SECOPS', sev: 'BLOCKING', act: 'VETO', msg: 'Payload não passou validação. Possível ataque.' },
+        'SECOPS_002': { name: 'Source Desconhecido', cat: 'SECOPS', sev: 'BLOCKING', act: 'VETO', msg: 'Fonte do trigger não reconhecida.' },
+        'SECOPS_003': { name: 'Event ID Inválido', cat: 'SECOPS', sev: 'MEDIUM', act: 'ALERT', msg: 'Formato de event_id não padrão.' },
+        'SECOPS_004': { name: 'Timestamp Futuro', cat: 'SECOPS', sev: 'HIGH', act: 'VETO', msg: 'Timestamp no futuro. Possível manipulação.' },
+        'SECOPS_005': { name: 'Timestamp Antigo', cat: 'SECOPS', sev: 'MEDIUM', act: 'ALERT', msg: 'Evento com mais de 1 hora de atraso.' },
+        'SECOPS_006': { name: 'Injection Attempt', cat: 'SECOPS', sev: 'BLOCKING', act: 'VETO', msg: 'Padrão de injection detectado. Bloqueado.' },
+      };
+
       function renderGuardrailsDetail(entry) {
         const g = entry.guardrails || {};
         const violations = g.violations || [];
         const checked = g.checked || [];
         const passed = violations.length === 0;
 
-        let violationsList = '';
-        if (violations.length > 0) {
-          violationsList = violations.map(v =>
-            `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;margin:4px 0;border-radius:8px;background:rgba(255,51,102,0.06);border:1px solid rgba(255,51,102,0.1);">
-            <span class="status-dot violated"></span>
-            <span style="color:var(--caos-red);font-weight:600;font-size:12px;">${v}</span>
-          </div>`
-          ).join('');
-        }
+        const catColors = {
+          'PHYSICAL': 'var(--caos-red)',
+          'FINANCIAL': 'var(--sentinel-yellow)',
+          'CONTRACTUAL': 'var(--oracle-purple)',
+          'COMMUNICATION': 'var(--atlas-blue)',
+          'ROBUSTNESS': 'var(--care-green)',
+          'SECOPS': 'var(--text-secondary)'
+        };
 
-        let checkedList = '';
-        if (checked.length > 0) {
-          checkedList = checked.map(c => {
-            const isViolated = violations.includes(c);
-            return `<div style="display:flex;align-items:center;gap:10px;padding:6px 10px;margin:2px 0;border-radius:6px;transition:background 0.15s ease;"
-            onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
-            <span class="status-dot ${isViolated ? 'violated' : 'passed'}"></span>
-            <span style="font-size:12px;font-weight:500;color:${isViolated ? 'var(--caos-red)' : 'var(--care-green)'};">${c}</span>
-          </div>`;
-          }).join('');
-        }
+        // Build guardrail items for checked list
+        let itemsHtml = '';
+        checked.forEach(id => {
+          const info = GUARDRAIL_INFO[id];
+          const isViolated = violations.includes(id);
+          const icon = isViolated ? '✗' : '✓';
+          const iconClass = isViolated ? 'gi-violated' : 'gi-passed';
+          const itemClass = isViolated ? 'g-violated' : 'g-passed';
+
+          if (info) {
+            const sevClass = info.sev === 'BLOCKING' ? 'gb-blocking' : 'gb-severity';
+            itemsHtml += `
+            <div class="guardrail-item ${itemClass}">
+              <div class="guardrail-icon ${iconClass}">${icon}</div>
+              <div class="guardrail-content">
+                <div class="guardrail-title-row">
+                  <span class="guardrail-id">${id}</span>
+                  <span class="guardrail-name">${info.name}</span>
+                  <div class="guardrail-badges">
+                    <span class="guardrail-category-tag" style="color:${catColors[info.cat] || 'var(--text-muted)'};border-color:${catColors[info.cat] || 'var(--border-normal)'};background:color-mix(in srgb, ${catColors[info.cat] || '#fff'} 8%, transparent)">${info.cat}</span>
+                    <span class="guardrail-badge ${sevClass}">${info.sev}</span>
+                    <span class="guardrail-badge gb-action">${info.act}</span>
+                  </div>
+                </div>
+                <div class="guardrail-message">${info.msg}</div>
+              </div>
+            </div>`;
+          } else {
+            itemsHtml += `
+            <div class="guardrail-item ${itemClass}">
+              <div class="guardrail-icon ${iconClass}">${icon}</div>
+              <div class="guardrail-content">
+                <div class="guardrail-title-row">
+                  <span class="guardrail-id">${id}</span>
+                  <span class="guardrail-name">${id}</span>
+                </div>
+              </div>
+            </div>`;
+          }
+        });
 
         return `
-        <div class="detail-card">
+        <div class="detail-card full-width">
           <div class="detail-card-header header-guardrails">
             <i class="ph-fill ph-shield-check"></i>
             Guardrails — Validação de Segurança
@@ -2156,8 +3627,9 @@
             ${detailRow('Status', passed ? '✓ Aprovado' : '✗ Violação detectada', passed ? 'value-good' : 'value-bad')}
             ${detailRow('Verificados', checked.length + ' guardrail(s)')}
             ${detailRow('Violações', violations.length > 0 ? violations.length + ' encontrada(s)' : 'Nenhuma', violations.length > 0 ? 'value-bad' : 'value-good')}
-            ${violations.length > 0 ? '<div class="section-label label-caos" style="margin-top:16px;">Violações</div>' + violationsList : ''}
-            ${checked.length > 0 ? '<div class="section-label" style="margin-top:16px;color:var(--text-secondary);">Guardrails Verificados</div>' + checkedList : ''}
+            <div class="guardrail-list">
+              ${itemsHtml}
+            </div>
           </div>
         </div>
       `;

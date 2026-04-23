@@ -19,6 +19,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+import redis # Added for Redis support
 
 from shared.schemas import (
     AlertPriority,
@@ -55,6 +56,10 @@ class CircuitBreaker:
     _success_count: int = field(default=0, init=False)
     _last_failure_time: Optional[datetime] = field(default=None, init=False)
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False)
+    redis_client: Optional[redis.Redis] = field(default=None, init=False) # Injectable
+
+    def set_redis(self, r: redis.Redis):
+        self.redis_client = r
     
     @property
     def state(self) -> CircuitBreakerState:
@@ -79,8 +84,25 @@ class CircuitBreaker:
                     self._state = CircuitBreakerState.CLOSED
                     self._failure_count = 0
                     logger.info(f"Circuit [{self.service_name}] CLOSED - recuperado")
+                    self._publish_state_change("CLOSED", "Circuit recovered")
             elif self._state == CircuitBreakerState.CLOSED:
                 self._failure_count = max(0, self._failure_count - 1)
+
+    def _publish_state_change(self, new_state: str, reason: str):
+        if self.redis_client:
+            try:
+                self.redis_client.xadd(
+                    "caos.alerts",
+                    {
+                        "severity": "INFO" if new_state == "CLOSED" else "HIGH",
+                        "type": "circuit_breaker_changed",
+                        "message": f"Circuit Breaker {self.service_name} changed to {new_state}: {reason}",
+                        "source": "caos.supervisor",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                )
+            except Exception as e:
+                logger.error(f"Failed to publish CB event: {e}")
     
     def record_failure(self) -> None:
         with self._lock:
@@ -90,9 +112,11 @@ class CircuitBreaker:
             if self._state == CircuitBreakerState.HALF_OPEN:
                 self._state = CircuitBreakerState.OPEN
                 logger.warning(f"Circuit [{self.service_name}] OPEN - falha em recovery")
+                self._publish_state_change("OPEN", "Failure during recovery")
             elif self._failure_count >= self.failure_threshold:
                 self._state = CircuitBreakerState.OPEN
                 logger.warning(f"Circuit [{self.service_name}] OPEN - threshold atingido")
+                self._publish_state_change("OPEN", "Failure threshold reached")
     
     def allow_request(self) -> bool:
         return self.state != CircuitBreakerState.OPEN
@@ -196,17 +220,38 @@ class AtlasSupervisor:
     - Auditoria estruturada
     """
     
-    def __init__(self):
+    def __init__(self, redis_client: Optional[redis.Redis] = None):
+        self.redis_client = redis_client
         self.rate_limiter = RateLimiter()
         self.validator = PayloadValidator()
         self.circuit_breakers: Dict[str, CircuitBreaker] = {}
+        self._start_time = time.time()
+        self._stats_lock = threading.Lock()
+        
+        # Redis Keys
+        self.STATS_KEY = "caos:stats:global"
+        self.EPM_PREFIX = "caos:stats:epm:"  # caos:stats:epm:{timestamp_min}
+        
+        # Initialize stats in Redis if needed (only if connected)
+        if self.redis_client:
+            try:
+                # Ensure keys exist with 0 if not present
+                self.redis_client.hsetnx(self.STATS_KEY, "validated", 0)
+                self.redis_client.hsetnx(self.STATS_KEY, "rejected", 0)
+                self.redis_client.hsetnx(self.STATS_KEY, "total_requests", 0)
+                self.redis_client.hsetnx(self.STATS_KEY, "total_telemetry", 0)
+            except Exception as e:
+                logger.error(f"Failed to init Redis stats: {e}")
         
         logger.info("Atlas Supervisor (simplificado) inicializado")
     
     def get_circuit_breaker(self, service_name: str) -> CircuitBreaker:
         """Obtém ou cria circuit breaker para um serviço."""
         if service_name not in self.circuit_breakers:
-            self.circuit_breakers[service_name] = CircuitBreaker(service_name=service_name)
+            cb = CircuitBreaker(service_name=service_name)
+            if self.redis_client:
+                cb.set_redis(self.redis_client)
+            self.circuit_breakers[service_name] = cb
         return self.circuit_breakers[service_name]
     
     def check_rate_limit(self, key: str, rule: Optional[AtlasRule] = None) -> bool:
@@ -249,6 +294,17 @@ class AtlasSupervisor:
         
         # 1. Rate limiting
         if not self.check_rate_limit(rate_key, rule):
+            self._record_event(is_validated=False)
+            return AuditResult(
+                status="BLOCKED",
+                reason=f"Rate limit excedido para {rate_key}",
+                priority=AlertPriority.MEDIUM,
+                processing_time_ms=(time.perf_counter() - start_time) * 1000,
+            )
+            self._publish_audit(
+                "BLOCKED", f"Rate limit exceeded for {rate_key}", 
+                "MEDIUM", "audit_ratelimit", client, path
+            )
             return AuditResult(
                 status="BLOCKED",
                 reason=f"Rate limit excedido para {rate_key}",
@@ -257,9 +313,15 @@ class AtlasSupervisor:
             )
         
         # 2. Validação de payload
+        # 2. Validação de payload
         if rule and payload:
             validation_error = self.validate_payload(payload, rule)
             if validation_error:
+                self._record_event(is_validated=False)
+                self._publish_audit(
+                    "BLOCKED", f"Validation failed: {validation_error}", 
+                    "LOW", "audit_validation", client, path
+                )
                 return AuditResult(
                     status="BLOCKED",
                     reason=f"Validação falhou: {validation_error}",
@@ -268,6 +330,7 @@ class AtlasSupervisor:
                 )
         
         # 3. Sucesso - requisição permitida
+        self._record_event(is_validated=True)
         return AuditResult(
             status="OK",
             reason="Requisição permitida",
@@ -284,6 +347,7 @@ class AtlasSupervisor:
         
         # Validação básica
         if not event.asset_serial_number:
+            self._record_event(is_validated=False)
             return AuditResult(
                 status="BLOCKED",
                 reason="asset_serial_number é obrigatório",
@@ -292,6 +356,7 @@ class AtlasSupervisor:
             )
         
         if not event.client:
+            self._record_event(is_validated=False)
             return AuditResult(
                 status="BLOCKED",
                 reason="client é obrigatório",
@@ -302,6 +367,7 @@ class AtlasSupervisor:
         # Rate limiting por asset
         rate_key = f"telemetry:{event.client}:{event.asset_serial_number}"
         if not self.rate_limiter.allow(rate_key, max_calls=60, window=60):
+            self._record_event(is_validated=False)
             return AuditResult(
                 status="BLOCKED",
                 reason=f"Rate limit de telemetria excedido para {event.asset_serial_number}",
@@ -310,6 +376,8 @@ class AtlasSupervisor:
             )
         
         # Sucesso - telemetria registrada
+        # Sucesso - telemetria registrada
+        self._record_event(is_validated=True)
         return AuditResult(
             status="OK",
             reason="Telemetria registrada com sucesso",
@@ -322,6 +390,7 @@ class AtlasSupervisor:
         return {
             "status": "healthy",
             "service": "atlas_supervisor_simple",
+            "uptime_seconds": int(time.time() - self._start_time),
             "features": {
                 "rate_limiting": True,
                 "payload_validation": True,
@@ -335,15 +404,108 @@ class AtlasSupervisor:
                 for name, cb in self.circuit_breakers.items()
             },
         }
+    
+    def _record_event(self, is_validated: bool):
+        """Records an event for stats tracking explicitly in Redis."""
+        if not self.redis_client:
+            return
+
+        try:
+            pipe = self.redis_client.pipeline()
+            
+            # Global counters
+            pipe.hincrby(self.STATS_KEY, "total_requests", 1)
+            if is_validated:
+                pipe.hincrby(self.STATS_KEY, "validated", 1)
+                pipe.hincrby(self.STATS_KEY, "total_telemetry", 1) # Count as telemetry too for now
+            else:
+                pipe.hincrby(self.STATS_KEY, "rejected", 1)
+            
+            # Events Per Minute (EPM)
+            # Key: caos:stats:epm:{timestamp_minute} -> expiration 5 mins
+            minute_ts = int(time.time() / 60)
+            epm_key = f"{self.EPM_PREFIX}{minute_ts}"
+            
+            pipe.incr(epm_key)
+            pipe.expire(epm_key, 300) # Keep for 5 minutes
+            
+            pipe.execute()
+        except Exception as e:
+            logger.error(f"Failed to record event stats in Redis: {e}")
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Returns dashboard statistics from Redis."""
+        stats = {
+            "validated": 0,
+            "rejected": 0,
+            "total_requests": 0,
+            "total_telemetry": 0,
+            "events_per_minute": 0,
+            "uptime_seconds": int(time.time() - self._start_time),
+        }
+
+        if self.redis_client:
+            try:
+                # 1. Get Global Stats
+                global_stats = self.redis_client.hgetall(self.STATS_KEY)
+                if global_stats:
+                    stats.update({
+                        "validated": int(global_stats.get("validated", 0)),
+                        "rejected": int(global_stats.get("rejected", 0)),
+                        "total_requests": int(global_stats.get("total_requests", 0)),
+                        "total_telemetry": int(global_stats.get("total_telemetry", 0)),
+                    })
+                
+                # 2. Calculate EPM (Sum of last minute)
+                # Actually, EPM usually means "current rate".
+                # Let's count current minute + previous minute average or just last minute.
+                # For simplicity/responsiveness: Current minute count * (60/current_second) approx? 
+                # Or just sum of last complete minute? 
+                # Let's take the count of the CURRENT minute.
+                current_min_ts = int(time.time() / 60)
+                epm_key = f"{self.EPM_PREFIX}{current_min_ts}"
+                current_epm = self.redis_client.get(epm_key)
+                
+                # If current minute just started, maybe look at previous too?
+                # Let's just return current minute counter for "Real Time" feel.
+                stats["events_per_minute"] = int(current_epm) if current_epm else 0
+                
+            except Exception as e:
+                logger.error(f"Failed to fetch stats from Redis: {e}")
+        
+        return stats
+
+    def _publish_audit(self, status: str, message: str, severity: str, type_code: str, client: str, path: str):
+        """Publishes audit event to Redis."""
+        if self.redis_client:
+            try:
+                self.redis_client.xadd(
+                    "caos.alerts",
+                    {
+                        "severity": severity,
+                        "type": type_code,
+                        "message": message,
+                        "source": "caos.supervisor",
+                        "client": client,
+                        "path": path,
+                        "status": status,
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                )
+            except Exception as e:
+                logger.error(f"Failed to publish audit event: {e}")
 
 
 # Instância global do supervisor
 _supervisor: Optional[AtlasSupervisor] = None
 
 
-def get_supervisor() -> AtlasSupervisor:
+def get_supervisor(redis_client: Optional[redis.Redis] = None) -> AtlasSupervisor:
     """Obtém a instância singleton do supervisor."""
     global _supervisor
     if _supervisor is None:
-        _supervisor = AtlasSupervisor()
+        _supervisor = AtlasSupervisor(redis_client=redis_client)
+    # If redis client is provided later
+    if redis_client and not _supervisor.redis_client:
+        _supervisor.redis_client = redis_client
     return _supervisor

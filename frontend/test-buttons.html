@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Básico de Botões</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 2px solid #4ade80;
+            background: transparent;
+            color: #4ade80;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #4ade80;
+            color: #1a1a2e;
+        }
+        .log {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px solid #0f3460;
+        }
+        .success { color: #4ade80; }
+        .info { color: #60a5fa; }
+        .warning { color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de Botões CAOS</h1>
+        <p>Teste básico para verificar se event listeners funcionam</p>
+        
+        <div>
+            <button id="btn-test-1" onclick="testInline()">Teste 1: Inline onclick</button>
+            <button id="btn-test-2">Teste 2: addEventListener</button>
+            <button id="btn-test-3">Teste 3: DOM ready</button>
+            <button id="btn-api" onclick="testAPI()">Teste 4: API Call</button>
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+    
+    <script>
+        // Log function
+        function addLog(msg, type = 'info') {
+            const log = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            log.insertBefore(entry, log.firstChild);
+        }
+        
+        // Test 1: Inline onclick (should work immediately)
+        function testInline() {
+            addLog('✅ Botão inline onclick funcionou!', 'success');
+        }
+        
+        // Test 2: Direct addEventListener (should work immediately)
+        document.getElementById('btn-test-2')?.addEventListener('click', () => {
+            addLog('✅ addEventListener direto funcionou!', 'success');
+        });
+        
+        // Test 3: DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            addLog('✅ DOMContentLoaded disparou', 'info');
+            
+            const btn3 = document.getElementById('btn-test-3');
+            if (btn3) {
+                btn3.addEventListener('click', () => {
+                    addLog('✅ addEventListener após DOMContentLoaded funcionou!', 'success');
+                });
+            }
+        });
+        
+        // Test 4: API call
+        async function testAPI() {
+            try {
+                addLog('🔄 Testando API...', 'info');
+                const response = await fetch('http://localhost:8080/health');
+                const data = await response.json();
+                addLog(`✅ API respondeu: ${data.status}`, 'success');
+            } catch (error) {
+                addLog(`❌ Erro na API: ${error.message}`, 'warning');
+            }
+        }
+        
+        // Initial log
+        addLog('📝 Página de teste carregada', 'info');
+        
+        // Check if scripts loaded
+        setTimeout(() => {
+            addLog('⏰ Timeout executado (3s)', 'info');
+        }, 3000);
+    </script>
+</body>
+</html>

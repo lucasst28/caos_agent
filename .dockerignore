@@ -1,0 +1,47 @@
+# Version control
+.git
+.gitignore
+
+# Python
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+dist/
+build/
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Tests & dev
+tests/
+simulators/
+htmlcov/
+.coverage
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Docs
+*.tex
+*.pdf
+*.md
+!README.md
+
+# Terraform
+terraform/
+
+# Database backups
+*.sql
+
+# OS files
+.DS_Store
+Thumbs.db

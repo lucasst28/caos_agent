@@ -1,0 +1,2659 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>CAOS • Supervisor Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/dashboard/assets/css/caos-styles.css" />
+</head>
+
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">
+          <i class="ph-fill ph-shield-warning"></i>
+        </div>
+        <div class="logo-text">
+          <span class="logo-name">CAOS</span>
+          <span class="logo-sub">Supervisor</span>
+        </div>
+      </div>
+      <button class="sidebar-toggle" id="sidebar-toggle" title="Recolher Menu">
+        <i class="ph-bold ph-caret-left"></i>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-section="overview">
+        <i class="ph-bold ph-squares-four"></i>
+        <span>Overview</span>
+      </a>
+      <a href="#" class="nav-item" data-section="agents">
+        <i class="ph-bold ph-robot"></i>
+        <span>Agentes</span>
+      </a>
+      <a href="#" class="nav-item" data-section="streams">
+        <i class="ph-bold ph-flow-arrow"></i>
+        <span>Streams</span>
+      </a>
+      <a href="#" class="nav-item" data-section="queue">
+        <i class="ph-bold ph-queue"></i>
+        <span>Fila</span>
+      </a>
+      <a href="#" class="nav-item" data-section="logs">
+        <i class="ph-bold ph-terminal"></i>
+        <span>Logs</span>
+      </a>
+      <a href="/dashboard/reasoning" class="nav-item" data-section="reasoning">
+        <i class="ph-bold ph-brain"></i>
+        <span>Raciocínio</span>
+      </a>
+      <a href="#" class="nav-item" data-section="settings">
+        <i class="ph-bold ph-gear"></i>
+        <span>Configurações</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="connection-badge" id="connection-badge">
+        <span class="badge-dot"></span>
+        <span class="badge-text" id="status-text">Offline</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title">Overview</h1>
+        <span class="page-subtitle">Monitoramento em tempo real do ecossistema</span>
+      </div>
+      <div class="topbar-right">
+        <div class="custom-select" id="custom-client-select">
+          <div class="select-selected">
+            <i class="ph-bold ph-buildings"></i>
+            <span class="selected-value">Selecione...</span>
+            <i class="ph-bold ph-caret-down caret-icon"></i>
+          </div>
+          <div class="select-items select-hide">
+            <!-- Options populated by JS -->
+          </div>
+        </div>
+        <div class="topbar-time" id="current-time">--:--</div>
+        <button class="btn-icon" id="refresh-all" title="Atualizar">
+          <i class="ph-bold ph-arrows-clockwise"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENT AREA -->
+    <div class="content">
+
+      <!-- ============================================
+           OVERVIEW SECTION
+           ============================================ -->
+      <div class="content-section active" id="section-overview">
+
+        <!-- STATUS METRICS -->
+        <section class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon health">
+              <i class="ph-fill ph-heart-half"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-value" id="health-status">--</span>
+              <span class="metric-label">System Health</span>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon uptime">
+              <i class="ph-fill ph-clock"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-value" id="uptime-value">--</span>
+              <span class="metric-label">Uptime</span>
+            </div>
+          </div>
+
+          <div class="metric-card clickable" onclick="showInfoPopup('validated')">
+            <div class="metric-icon validated">
+              <i class="ph-fill ph-check-circle"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-value" id="validated-count">--</span>
+              <span class="metric-label">Validados <i class="ph-bold ph-info"
+                  style="opacity: 0.5; font-size: 12px;"></i></span>
+            </div>
+          </div>
+
+          <div class="metric-card clickable" onclick="showInfoPopup('rejected')">
+            <div class="metric-icon rejected">
+              <i class="ph-fill ph-x-circle"></i>
+            </div>
+            <div class="metric-info">
+              <span class="metric-value" id="rejected-count">--</span>
+              <span class="metric-label">Rejeitados <i class="ph-bold ph-info"
+                  style="opacity: 0.5; font-size: 12px;"></i></span>
+            </div>
+          </div>
+        </section>
+
+        <!-- AGENTS OVERVIEW -->
+        <section class="section-block">
+          <div class="section-header">
+            <h2>Agentes do Ecossistema</h2>
+            <span class="section-badge">4 Monitorados</span>
+          </div>
+
+          <div class="agents-grid">
+            <!-- ATLAS -->
+            <div class="agent-card atlas">
+              <div class="agent-header">
+                <div class="agent-icon">
+                  <i class="ph-fill ph-globe"></i>
+                </div>
+                <div class="agent-status" id="atlas-status">
+                  <span class="status-dot"></span>
+                  <span>Ativo</span>
+                </div>
+              </div>
+              <h3 class="agent-name">Atlas</h3>
+              <p class="agent-role">Integração & Telemetria</p>
+              <div class="agent-metrics">
+                <div class="agent-metric">
+                  <span class="metric-num" id="atlas-events">--</span>
+                  <span class="metric-lbl">eventos/min</span>
+                </div>
+                <div class="agent-metric">
+                  <span class="metric-num" id="atlas-assets">--</span>
+                  <span class="metric-lbl">ativos</span>
+                </div>
+              </div>
+              <div class="agent-streams">
+                <code>telemetry.received</code>
+                <code>atlas.daily_routine</code>
+              </div>
+            </div>
+
+            <!-- SENTINEL -->
+            <div class="agent-card sentinel">
+              <div class="agent-header">
+                <div class="agent-icon">
+                  <i class="ph-fill ph-eye"></i>
+                </div>
+                <div class="agent-status" id="sentinel-status">
+                  <span class="status-dot"></span>
+                  <span>Ativo</span>
+                </div>
+              </div>
+              <h3 class="agent-name">Sentinel</h3>
+              <p class="agent-role">Vigilância & Consumo</p>
+              <div class="agent-metrics">
+                <div class="agent-metric">
+                  <span class="metric-num" id="sentinel-processed">--</span>
+                  <span class="metric-lbl">alertas</span>
+                </div>
+                <div class="agent-metric">
+                  <span class="metric-num" id="sentinel-errors">--</span>
+                  <span class="metric-lbl">erros</span>
+                </div>
+              </div>
+              <div class="agent-streams">
+                <code>telemetry.validated</code>
+                <code>sentinel.consumer_health</code>
+              </div>
+            </div>
+
+            <!-- ORACLE -->
+            <div class="agent-card oracle">
+              <div class="agent-header">
+                <div class="agent-icon">
+                  <i class="ph-fill ph-brain"></i>
+                </div>
+                <div class="agent-status" id="oracle-status">
+                  <span class="status-dot inactive"></span>
+                  <span>Standby</span>
+                </div>
+              </div>
+              <h3 class="agent-name">Oracle</h3>
+              <p class="agent-role">Predição & Análise</p>
+              <div class="agent-metrics">
+                <div class="agent-metric">
+                  <span class="metric-num">--</span>
+                  <span class="metric-lbl">previsões</span>
+                </div>
+                <div class="agent-metric">
+                  <span class="metric-num">--</span>
+                  <span class="metric-lbl">accuracy</span>
+                </div>
+              </div>
+              <div class="agent-streams">
+                <code>oracle.predictions</code>
+              </div>
+            </div>
+
+            <!-- CARE -->
+            <div class="agent-card care">
+              <div class="agent-header">
+                <div class="agent-icon">
+                  <i class="ph-fill ph-hand-heart"></i>
+                </div>
+                <div class="agent-status" id="care-status">
+                  <span class="status-dot inactive"></span>
+                  <span>Standby</span>
+                </div>
+              </div>
+              <h3 class="agent-name">Care</h3>
+              <p class="agent-role">Ação & Resposta</p>
+              <div class="agent-metrics">
+                <div class="agent-metric">
+                  <span class="metric-num">--</span>
+                  <span class="metric-lbl">tickets</span>
+                </div>
+                <div class="agent-metric">
+                  <span class="metric-num">--</span>
+                  <span class="metric-lbl">resolvidos</span>
+                </div>
+              </div>
+              <div class="agent-streams">
+                <code>care.actions</code>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- TWO COLUMNS: CIRCUIT BREAKERS + REAL-TIME LOGS -->
+        <div class="two-columns">
+
+          <!-- CIRCUIT BREAKERS -->
+          <section class="section-block">
+            <div class="section-header">
+              <h2>Circuit Breakers</h2>
+              <button class="btn-text" id="reset-all-cb">Reset All</button>
+            </div>
+            <div class="cb-list" id="cb-list">
+              <div class="cb-empty">
+                <i class="ph-bold ph-lightning-slash"></i>
+                <span>Carregando...</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- REAL-TIME LOGS WITH AGENT TABS -->
+          <section class="section-block logs-section logs-tabbed">
+            <div class="section-header">
+              <h2>Logs em Tempo Real</h2>
+              <div class="logs-agent-tabs">
+                <button class="agent-log-tab active" data-agent="all">
+                  <i class="ph-bold ph-list"></i>
+                  <span>Todos</span>
+                </button>
+                <button class="agent-log-tab" data-agent="atlas">
+                  <i class="ph-fill ph-globe"></i>
+                  <span>Atlas</span>
+                </button>
+                <button class="agent-log-tab" data-agent="sentinel">
+                  <i class="ph-fill ph-eye"></i>
+                  <span>Sentinel</span>
+                </button>
+                <button class="agent-log-tab" data-agent="oracle">
+                  <i class="ph-fill ph-brain"></i>
+                  <span>Oracle</span>
+                </button>
+                <button class="agent-log-tab" data-agent="caos">
+                  <i class="ph-fill ph-shield-warning"></i>
+                  <span>CAOS</span>
+                </button>
+                <button class="agent-log-tab" data-agent="system">
+                  <i class="ph-bold ph-gear"></i>
+                  <span>Sistema</span>
+                </button>
+              </div>
+            </div>
+            <div class="logs-subheader">
+              <div class="log-filters">
+                <button class="log-filter active" data-filter="all">All</button>
+                <button class="log-filter" data-filter="validated">✓ OK</button>
+                <button class="log-filter" data-filter="rejected">✗ Erro</button>
+                <button class="log-filter" data-filter="info">ℹ Info</button>
+              </div>
+              <div class="logs-counter">
+                <span id="filtered-logs-count">0</span> logs
+              </div>
+            </div>
+            <div class="logs-container" id="logs-container">
+              <div class="log-entry info">
+                <span class="log-time">--:--:--</span>
+                <span class="log-type">INFO</span>
+                <span class="log-msg">Aguardando conexão com API...</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- VALIDATION RULES -->
+        <section class="section-block">
+          <div class="section-header">
+            <h2>Regras de Validação</h2>
+            <span class="section-badge" id="rules-count">0 regras</span>
+          </div>
+          <div class="rules-grid" id="rules-grid">
+            <div class="rule-empty">Carregando regras...</div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============================================
+           AGENTS SECTION
+           ============================================ -->
+      <div class="content-section" id="section-agents">
+
+        <div class="agents-detail-grid">
+          <!-- ATLAS DETAIL -->
+          <div class="agent-detail-card atlas">
+            <div class="agent-detail-header">
+              <div class="agent-detail-icon">
+                <i class="ph-fill ph-globe"></i>
+              </div>
+              <div class="agent-detail-title">
+                <h3>Atlas</h3>
+                <span class="agent-detail-role">Integração & Telemetria</span>
+              </div>
+              <div class="agent-detail-status" id="atlas-detail-status">
+                <span class="status-indicator active"></span>
+                <span>Ativo</span>
+              </div>
+            </div>
+            <div class="agent-detail-body">
+              <div class="detail-metrics-row">
+                <div class="detail-metric">
+                  <i class="ph-bold ph-activity"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value" id="atlas-detail-events">--</span>
+                    <span class="detail-metric-label">eventos/min</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-buildings"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value" id="atlas-detail-assets">--</span>
+                    <span class="detail-metric-label">ativos monitorados</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-timer"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value" id="atlas-detail-latency">--</span>
+                    <span class="detail-metric-label">latência média</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-check-circle"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value" id="atlas-detail-success">--%</span>
+                    <span class="detail-metric-label">taxa sucesso</span>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-streams-section">
+                <h4>Streams Monitorados</h4>
+                <div class="detail-streams">
+                  <div class="stream-chip">
+                    <i class="ph-bold ph-flow-arrow"></i>
+                    <span>telemetry.received</span>
+                    <span class="stream-count" id="atlas-stream-received">--</span>
+                  </div>
+                  <div class="stream-chip">
+                    <i class="ph-bold ph-flow-arrow"></i>
+                    <span>atlas.daily_routine</span>
+                    <span class="stream-count" id="atlas-stream-routine">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="agent-detail-footer">
+              <button class="btn-outline" id="atlas-restart-btn" onclick="restartAtlasAgent()">
+                <i class="ph-bold ph-arrow-clockwise"></i>
+                Restart
+              </button>
+              <button class="btn-outline btn-primary-outline" id="atlas-config-btn" onclick="openAtlasConfig()">
+                <i class="ph-bold ph-gear"></i>
+                Configurar
+              </button>
+            </div>
+          </div>
+
+          <!-- SENTINEL DETAIL -->
+          <div class="agent-detail-card sentinel">
+            <div class="agent-detail-header">
+              <div class="agent-detail-icon">
+                <i class="ph-fill ph-eye"></i>
+              </div>
+              <div class="agent-detail-title">
+                <h3>Sentinel</h3>
+                <span class="agent-detail-role">Vigilância & Consumo</span>
+              </div>
+              <div class="agent-detail-status" id="sentinel-detail-status">
+                <span class="status-indicator active"></span>
+                <span>Ativo</span>
+              </div>
+            </div>
+            <div class="agent-detail-body">
+              <div class="detail-metrics-row">
+                <div class="detail-metric">
+                  <i class="ph-bold ph-bell-ringing"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value" id="sentinel-detail-alerts">--</span>
+                    <span class="detail-metric-label">alertas</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-warning-circle"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value" id="sentinel-detail-anomalies">--</span>
+                    <span class="detail-metric-label">anomalias</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-x-circle"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value" id="sentinel-detail-errors">--</span>
+                    <span class="detail-metric-label">erros</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-shield-check"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value" id="sentinel-detail-health">--%</span>
+                    <span class="detail-metric-label">health score</span>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-streams-section">
+                <h4>Streams Monitorados</h4>
+                <div class="detail-streams">
+                  <div class="stream-chip">
+                    <i class="ph-bold ph-flow-arrow"></i>
+                    <span>telemetry.validated</span>
+                    <span class="stream-count" id="sentinel-stream-validated">--</span>
+                  </div>
+                  <div class="stream-chip">
+                    <i class="ph-bold ph-flow-arrow"></i>
+                    <span>sentinel.consumer_health</span>
+                    <span class="stream-count" id="sentinel-stream-health">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="agent-detail-footer">
+              <button class="btn-outline" id="btn-sentinel-restart">
+                <i class="ph-bold ph-arrow-clockwise"></i>
+                Restart
+              </button>
+              <button class="btn-outline btn-sentinel-outline" id="btn-sentinel-config">
+                <i class="ph-bold ph-gear"></i>
+                Configurar
+              </button>
+            </div>
+          </div>
+
+          <!-- ORACLE DETAIL -->
+          <div class="agent-detail-card oracle">
+            <div class="agent-detail-header">
+              <div class="agent-detail-icon">
+                <i class="ph-fill ph-brain"></i>
+              </div>
+              <div class="agent-detail-title">
+                <h3>Oracle</h3>
+                <span class="agent-detail-role">Predição & Análise</span>
+              </div>
+              <div class="agent-detail-status standby" id="oracle-detail-status">
+                <span class="status-indicator"></span>
+                <span>Standby</span>
+              </div>
+            </div>
+            <div class="agent-detail-body">
+              <div class="detail-metrics-row">
+                <div class="detail-metric">
+                  <i class="ph-bold ph-chart-line-up"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value">--</span>
+                    <span class="detail-metric-label">previsões</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-target"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value">--%</span>
+                    <span class="detail-metric-label">accuracy</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-lightning"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value">--</span>
+                    <span class="detail-metric-label">modelos ativos</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-database"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value">--</span>
+                    <span class="detail-metric-label">dados processados</span>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-streams-section">
+                <h4>Streams Monitorados</h4>
+                <div class="detail-streams">
+                  <div class="stream-chip inactive">
+                    <i class="ph-bold ph-flow-arrow"></i>
+                    <span>oracle.predictions</span>
+                    <span class="stream-count">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="agent-detail-footer">
+              <button class="btn-outline" disabled>
+                <i class="ph-bold ph-play"></i>
+                Ativar
+              </button>
+              <button class="btn-outline" disabled>
+                <i class="ph-bold ph-gear"></i>
+                Configurar
+              </button>
+            </div>
+          </div>
+
+          <!-- CARE DETAIL -->
+          <div class="agent-detail-card care">
+            <div class="agent-detail-header">
+              <div class="agent-detail-icon">
+                <i class="ph-fill ph-hand-heart"></i>
+              </div>
+              <div class="agent-detail-title">
+                <h3>Care</h3>
+                <span class="agent-detail-role">Ação & Resposta</span>
+              </div>
+              <div class="agent-detail-status standby" id="care-detail-status">
+                <span class="status-indicator"></span>
+                <span>Standby</span>
+              </div>
+            </div>
+            <div class="agent-detail-body">
+              <div class="detail-metrics-row">
+                <div class="detail-metric">
+                  <i class="ph-bold ph-ticket"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value">--</span>
+                    <span class="detail-metric-label">tickets abertos</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-check-circle"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value">--</span>
+                    <span class="detail-metric-label">resolvidos</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-hourglass-medium"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value">--</span>
+                    <span class="detail-metric-label">tempo médio</span>
+                  </div>
+                </div>
+                <div class="detail-metric">
+                  <i class="ph-bold ph-star"></i>
+                  <div class="detail-metric-info">
+                    <span class="detail-metric-value">--%</span>
+                    <span class="detail-metric-label">satisfação</span>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-streams-section">
+                <h4>Streams Monitorados</h4>
+                <div class="detail-streams">
+                  <div class="stream-chip inactive">
+                    <i class="ph-bold ph-flow-arrow"></i>
+                    <span>care.actions</span>
+                    <span class="stream-count">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="agent-detail-footer">
+              <button class="btn-outline" disabled>
+                <i class="ph-bold ph-play"></i>
+                Ativar
+              </button>
+              <button class="btn-outline" disabled>
+                <i class="ph-bold ph-gear"></i>
+                Configurar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================
+           STREAMS SECTION
+           ============================================ -->
+      <div class="content-section" id="section-streams">
+
+        <!-- STREAM FLOW DIAGRAM -->
+        <section class="section-block stream-flow-section">
+          <div class="section-header">
+            <h2>Fluxo de Dados</h2>
+            <span class="section-badge pulse-badge">
+              <span class="pulse-dot"></span>
+              <span>Live</span>
+            </span>
+          </div>
+          <div class="stream-flow">
+            <div class="flow-node source">
+              <i class="ph-fill ph-database"></i>
+              <span>Telemetria</span>
+            </div>
+            <div class="flow-arrow">
+              <i class="ph-bold ph-arrow-right"></i>
+            </div>
+            <div class="flow-node atlas">
+              <i class="ph-fill ph-globe"></i>
+              <span>Atlas</span>
+            </div>
+            <div class="flow-arrow">
+              <i class="ph-bold ph-arrow-right"></i>
+            </div>
+            <div class="flow-node sentinel">
+              <i class="ph-fill ph-eye"></i>
+              <span>Sentinel</span>
+            </div>
+            <div class="flow-arrow">
+              <i class="ph-bold ph-arrows-split"></i>
+            </div>
+            <div class="flow-split">
+              <div class="flow-branch">
+                <div class="flow-node oracle">
+                  <i class="ph-fill ph-brain"></i>
+                  <span>Oracle</span>
+                </div>
+              </div>
+              <div class="flow-branch">
+                <div class="flow-node care">
+                  <i class="ph-fill ph-hand-heart"></i>
+                  <span>Care</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STREAMS GRID -->
+        <div class="streams-grid">
+          <div class="stream-card">
+            <div class="stream-card-header">
+              <div class="stream-card-icon atlas">
+                <i class="ph-bold ph-flow-arrow"></i>
+              </div>
+              <h3>telemetry.received</h3>
+            </div>
+            <div class="stream-card-body">
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-telemetry-count">--</span>
+                <span class="stream-stat-label">mensagens</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-telemetry-rate">--</span>
+                <span class="stream-stat-label">msg/min</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-telemetry-consumers">--</span>
+                <span class="stream-stat-label">consumers</span>
+              </div>
+            </div>
+            <div class="stream-card-footer">
+              <span class="stream-status active">
+                <span class="status-dot-sm"></span>
+                Ativo
+              </span>
+            </div>
+          </div>
+
+          <div class="stream-card">
+            <div class="stream-card-header">
+              <div class="stream-card-icon caos">
+                <i class="ph-bold ph-flow-arrow"></i>
+              </div>
+              <h3>telemetry.validated</h3>
+            </div>
+            <div class="stream-card-body">
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-validated-count">--</span>
+                <span class="stream-stat-label">mensagens</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-validated-rate">--</span>
+                <span class="stream-stat-label">msg/min</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-validated-consumers">--</span>
+                <span class="stream-stat-label">consumers</span>
+              </div>
+            </div>
+            <div class="stream-card-footer">
+              <span class="stream-status active">
+                <span class="status-dot-sm"></span>
+                Ativo
+              </span>
+            </div>
+          </div>
+
+          <div class="stream-card">
+            <div class="stream-card-header">
+              <div class="stream-card-icon caos">
+                <i class="ph-bold ph-flow-arrow"></i>
+              </div>
+              <h3>telemetry.rejected</h3>
+            </div>
+            <div class="stream-card-body">
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-rejected-count">--</span>
+                <span class="stream-stat-label">mensagens</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-rejected-rate">--</span>
+                <span class="stream-stat-label">msg/min</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-rejected-consumers">--</span>
+                <span class="stream-stat-label">consumers</span>
+              </div>
+            </div>
+            <div class="stream-card-footer">
+              <span class="stream-status warning">
+                <span class="status-dot-sm"></span>
+                Monitorado
+              </span>
+            </div>
+          </div>
+
+          <div class="stream-card">
+            <div class="stream-card-header">
+              <div class="stream-card-icon oracle">
+                <i class="ph-bold ph-flow-arrow"></i>
+              </div>
+              <h3>oracle.predictions</h3>
+            </div>
+            <div class="stream-card-body">
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-oracle-count">--</span>
+                <span class="stream-stat-label">mensagens</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-oracle-rate">--</span>
+                <span class="stream-stat-label">msg/min</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-oracle-consumers">--</span>
+                <span class="stream-stat-label">consumers</span>
+              </div>
+            </div>
+            <div class="stream-card-footer">
+              <span class="stream-status inactive">
+                <span class="status-dot-sm"></span>
+                Standby
+              </span>
+            </div>
+          </div>
+
+          <div class="stream-card">
+            <div class="stream-card-header">
+              <div class="stream-card-icon care">
+                <i class="ph-bold ph-flow-arrow"></i>
+              </div>
+              <h3>care.actions</h3>
+            </div>
+            <div class="stream-card-body">
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-care-count">--</span>
+                <span class="stream-stat-label">mensagens</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-care-rate">--</span>
+                <span class="stream-stat-label">msg/min</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-care-consumers">--</span>
+                <span class="stream-stat-label">consumers</span>
+              </div>
+            </div>
+            <div class="stream-card-footer">
+              <span class="stream-status inactive">
+                <span class="status-dot-sm"></span>
+                Standby
+              </span>
+            </div>
+          </div>
+
+          <div class="stream-card">
+            <div class="stream-card-header">
+              <div class="stream-card-icon sentinel">
+                <i class="ph-bold ph-flow-arrow"></i>
+              </div>
+              <h3>sentinel.consumer_health</h3>
+            </div>
+            <div class="stream-card-body">
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-sentinel-health-count">--</span>
+                <span class="stream-stat-label">mensagens</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-sentinel-health-rate">--</span>
+                <span class="stream-stat-label">msg/min</span>
+              </div>
+              <div class="stream-stat">
+                <span class="stream-stat-value" id="stream-sentinel-health-consumers">--</span>
+                <span class="stream-stat-label">consumers</span>
+              </div>
+            </div>
+            <div class="stream-card-footer">
+              <span class="stream-status active">
+                <span class="status-dot-sm"></span>
+                Ativo
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================
+           QUEUE (REDIS) SECTION
+           ============================================ -->
+      <div class="content-section" id="section-queue">
+
+        <!-- HEADER HERO -->
+        <div class="queue-hero">
+          <div class="queue-hero-content">
+            <div class="queue-hero-icon">
+              <i class="ph-fill ph-database"></i>
+            </div>
+            <div class="queue-hero-text">
+              <h2>Fila Viva</h2>
+              <p>Monitoramento do Redis compartilhado</p>
+            </div>
+          </div>
+          <div class="queue-hero-status" id="queue-status-badge">
+            <span class="status-dot"></span>
+            <span>Verificando...</span>
+          </div>
+        </div>
+
+        <!-- METRICS CARDS -->
+        <div class="queue-metrics-grid">
+          <div class="queue-metric-card">
+            <div class="queue-metric-icon memory">
+              <i class="ph-bold ph-memory"></i>
+            </div>
+            <div class="queue-metric-content">
+              <span class="queue-metric-value" id="queue-memory">--</span>
+              <span class="queue-metric-label">Memória (MB)</span>
+            </div>
+          </div>
+          <div class="queue-metric-card">
+            <div class="queue-metric-icon streams">
+              <i class="ph-bold ph-flow-arrow"></i>
+            </div>
+            <div class="queue-metric-content">
+              <span class="queue-metric-value" id="queue-streams">--</span>
+              <span class="queue-metric-label">Streams Ativos</span>
+            </div>
+          </div>
+          <div class="queue-metric-card">
+            <div class="queue-metric-icon consumers">
+              <i class="ph-bold ph-users"></i>
+            </div>
+            <div class="queue-metric-content">
+              <span class="queue-metric-value" id="queue-consumers">--</span>
+              <span class="queue-metric-label">Consumers</span>
+            </div>
+          </div>
+          <div class="queue-metric-card">
+            <div class="queue-metric-icon throughput">
+              <i class="ph-bold ph-lightning"></i>
+            </div>
+            <div class="queue-metric-content">
+              <span class="queue-metric-value" id="queue-throughput">--</span>
+              <span class="queue-metric-label">cmd/seg</span>
+            </div>
+          </div>
+          <div class="queue-metric-card">
+            <div class="queue-metric-icon pending">
+              <i class="ph-bold ph-clock"></i>
+            </div>
+            <div class="queue-metric-content">
+              <span class="queue-metric-value" id="queue-pending">--</span>
+              <span class="queue-metric-label">Pendentes</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTTLENECKS ALERTS -->
+        <section class="section-block queue-bottlenecks-section" id="queue-bottlenecks-section" style="display: none;">
+          <div class="section-header">
+            <h2><i class="ph-fill ph-warning-circle"></i> Alertas de Engarrafamento</h2>
+          </div>
+          <div class="queue-bottlenecks-list" id="queue-bottlenecks-list">
+            <!-- Populated by JS -->
+          </div>
+        </section>
+
+        <!-- STREAMS & CONSUMER GROUPS TABLES -->
+        <div class="queue-tables-grid">
+          <!-- STREAMS TABLE -->
+          <section class="section-block queue-streams-table-section">
+            <div class="section-header">
+              <h2><i class="ph-bold ph-flow-arrow"></i> Streams</h2>
+            </div>
+            <div class="queue-table-wrapper">
+              <table class="queue-table">
+                <thead>
+                  <tr>
+                    <th>Nome</th>
+                    <th>Mensagens</th>
+                    <th>Groups</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="queue-streams-table">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- CONSUMER GROUPS TABLE -->
+          <section class="section-block queue-consumers-table-section">
+            <div class="section-header">
+              <h2><i class="ph-bold ph-users-three"></i> Consumer Groups</h2>
+            </div>
+            <div class="queue-table-wrapper">
+              <table class="queue-table">
+                <thead>
+                  <tr>
+                    <th>Stream</th>
+                    <th>Grupo</th>
+                    <th>Consumers</th>
+                    <th>Pending</th>
+                    <th>Lag</th>
+                  </tr>
+                </thead>
+                <tbody id="queue-consumers-table">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+      </div>
+
+      <!-- ============================================
+           LOGS SECTION
+           ============================================ -->
+      <div class="content-section" id="section-logs">
+
+        <section class="section-block logs-full-section">
+          <div class="section-header logs-full-header">
+            <div class="logs-header-left">
+              <h2>Logs do Sistema</h2>
+              <span class="section-badge" id="logs-total-count">0 logs</span>
+            </div>
+            <div class="logs-header-right">
+              <div class="logs-search">
+                <i class="ph-bold ph-magnifying-glass"></i>
+                <input type="text" id="logs-search-input" placeholder="Pesquisar logs..." />
+              </div>
+              <div class="logs-level-filters">
+                <button class="level-filter active" data-level="all">Todos</button>
+                <button class="level-filter" data-level="info">INFO</button>
+                <button class="level-filter" data-level="success">OK</button>
+                <button class="level-filter" data-level="error">ERRO</button>
+              </div>
+              <button class="btn-outline" id="export-logs">
+                <i class="ph-bold ph-download-simple"></i>
+                Exportar
+              </button>
+              <button class="btn-outline" id="clear-logs">
+                <i class="ph-bold ph-trash"></i>
+                Limpar
+              </button>
+            </div>
+          </div>
+          <div class="logs-full-container" id="logs-full-container">
+            <div class="log-entry info">
+              <span class="log-time">--:--:--</span>
+              <span class="log-type">INFO</span>
+              <span class="log-msg">Aguardando conexão com API...</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ============================================
+           ATLAS CONFIG SECTION (FULL PAGE)
+           ============================================ -->
+      <div class="content-section" id="section-atlas-config">
+
+        <!-- BACK BUTTON & HEADER -->
+        <div class="stream-detail-header atlas-config-header">
+          <button class="btn-back" id="btn-back-to-agents">
+            <i class="ph-bold ph-arrow-left"></i>
+            <span>Voltar para Agentes</span>
+          </button>
+          <div class="stream-hero atlas-hero">
+            <div class="stream-hero-icon atlas-hero-icon">
+              <i class="ph-fill ph-globe"></i>
+            </div>
+            <div class="stream-hero-info">
+              <h1>Atlas Agent</h1>
+              <p class="stream-hero-sub">
+                <span class="hero-badge active" id="atlas-config-status">
+                  <span class="pulse-micro"></span> Online
+                </span>
+                <span class="hero-separator">•</span>
+                <span id="atlas-config-version-display">v1.0.0</span>
+                <span class="hero-separator">•</span>
+                <span>Integração & Telemetria</span>
+              </p>
+            </div>
+            <div class="hero-actions">
+              <button class="btn-outline btn-restart-hero" onclick="restartAtlasAgent()">
+                <i class="ph-bold ph-arrow-clockwise"></i>
+                Reiniciar
+              </button>
+              <button class="btn-primary" id="btn-save-atlas-hero">
+                <i class="ph-bold ph-floppy-disk"></i>
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STATS CARDS ROW -->
+        <div class="stream-detail-stats atlas-stats">
+          <div class="stat-card gradient-blue">
+            <div class="stat-card-icon">
+              <i class="ph-fill ph-heartbeat"></i>
+            </div>
+            <div class="stat-card-content">
+              <span class="stat-card-value" id="atlas-stat-health">OK</span>
+              <span class="stat-card-label">Status</span>
+            </div>
+            <div class="stat-card-trend up">
+              <i class="ph-bold ph-check-circle"></i>
+            </div>
+          </div>
+
+          <div class="stat-card gradient-green">
+            <div class="stat-card-icon">
+              <i class="ph-fill ph-clock"></i>
+            </div>
+            <div class="stat-card-content">
+              <span class="stat-card-value" id="atlas-stat-uptime">--</span>
+              <span class="stat-card-label">Uptime</span>
+            </div>
+          </div>
+
+          <div class="stat-card gradient-yellow">
+            <div class="stat-card-icon">
+              <i class="ph-fill ph-calendar-check"></i>
+            </div>
+            <div class="stat-card-content">
+              <span class="stat-card-value" id="atlas-stat-routine">OK</span>
+              <span class="stat-card-label">Última Rotina</span>
+            </div>
+          </div>
+
+          <div class="stat-card gradient-purple">
+            <div class="stat-card-icon">
+              <i class="ph-fill ph-cpu"></i>
+            </div>
+            <div class="stat-card-content">
+              <span class="stat-card-value" id="atlas-stat-workers">4</span>
+              <span class="stat-card-label">Workers</span>
+            </div>
+          </div>
+
+          <div class="stat-card gradient-red">
+            <div class="stat-card-icon">
+              <i class="ph-fill ph-flow-arrow"></i>
+            </div>
+            <div class="stat-card-content">
+              <span class="stat-card-value" id="atlas-stat-events">--</span>
+              <span class="stat-card-label">Eventos/min</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB NAVIGATION -->
+        <div class="atlas-tabs-container">
+          <div class="atlas-tabs">
+            <button class="atlas-tab active" data-tab="config">
+              <i class="ph-bold ph-gear"></i>
+              <span>Configurações</span>
+            </button>
+            <button class="atlas-tab" data-tab="monitoring">
+              <i class="ph-bold ph-chart-line"></i>
+              <span>Monitoramento</span>
+            </button>
+            <button class="atlas-tab" data-tab="logs">
+              <i class="ph-bold ph-file-text"></i>
+              <span>Logs</span>
+            </button>
+            <button class="atlas-tab" data-tab="apikeys">
+              <i class="ph-bold ph-key"></i>
+              <span>API Keys</span>
+            </button>
+            <button class="atlas-tab" data-tab="validations">
+              <i class="ph-bold ph-check-square"></i>
+              <span>Validações</span>
+            </button>
+            <button class="atlas-tab" data-tab="rawdata">
+              <i class="ph-bold ph-database"></i>
+              <span>Dados Brutos</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB PANELS -->
+        <div class="atlas-tab-panels">
+
+          <!-- TAB 1: CONFIGURAÇÕES -->
+          <div class="atlas-tab-panel active" id="atlas-panel-config">
+            <div class="atlas-config-grid">
+
+              <!-- LEFT COLUMN -->
+              <div class="atlas-config-column">
+
+                <!-- SERVER SETTINGS -->
+                <div class="section-block config-block">
+                  <div class="section-header">
+                    <h2><i class="ph-bold ph-computer-tower"></i> Servidor</h2>
+                  </div>
+                  <div class="config-block-content">
+                    <div class="config-row">
+                      <div class="config-item">
+                        <label>Workers</label>
+                        <div class="input-with-icon">
+                          <i class="ph-bold ph-cpu"></i>
+                          <input type="number" id="atlas-cfg-workers" min="1" max="16" value="4" />
+                        </div>
+                        <span class="config-hint">Processos uvicorn paralelos</span>
+                      </div>
+                      <div class="config-item">
+                        <label>Log Level</label>
+                        <div class="select-wrapper">
+                          <select id="atlas-cfg-log-level">
+                            <option value="DEBUG">DEBUG</option>
+                            <option value="INFO" selected>INFO</option>
+                            <option value="WARNING">WARNING</option>
+                            <option value="ERROR">ERROR</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="config-item toggle-item">
+                        <label>Debug Mode</label>
+                        <div class="premium-toggle">
+                          <input type="checkbox" id="atlas-cfg-debug" />
+                          <span class="toggle-track">
+                            <span class="toggle-thumb"></span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DATABASE -->
+                <div class="section-block config-block">
+                  <div class="section-header">
+                    <h2><i class="ph-bold ph-database"></i> Database PostgreSQL</h2>
+                    <button class="btn-test-inline" id="atlas-btn-test-db">
+                      <i class="ph-bold ph-plugs-connected"></i>
+                      Testar
+                    </button>
+                  </div>
+                  <div class="config-block-content">
+                    <div class="config-row full-width">
+                      <div class="config-item">
+                        <label>DATABASE_URL</label>
+                        <div class="input-with-icon code-input">
+                          <i class="ph-bold ph-link"></i>
+                          <input type="text" id="atlas-cfg-db-url" placeholder="postgresql://user:pass@host:port/db" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="test-result-box" id="atlas-db-result"></div>
+                    <div class="config-row three-cols">
+                      <div class="config-item">
+                        <label>Pool Size</label>
+                        <input type="number" id="atlas-cfg-pool-size" min="1" max="50" value="10" />
+                      </div>
+                      <div class="config-item">
+                        <label>Max Overflow</label>
+                        <input type="number" id="atlas-cfg-max-overflow" min="0" max="50" value="20" />
+                      </div>
+                      <div class="config-item">
+                        <label>Recycle (s)</label>
+                        <input type="number" id="atlas-cfg-pool-recycle" min="60" value="3600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- REDIS -->
+                <div class="section-block config-block">
+                  <div class="section-header">
+                    <h2><i class="ph-bold ph-lightning"></i> Redis Stream</h2>
+                    <button class="btn-test-inline" id="atlas-btn-test-redis">
+                      <i class="ph-bold ph-lightning"></i>
+                      Testar
+                    </button>
+                  </div>
+                  <div class="config-block-content">
+                    <div class="config-row two-cols">
+                      <div class="config-item">
+                        <label>REDIS_URL</label>
+                        <div class="input-with-icon code-input">
+                          <i class="ph-bold ph-broadcast"></i>
+                          <input type="text" id="atlas-cfg-redis-url" placeholder="redis://host:port/db" />
+                        </div>
+                      </div>
+                      <div class="config-item">
+                        <label>Sentinel Stream</label>
+                        <div class="input-with-icon code-input">
+                          <i class="ph-bold ph-flow-arrow"></i>
+                          <input type="text" id="atlas-cfg-stream" value="telemetry.received" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="test-result-box" id="atlas-redis-result"></div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- RIGHT COLUMN -->
+              <div class="atlas-config-column">
+
+                <!-- SECURITY -->
+                <div class="section-block config-block">
+                  <div class="section-header">
+                    <h2><i class="ph-bold ph-shield-check"></i> Segurança</h2>
+                  </div>
+                  <div class="config-block-content">
+                    <div class="config-row full-width">
+                      <div class="config-item">
+                        <label>API Key</label>
+                        <div class="api-key-field">
+                          <div class="input-with-icon code-input">
+                            <i class="ph-bold ph-key"></i>
+                            <input type="password" id="atlas-cfg-api-key" placeholder="Chave de autenticação" />
+                          </div>
+                          <button class="btn-icon-action" id="atlas-toggle-key" title="Mostrar/Ocultar">
+                            <i class="ph-bold ph-eye"></i>
+                          </button>
+                          <button class="btn-icon-action btn-generate" id="atlas-gen-key" title="Gerar Nova">
+                            <i class="ph-bold ph-arrows-clockwise"></i>
+                          </button>
+                        </div>
+                        <span class="config-hint">Usada para autenticar requisições X-API-Key</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SCHEDULING -->
+                <div class="section-block config-block routine-block">
+                  <div class="section-header">
+                    <h2><i class="ph-bold ph-calendar"></i> Rotina Diária</h2>
+                  </div>
+                  <div class="config-block-content">
+                    <div class="config-row two-cols">
+                      <div class="config-item">
+                        <label>Expressão Cron (UTC)</label>
+                        <div class="input-with-icon code-input">
+                          <i class="ph-bold ph-clock"></i>
+                          <input type="text" id="atlas-cfg-cron" value="0 10 * * *" />
+                        </div>
+                      </div>
+                      <div class="config-item">
+                        <label>Horário Local</label>
+                        <input type="text" id="atlas-cfg-cron-desc" value="07:00 BRT" readonly class="readonly-field" />
+                      </div>
+                    </div>
+                    <div class="cron-presets-row">
+                      <span class="presets-label">Atalhos:</span>
+                      <button class="preset-chip" data-cron="0 10 * * *">07:00</button>
+                      <button class="preset-chip" data-cron="0 13 * * *">10:00</button>
+                      <button class="preset-chip" data-cron="0 15 * * *">12:00</button>
+                      <button class="preset-chip" data-cron="0 21 * * *">18:00</button>
+                      <button class="preset-chip preset-test" data-cron="*/5 * * * *">5 min</button>
+                    </div>
+
+                    <!-- MANUAL TRIGGER -->
+                    <div class="routine-trigger-section">
+                      <div class="routine-status-display" id="atlas-routine-display">
+                        <div class="routine-icon success">
+                          <i class="ph-bold ph-check-circle"></i>
+                        </div>
+                        <div class="routine-info">
+                          <span class="routine-label">Última execução</span>
+                          <span class="routine-time" id="atlas-routine-time">--</span>
+                        </div>
+                      </div>
+                      <button class="btn-trigger-routine" id="atlas-btn-trigger">
+                        <i class="ph-bold ph-play-circle"></i>
+                        Executar Agora
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- APP INFO (Read-only) -->
+                <div class="section-block config-block info-block">
+                  <div class="section-header">
+                    <h2><i class="ph-bold ph-info"></i> Informações</h2>
+                  </div>
+                  <div class="config-block-content">
+                    <div class="info-grid">
+                      <div class="info-item">
+                        <span class="info-label">Nome</span>
+                        <span class="info-value" id="atlas-info-name">Atlas Agent API</span>
+                      </div>
+                      <div class="info-item">
+                        <span class="info-label">Versão</span>
+                        <span class="info-value" id="atlas-info-version">1.0.0</span>
+                      </div>
+                      <div class="info-item">
+                        <span class="info-label">Host</span>
+                        <span class="info-value">0.0.0.0:8000</span>
+                      </div>
+                      <div class="info-item">
+                        <span class="info-label">Container</span>
+                        <span class="info-value">atlas-agent</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div> <!-- End Config Grid -->
+        </div> <!-- End Panel Config -->
+
+        <!-- TAB 2: MONITORAMENTO -->
+        <div class="atlas-tab-panel" id="atlas-panel-monitoring">
+          <div class="atlas-monitoring-sections">
+
+            <!-- TOP ROW: PERFORMANCE & METRICS -->
+            <div class="monitoring-grid top-row">
+              <!-- LEFT: PERFORMANCE CHART -->
+              <div class="section-block monitoring-block performance-block">
+                <div class="section-header">
+                  <h2><i class="ph-bold ph-chart-line-up"></i> Performance das Rotinas</h2>
+                </div>
+                <div class="performance-chart-container">
+                  <div class="performance-bars" id="atlas-performance-bars">
+                    <!-- Dynamic bars -->
+                  </div>
+                  <div class="performance-legend">
+                    <span class="legend-item"><span class="legend-dot success"></span> Sucesso</span>
+                    <span class="legend-item"><span class="legend-dot failed"></span> Falha</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- RIGHT: METRICS STACK -->
+              <div class="monitoring-column metrics-stack">
+                <!-- TELEMETRY -->
+                <div class="section-block monitoring-block telemetry-block">
+                  <div class="section-header">
+                    <h2><i class="ph-bold ph-broadcast"></i> Telemetria</h2>
+                  </div>
+                  <div class="telemetry-stats">
+                    <div class="telemetry-stat">
+                      <div class="telemetry-icon green"><i class="ph-bold ph-check-circle"></i></div>
+                      <div class="telemetry-info">
+                        <span class="telemetry-value" id="atlas-telem-validated">--</span>
+                        <span class="telemetry-label">Validados</span>
+                      </div>
+                    </div>
+                    <div class="telemetry-stat">
+                      <div class="telemetry-icon red"><i class="ph-bold ph-x-circle"></i></div>
+                      <div class="telemetry-info">
+                        <span class="telemetry-value" id="atlas-telem-rejected">--</span>
+                        <span class="telemetry-label">Rejeitados</span>
+                      </div>
+                    </div>
+                    <div class="telemetry-stat">
+                      <div class="telemetry-icon blue"><i class="ph-bold ph-database"></i></div>
+                      <div class="telemetry-info">
+                        <span class="telemetry-value" id="atlas-telem-stream">--</span>
+                        <span class="telemetry-label">No Stream</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DASHBOARD STATS -->
+                <div class="section-block monitoring-block dashboard-stats-block">
+                  <div class="section-header">
+                    <h2><i class="ph-bold ph-chart-bar"></i> Dados do Cliente</h2>
+                  </div>
+                  <div class="dashboard-mini-stats">
+                    <div class="mini-stat">
+                      <i class="ph-bold ph-cube"></i>
+                      <span class="mini-stat-value" id="atlas-stats-assets">--</span>
+                      <span class="mini-stat-label">Assets</span>
+                    </div>
+                    <div class="mini-stat">
+                      <i class="ph-bold ph-storefront"></i>
+                      <span class="mini-stat-value" id="atlas-stats-outlets">--</span>
+                      <span class="mini-stat-label">Outlets</span>
+                    </div>
+                    <div class="mini-stat">
+                      <i class="ph-bold ph-users"></i>
+                      <span class="mini-stat-value" id="atlas-stats-users">--</span>
+                      <span class="mini-stat-label">Usuários</span>
+                    </div>
+                    <div class="mini-stat">
+                      <i class="ph-bold ph-warning-circle"></i>
+                      <span class="mini-stat-value" id="atlas-stats-alerts">--</span>
+                      <span class="mini-stat-label">Alertas</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BOTTOM ROW: TIMELINE -->
+            <div class="section-block monitoring-block timeline-block">
+              <div class="section-header">
+                <h2><i class="ph-bold ph-clock-counter-clockwise"></i> Histórico de Execuções</h2>
+                <button class="btn-refresh-inline" id="atlas-refresh-timeline">
+                  <i class="ph-bold ph-arrow-clockwise"></i>
+                </button>
+              </div>
+              <div class="timeline-container" id="atlas-routine-timeline">
+                <div class="timeline-loading">
+                  <i class="ph-bold ph-spinner"></i>
+                  <span>Carregando histórico...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: LOGS -->
+        <div class="atlas-tab-panel" id="atlas-panel-logs">
+          <div class="atlas-monitoring-sections" style="margin-top: 0;">
+            <div class="section-block monitoring-block logs-block" style="margin: 0;">
+              <div class="section-header">
+                <h2><i class="ph-bold ph-file-text"></i> Logs da Rotina</h2>
+                <div class="log-controls">
+                  <select id="atlas-log-date" class="log-date-select">
+                    <option value="">Hoje</option>
+                  </select>
+                  <button class="btn-refresh-inline" id="atlas-refresh-logs">
+                    <i class="ph-bold ph-arrow-clockwise"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="log-viewer" id="atlas-log-viewer">
+                <div class="log-empty">
+                  <i class="ph-bold ph-file-dashed"></i>
+                  <span>Selecione uma data para visualizar os logs</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: API KEYS -->
+        <div class="atlas-tab-panel" id="atlas-panel-apikeys">
+          <div class="atlas-monitoring-sections" style="margin-top: 0;">
+            <div class="section-block monitoring-block api-keys-block" style="margin: 0;">
+              <div class="section-header">
+                <h2><i class="ph-bold ph-key"></i> API Keys</h2>
+                <button class="btn-add-key" id="atlas-btn-add-key">
+                  <i class="ph-bold ph-plus"></i>
+                  Nova Key
+                </button>
+              </div>
+              <div class="api-keys-table-container">
+                <table class="api-keys-table" id="atlas-api-keys-table">
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Cliente</th>
+                      <th>Key (parcial)</th>
+                      <th>Criada em</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="atlas-api-keys-body">
+                    <tr class="loading-row">
+                      <td colspan="5"><i class="ph-bold ph-spinner"></i> Carregando...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: VALIDAÇÕES -->
+        <div class="atlas-tab-panel" id="atlas-panel-validations">
+          <div class="atlas-monitoring-sections" style="margin-top: 0;">
+            <div class="section-block monitoring-block validations-block" style="margin: 0;">
+              <div class="section-header">
+                <h2><i class="ph-bold ph-check-square"></i> Log de Validações CAOS</h2>
+                <div class="validation-controls">
+                  <div class="validation-stats-mini">
+                    <span class="vstat approved">
+                      <i class="ph-bold ph-check-circle"></i>
+                      <span id="vlog-approved-count">--</span>
+                    </span>
+                    <span class="vstat rejected">
+                      <i class="ph-bold ph-x-circle"></i>
+                      <span id="vlog-rejected-count">--</span>
+                    </span>
+                    <span class="vstat rate">
+                      <i class="ph-bold ph-percent"></i>
+                      <span id="vlog-approval-rate">--</span>%
+                    </span>
+                  </div>
+                  <select id="vlog-status-filter" class="filter-select" title="Filtrar por status">
+                    <option value="">Todos</option>
+                    <option value="approved">Aprovados</option>
+                    <option value="rejected">Rejeitados</option>
+                  </select>
+                  <select id="vlog-per-page" class="filter-select" title="Itens por página">
+                    <option value="25">25</option>
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                  </select>
+                  <button class="btn-refresh-inline" id="atlas-refresh-validations">
+                    <i class="ph-bold ph-arrow-clockwise"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="validation-log-container" id="atlas-validation-log">
+                <div class="raw-loading">
+                  <i class="ph-bold ph-spinner"></i>
+                  <span>Carregando log de validações...</span>
+                </div>
+              </div>
+              <!-- PAGINATION -->
+              <div class="validation-pagination">
+                <span class="pagination-info">
+                  Mostrando <span id="vlog-showing">--</span> de <span id="vlog-total">--</span>
+                </span>
+                <div class="pagination-controls">
+                  <button class="btn-page" id="vlog-prev" disabled>
+                    <i class="ph-bold ph-caret-left"></i>
+                  </button>
+                  <span id="vlog-current-page">Página 1 de 1</span>
+                  <button class="btn-page" id="vlog-next" disabled>
+                    <i class="ph-bold ph-caret-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 6: DADOS BRUTOS -->
+        <div class="atlas-tab-panel" id="atlas-panel-rawdata">
+          <div class="atlas-monitoring-sections" style="margin-top: 0;">
+            <div class="section-block monitoring-block raw-data-block" style="margin: 0;">
+              <div class="section-header">
+                <h2><i class="ph-bold ph-database"></i> Dados Brutos Recebidos</h2>
+                <div class="raw-data-controls">
+                  <select id="atlas-raw-stream" class="raw-stream-select">
+                    <option value="telemetry.received">telemetry.received</option>
+                    <option value="telemetry.validated">telemetry.validated</option>
+                    <option value="telemetry.rejected">telemetry.rejected</option>
+                    <option value="atlas.daily_routine">atlas.daily_routine</option>
+                  </select>
+                  <input type="number" id="atlas-raw-limit" value="20" min="1" max="100" class="raw-limit-input"
+                    title="Limite de mensagens" />
+                  <button class="btn-refresh-inline" id="atlas-refresh-raw">
+                    <i class="ph-bold ph-arrow-clockwise"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="raw-data-info">
+                <div class="raw-info-stat">
+                  <i class="ph-bold ph-hash"></i>
+                  <span>Total no Stream:</span>
+                  <strong id="atlas-raw-total">--</strong>
+                </div>
+                <div class="raw-info-stat">
+                  <i class="ph-bold ph-clock"></i>
+                  <span>Última Atualização:</span>
+                  <strong id="atlas-raw-updated">--</strong>
+                </div>
+              </div>
+              <div class="raw-data-container" id="atlas-raw-container">
+                <div class="raw-loading">
+                  <i class="ph-bold ph-spinner"></i>
+                  <span>Carregando dados brutos...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================
+           SENTINEL CONFIG SECTION (FULL PAGE)
+           ============================================ -->
+      <div class="content-section" id="section-sentinel-config">
+
+        <!-- BACK BUTTON -->
+        <button class="btn-back sentinel-back-btn" id="btn-back-to-agents-sentinel">
+          <i class="ph-bold ph-arrow-left"></i>
+          <span>Voltar para Agentes</span>
+        </button>
+
+        <!-- SENTINEL HERO CARD -->
+        <div class="sentinel-hero-card">
+          <div class="sentinel-hero-background"></div>
+          <div class="sentinel-hero-content">
+            <div class="sentinel-hero-left">
+              <div class="sentinel-hero-icon">
+                <i class="ph-fill ph-eye"></i>
+              </div>
+              <div class="sentinel-hero-info">
+                <h1>Sentinel Agent</h1>
+                <div class="sentinel-hero-meta">
+                  <span class="hero-badge active" id="sentinel-config-status">
+                    <span class="pulse-micro"></span> Online
+                  </span>
+                  <span class="hero-separator">•</span>
+                  <span class="hero-description">Vigilância & Alertas em Tempo Real</span>
+                </div>
+              </div>
+            </div>
+            <div class="sentinel-hero-right">
+              <button class="btn-sentinel-action" id="sentinel-btn-restart">
+                <i class="ph-bold ph-arrow-clockwise"></i>
+                Reiniciar
+              </button>
+            </div>
+          </div>
+
+          <!-- STATS INTEGRATED IN HERO -->
+          <div class="sentinel-stats-row">
+            <div class="sentinel-stat-item">
+              <div class="sentinel-stat-icon processed">
+                <i class="ph-bold ph-check-square"></i>
+              </div>
+              <div class="sentinel-stat-info">
+                <span class="sentinel-stat-value" id="sentinel-stat-processed">--</span>
+                <span class="sentinel-stat-label">Processados</span>
+              </div>
+            </div>
+            <div class="sentinel-stat-item">
+              <div class="sentinel-stat-icon alerts">
+                <i class="ph-bold ph-warning-octagon"></i>
+              </div>
+              <div class="sentinel-stat-info">
+                <span class="sentinel-stat-value" id="sentinel-stat-alerts-open">--</span>
+                <span class="sentinel-stat-label">Alertas Ativos</span>
+              </div>
+            </div>
+            <div class="sentinel-stat-item">
+              <div class="sentinel-stat-icon resolved">
+                <i class="ph-bold ph-check-circle"></i>
+              </div>
+              <div class="sentinel-stat-info">
+                <span class="sentinel-stat-value" id="sentinel-stat-alerts-resolved">--</span>
+                <span class="sentinel-stat-label">Resolvidos</span>
+              </div>
+            </div>
+            <div class="sentinel-stat-item">
+              <div class="sentinel-stat-icon rules">
+                <i class="ph-bold ph-list-checks"></i>
+              </div>
+              <div class="sentinel-stat-info">
+                <span class="sentinel-stat-value" id="sentinel-stat-rules">--</span>
+                <span class="sentinel-stat-label">Regras Ativas</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABS -->
+        <div class="atlas-tabs-container" style="margin-top: 16px;">
+          <div class="atlas-tabs sentinel-tabs">
+            <button class="atlas-tab active" data-tab="s-monitoring">
+              <i class="ph-bold ph-chart-line"></i>
+              <span>Monitoramento</span>
+            </button>
+            <button class="atlas-tab" data-tab="s-alerts">
+              <i class="ph-bold ph-warning"></i>
+              <span>Alertas</span>
+            </button>
+            <button class="atlas-tab" data-tab="s-rules">
+              <i class="ph-bold ph-list-checks"></i>
+              <span>Regras</span>
+            </button>
+            <button class="atlas-tab" data-tab="s-config">
+              <i class="ph-bold ph-gear"></i>
+              <span>Configurações</span>
+            </button>
+            <button class="atlas-tab" data-tab="s-logs">
+              <i class="ph-bold ph-file-text"></i>
+              <span>Logs</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB PANELS -->
+        <div class="atlas-tab-panels sentinel-tab-panels">
+
+          <!-- TAB 1: MONITORAMENTO -->
+          <div class="atlas-tab-panel active" id="sentinel-panel-s-monitoring">
+            <div class="atlas-monitoring-sections" style="margin-top: 0;">
+              <!-- Consumer Health -->
+              <div class="section-block monitoring-block" style="margin: 0 0 16px 0;">
+                <div class="section-header">
+                  <h2><i class="ph-bold ph-heartbeat"></i> Saúde dos Consumers</h2>
+                  <button class="btn-refresh-inline" id="sentinel-refresh-health">
+                    <i class="ph-bold ph-arrow-clockwise"></i>
+                  </button>
+                </div>
+                <div class="consumer-health-grid" id="sentinel-consumers-grid">
+                  <div class="consumer-card clickable" onclick="showConsumerHealthInfo()">
+                    <div class="consumer-header">
+                      <span class="consumer-name">sentinel-consumer</span>
+                      <span class="consumer-status active">Ativo</span>
+                    </div>
+                    <div class="consumer-metrics">
+                      <div class="consumer-metric">
+                        <span class="metric-label">Mensagens</span>
+                        <span class="metric-value" id="sentinel-consumer-msgs">--</span>
+                      </div>
+                      <div class="consumer-metric">
+                        <span class="metric-label">Sucesso</span>
+                        <span class="metric-value success" id="sentinel-consumer-success">--</span>
+                      </div>
+                      <div class="consumer-metric">
+                        <span class="metric-label">Erros</span>
+                        <span class="metric-value error" id="sentinel-consumer-errors">--</span>
+                      </div>
+                    </div>
+                    <div class="consumer-card-hint">
+                      <i class="ph-bold ph-info"></i> Clique para entender as métricas
+                    </div>
+                  </div>
+                  <div class="consumer-card">
+                    <div class="consumer-header">
+                      <span class="consumer-name">sentinel-alerts</span>
+                      <span class="consumer-status active">Ativo</span>
+                    </div>
+                    <div class="consumer-metrics">
+                      <div class="consumer-metric">
+                        <span class="metric-label">Alertas Gerados</span>
+                        <span class="metric-value" id="sentinel-alerts-generated">--</span>
+                      </div>
+                      <div class="consumer-metric">
+                        <span class="metric-label">Resolvidos</span>
+                        <span class="metric-value success" id="sentinel-alerts-auto-resolved">--</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Streams -->
+              <div class="section-block monitoring-block" style="margin: 0;">
+                <div class="section-header">
+                  <h2><i class="ph-bold ph-flow-arrow"></i> Streams Monitorados</h2>
+                </div>
+                <div class="streams-monitor-grid" id="sentinel-streams-grid">
+                  <div class="stream-monitor-card">
+                    <div class="stream-monitor-name">telemetry.validated</div>
+                    <div class="stream-monitor-stats">
+                      <span class="stream-stat">
+                        <i class="ph-bold ph-hash"></i>
+                        <span id="sentinel-stream-len-validated">--</span> msgs
+                      </span>
+                      <span class="stream-stat">
+                        <i class="ph-bold ph-users"></i>
+                        <span id="sentinel-stream-consumers">--</span> consumers
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: ALERTAS -->
+          <div class="atlas-tab-panel" id="sentinel-panel-s-alerts">
+            <div class="atlas-monitoring-sections" style="margin-top: 0;">
+              <div class="section-block monitoring-block" style="margin: 0;">
+                <div class="section-header">
+                  <h2><i class="ph-bold ph-warning"></i> Alertas Ativos</h2>
+                  <div class="alerts-controls">
+                    <select id="sentinel-alerts-filter" class="raw-stream-select">
+                      <option value="OPEN">Abertos</option>
+                      <option value="ACK">Reconhecidos</option>
+                      <option value="RESOLVED">Resolvidos</option>
+                      <option value="all">Todos</option>
+                    </select>
+                    <button class="btn-refresh-inline" id="sentinel-refresh-alerts">
+                      <i class="ph-bold ph-arrow-clockwise"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="alerts-summary">
+                  <div class="alert-summary-item high">
+                    <i class="ph-bold ph-warning-octagon"></i>
+                    <span class="summary-count" id="sentinel-alerts-high">0</span>
+                    <span class="summary-label">Alta</span>
+                  </div>
+                  <div class="alert-summary-item medium">
+                    <i class="ph-bold ph-warning"></i>
+                    <span class="summary-count" id="sentinel-alerts-medium">0</span>
+                    <span class="summary-label">Média</span>
+                  </div>
+                  <div class="alert-summary-item low">
+                    <i class="ph-bold ph-info"></i>
+                    <span class="summary-count" id="sentinel-alerts-low">0</span>
+                    <span class="summary-label">Baixa</span>
+                  </div>
+                </div>
+                <div class="alerts-table-container" id="sentinel-alerts-container">
+                  <div class="raw-loading">
+                    <i class="ph-bold ph-spinner"></i>
+                    <span>Carregando alertas...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: REGRAS -->
+          <div class="atlas-tab-panel" id="sentinel-panel-s-rules">
+            <div class="atlas-monitoring-sections" style="margin-top: 0;">
+              <div class="section-block monitoring-block" style="margin: 0;">
+                <div class="section-header">
+                  <h2><i class="ph-bold ph-list-checks"></i> Regras de Alerta</h2>
+                  <div class="rules-controls">
+                    <button class="btn-primary btn-small" id="sentinel-add-rule">
+                      <i class="ph-bold ph-plus"></i>
+                      Nova Regra
+                    </button>
+                  </div>
+                </div>
+                <div class="rules-info-banner">
+                  <i class="ph-bold ph-info"></i>
+                  <span>As regras definem quando alertas serão gerados. Tipos: TEMP_OUT_OF_RANGE, TEMP_ABOVE,
+                    TEMP_BELOW, BATTERY_LOW, OFFLINE_SUSPECT</span>
+                </div>
+                <div class="rules-table-container" id="sentinel-rules-container">
+                  <div class="raw-loading">
+                    <i class="ph-bold ph-spinner"></i>
+                    <span>Carregando regras...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: CONFIGURAÇÕES -->
+          <div class="atlas-tab-panel" id="sentinel-panel-s-config">
+            <div class="atlas-config-grid">
+              <div class="section-block config-block">
+                <div class="section-header">
+                  <h2><i class="ph-bold ph-sliders"></i> Parâmetros do Sentinel</h2>
+                </div>
+                <div class="config-form">
+                  <div class="config-group">
+                    <label>Stream de Entrada</label>
+                    <input type="text" id="sentinel-cfg-stream" value="telemetry.validated" readonly
+                      class="config-input disabled" />
+                    <span class="config-hint">O Sentinel consome dados validados pelo CAOS</span>
+                  </div>
+                  <div class="config-group">
+                    <label>Tenant Padrão</label>
+                    <input type="text" id="sentinel-cfg-tenant" value="client" class="config-input" />
+                  </div>
+                  <div class="config-group">
+                    <label>Intervalo de Health Check (segundos)</label>
+                    <input type="number" id="sentinel-cfg-health-interval" value="30" min="10" max="300"
+                      class="config-input" />
+                  </div>
+                  <div class="config-group">
+                    <label>Timeout Offline Suspect (minutos)</label>
+                    <input type="number" id="sentinel-cfg-offline-timeout" value="60" min="5" max="1440"
+                      class="config-input" />
+                    <span class="config-hint">Tempo sem eventos para marcar asset como offline</span>
+                  </div>
+                </div>
+                <div class="config-actions">
+                  <button class="btn-secondary" id="sentinel-config-reset">
+                    <i class="ph-bold ph-arrow-counter-clockwise"></i>
+                    Resetar
+                  </button>
+                  <button class="btn-primary" id="sentinel-config-save" disabled>
+                    <i class="ph-bold ph-floppy-disk"></i>
+                    Salvar
+                  </button>
+                </div>
+              </div>
+
+              <div class="section-block config-block">
+                <div class="section-header">
+                  <h2><i class="ph-bold ph-database"></i> Status do Banco</h2>
+                </div>
+                <div class="config-status-grid">
+                  <div class="config-status-item">
+                    <span class="status-label">Conexão PostgreSQL</span>
+                    <span class="status-value success" id="sentinel-db-status">Conectado</span>
+                  </div>
+                  <div class="config-status-item">
+                    <span class="status-label">Total de Assets</span>
+                    <span class="status-value" id="sentinel-db-assets">--</span>
+                  </div>
+                  <div class="config-status-item">
+                    <span class="status-label">Total de Alertas</span>
+                    <span class="status-value" id="sentinel-db-total-alerts">--</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 5: LOGS -->
+          <div class="atlas-tab-panel" id="sentinel-panel-s-logs">
+            <div class="atlas-monitoring-sections" style="margin-top: 0;">
+              <div class="section-block monitoring-block" style="margin: 0;">
+                <div class="section-header">
+                  <h2><i class="ph-bold ph-file-text"></i> Logs do Sentinel</h2>
+                  <button class="btn-refresh-inline" id="sentinel-refresh-logs">
+                    <i class="ph-bold ph-arrow-clockwise"></i>
+                  </button>
+                </div>
+                <div class="logs-container sentinel-logs" id="sentinel-logs-container">
+                  <div class="log-entry info">
+                    <span class="log-time">--:--:--</span>
+                    <span class="log-type">INFO</span>
+                    <span class="log-msg">Aguardando logs do Sentinel...</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ============================================
+           STREAM DETAIL SECTION
+           ============================================ -->
+      <div class="content-section" id="section-stream-detail">
+
+        <!-- BACK BUTTON & HEADER -->
+        <div class="stream-detail-header">
+          <button class="btn-back" id="btn-back-to-streams">
+            <i class="ph-bold ph-arrow-left"></i>
+            <span>Voltar para Streams</span>
+          </button>
+          <div class="stream-hero">
+            <div class="stream-hero-icon">
+              <i class="ph-fill ph-flow-arrow"></i>
+            </div>
+            <div class="stream-hero-info">
+              <h1 id="detail-stream-name">telemetry.received</h1>
+              <p class="stream-hero-sub">
+                <span class="hero-badge active" id="detail-stream-status">
+                  <span class="pulse-micro"></span> Ativo
+                </span>
+                <span class="hero-separator">•</span>
+                <span id="detail-stream-time-range">Últimas 27 horas</span>
+              </p>
+            </div>
+            <button class="btn-primary" id="btn-refresh-stream-detail">
+              <i class="ph-bold ph-arrow-clockwise"></i>
+              Atualizar
+            </button>
+          </div>
+        </div>
+
+        <!-- STATS CARDS ROW -->
+        <div class="stream-detail-stats">
+          <div class="stat-card gradient-blue">
+            <div class="stat-card-icon">
+              <i class="ph-fill ph-database"></i>
+            </div>
+            <div class="stat-card-content">
+              <span class="stat-card-value" id="detail-stat-messages">--</span>
+              <span class="stat-card-label">Total de Mensagens</span>
+            </div>
+            <div class="stat-card-trend up">
+              <i class="ph-bold ph-trend-up"></i>
+            </div>
+          </div>
+
+          <div class="stat-card gradient-green">
+            <div class="stat-card-icon">
+              <i class="ph-fill ph-users-three"></i>
+            </div>
+            <div class="stat-card-content">
+              <span class="stat-card-value" id="detail-stat-consumers">--</span>
+              <span class="stat-card-label">Consumers Ativos</span>
+            </div>
+          </div>
+
+          <div class="stat-card gradient-yellow">
+            <div class="stat-card-icon">
+              <i class="ph-fill ph-clock-countdown"></i>
+            </div>
+            <div class="stat-card-content">
+              <span class="stat-card-value" id="detail-stat-pending">--</span>
+              <span class="stat-card-label">Pendentes</span>
+            </div>
+          </div>
+
+          <div class="stat-card gradient-purple">
+            <div class="stat-card-icon">
+              <i class="ph-fill ph-chart-line-up"></i>
+            </div>
+            <div class="stat-card-content">
+              <span class="stat-card-value" id="detail-stat-rate">--</span>
+              <span class="stat-card-label">Mensagens/Hora</span>
+            </div>
+          </div>
+
+          <div class="stat-card gradient-red">
+            <div class="stat-card-icon">
+              <i class="ph-fill ph-stack"></i>
+            </div>
+            <div class="stat-card-content">
+              <span class="stat-card-value" id="detail-stat-groups">--</span>
+              <span class="stat-card-label">Consumer Groups</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TWO COLUMN: CHART + CONSUMERS -->
+        <div class="stream-detail-grid">
+          <!-- THROUGHPUT CHART -->
+          <div class="section-block stream-chart-section">
+            <div class="section-header">
+              <h2><i class="ph-bold ph-chart-line"></i> Throughput</h2>
+              <div class="header-controls">
+                <div class="chart-toggles">
+                  <button class="chart-toggle active" data-interval="day"
+                    onclick="toggleChartInterval('day')">Dia</button>
+                  <button class="chart-toggle" data-interval="month" onclick="toggleChartInterval('month')">Mês</button>
+                </div>
+              </div>
+            </div>
+            <div class="chart-container" id="throughput-chart-container">
+              <canvas id="stream-throughput-chart"></canvas>
+            </div>
+          </div>
+
+          <!-- CONSUMER GROUPS -->
+          <div class="section-block stream-consumers-section">
+            <div class="section-header">
+              <h2><i class="ph-bold ph-users-three"></i> Consumer Groups</h2>
+              <span class="section-badge" id="detail-groups-badge">0 grupos</span>
+            </div>
+            <div class="consumers-list" id="detail-consumers-container">
+              <div class="consumer-group-empty">
+                <i class="ph-bold ph-user-circle-dashed"></i>
+                <span>Carregando consumer groups...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MESSAGES TABLE -->
+        <div class="section-block stream-messages-section">
+          <div class="section-header">
+            <div class="messages-header-left">
+              <h2><i class="ph-bold ph-envelope-simple"></i> Mensagens Recentes</h2>
+              <span class="section-badge" id="detail-messages-badge">0 mensagens</span>
+            </div>
+            <div class="messages-header-right">
+              <div class="messages-filters">
+                <select id="messages-status-filter" class="filter-select" title="Filtrar por status">
+                  <option value="">Todos status</option>
+                  <option value="pending">Pendente</option>
+                  <option value="processed">Processada</option>
+                  <option value="has-errors">Com Erros</option>
+                  <option value="all-success">OK</option>
+                </select>
+                <select id="messages-reason-filter" class="filter-select" title="Filtrar por razão">
+                  <option value="">Todas razões</option>
+                  <option value="unknown_client">Client desconhecido</option>
+                  <option value="invalid_json">JSON inválido</option>
+                  <option value="missing_asset">Asset ausente</option>
+                  <option value="rate_limit">Rate limit</option>
+                  <option value="validation_error">Erro de validação</option>
+                </select>
+                <select id="messages-sort" class="filter-select" title="Ordenar por">
+                  <option value="desc">Mais recentes</option>
+                  <option value="asc">Mais antigos</option>
+                </select>
+              </div>
+              <div class="messages-search">
+                <i class="ph-bold ph-magnifying-glass"></i>
+                <input type="text" id="messages-search-input" placeholder="Buscar..." />
+              </div>
+              <button class="btn-outline" id="btn-export-messages">
+                <i class="ph-bold ph-download-simple"></i>
+                Exportar
+              </button>
+            </div>
+          </div>
+          <div class="messages-table-wrapper">
+            <table class="detail-messages-table">
+              <thead>
+                <tr>
+                  <th class="col-id">ID da Mensagem</th>
+                  <th class="col-time">Timestamp</th>
+                  <th class="col-status">Status</th>
+                  <th class="col-reason" id="col-reason-header">Razão</th>
+                  <th class="col-payload">Payload</th>
+                  <th class="col-actions"></th>
+                </tr>
+              </thead>
+              <tbody id="detail-messages-tbody">
+                <tr class="loading-row">
+                  <td colspan="6">
+                    <div class="loading-spinner"></div>
+                    <span>Carregando mensagens...</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- PAGINATION -->
+          <div class="messages-pagination" id="messages-pagination">
+            <div class="pagination-info">
+              <span id="pagination-showing">Mostrando 0-0</span>
+              <span>de</span>
+              <span id="pagination-total">0</span>
+            </div>
+            <div class="pagination-controls">
+              <select id="messages-per-page" class="filter-select" title="Itens por página">
+                <option value="10">10 por página</option>
+                <option value="25" selected>25 por página</option>
+                <option value="50">50 por página</option>
+                <option value="100">100 por página</option>
+              </select>
+              <div class="pagination-buttons">
+                <button class="pagination-btn" id="pagination-prev" disabled>
+                  <i class="ph-bold ph-caret-left"></i>
+                </button>
+                <span class="pagination-page" id="pagination-current">Página 1</span>
+                <button class="pagination-btn" id="pagination-next">
+                  <i class="ph-bold ph-caret-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- INFO POPUP MODAL -->
+  <div class="modal info-popup-modal" id="info-popup-modal">
+    <div class="modal-backdrop" onclick="closeInfoPopup()"></div>
+    <div class="modal-content info-popup-content">
+      <div class="modal-header info-popup-header" id="info-popup-header">
+        <div class="info-popup-icon" id="info-popup-icon">
+          <i class="ph-fill ph-check-circle"></i>
+        </div>
+        <div class="info-popup-title-group">
+          <h3 id="info-popup-title">Título</h3>
+          <span class="info-popup-subtitle" id="info-popup-subtitle">Subtítulo</span>
+        </div>
+        <button class="modal-close" onclick="closeInfoPopup()">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body info-popup-body" id="info-popup-body">
+        <!-- Content populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal" id="settings-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Configurações</h3>
+        <button class="modal-close" id="close-settings">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label>API URL</label>
+          <input type="text" id="api-url-input" value="http://localhost:8001" />
+        </div>
+        <div class="setting-group">
+          <label>Intervalo de Polling (ms)</label>
+          <input type="number" id="poll-interval" value="3000" min="1000" max="30000" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="cancel-settings">Cancelar</button>
+        <button class="btn-primary" id="save-settings">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ATLAS CONFIGURATION MODAL -->
+  <div class="modal atlas-config-modal" id="atlas-config-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content large-modal">
+      <div class="modal-header atlas-modal-header">
+        <div class="modal-header-left">
+          <div class="atlas-modal-icon">
+            <i class="ph-fill ph-globe"></i>
+          </div>
+          <div class="modal-title-group">
+            <h3>Configuração do Atlas Agent</h3>
+            <span class="modal-subtitle" id="atlas-config-version">v1.0.0</span>
+          </div>
+        </div>
+        <button class="modal-close" id="close-atlas-config">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <!-- TABS -->
+      <div class="config-tabs">
+        <button class="config-tab active" data-tab="general">
+          <i class="ph-bold ph-sliders-horizontal"></i>
+          Geral
+        </button>
+        <button class="config-tab" data-tab="database">
+          <i class="ph-bold ph-database"></i>
+          Database
+        </button>
+        <button class="config-tab" data-tab="redis">
+          <i class="ph-bold ph-lightning"></i>
+          Redis
+        </button>
+        <button class="config-tab" data-tab="security">
+          <i class="ph-bold ph-shield-check"></i>
+          Segurança
+        </button>
+        <button class="config-tab" data-tab="scheduling">
+          <i class="ph-bold ph-clock"></i>
+          Agendamento
+        </button>
+      </div>
+
+      <div class="modal-body config-modal-body">
+        <!-- GENERAL TAB -->
+        <div class="config-tab-content active" id="tab-general">
+          <div class="config-section">
+            <h4><i class="ph-bold ph-app-window"></i> Aplicação</h4>
+            <div class="config-grid">
+              <div class="config-field">
+                <label>Nome da Aplicação</label>
+                <input type="text" id="cfg-app-name" readonly />
+              </div>
+              <div class="config-field">
+                <label>Versão</label>
+                <input type="text" id="cfg-app-version" readonly />
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <h4><i class="ph-bold ph-computer-tower"></i> Servidor</h4>
+            <div class="config-grid">
+              <div class="config-field">
+                <label>Workers</label>
+                <input type="number" id="cfg-workers" min="1" max="16" />
+                <span class="field-hint">Número de workers uvicorn</span>
+              </div>
+              <div class="config-field">
+                <label>Log Level</label>
+                <select id="cfg-log-level">
+                  <option value="DEBUG">DEBUG</option>
+                  <option value="INFO">INFO</option>
+                  <option value="WARNING">WARNING</option>
+                  <option value="ERROR">ERROR</option>
+                </select>
+              </div>
+              <div class="config-field toggle-field">
+                <label>Modo Debug</label>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="cfg-debug" />
+                  <span class="toggle-slider"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <h4><i class="ph-bold ph-activity"></i> Status Atual</h4>
+            <div class="status-cards-row">
+              <div class="status-card">
+                <i class="ph-bold ph-heartbeat"></i>
+                <div class="status-info">
+                  <span class="status-value" id="atlas-status-health">--</span>
+                  <span class="status-label">Health</span>
+                </div>
+              </div>
+              <div class="status-card">
+                <i class="ph-bold ph-timer"></i>
+                <div class="status-info">
+                  <span class="status-value" id="atlas-status-uptime">--</span>
+                  <span class="status-label">Uptime</span>
+                </div>
+              </div>
+              <div class="status-card">
+                <i class="ph-bold ph-calendar-check"></i>
+                <div class="status-info">
+                  <span class="status-value" id="atlas-routine-status">--</span>
+                  <span class="status-label">Rotina</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DATABASE TAB -->
+        <div class="config-tab-content" id="tab-database">
+          <div class="config-section">
+            <h4><i class="ph-bold ph-plug"></i> Conexão PostgreSQL</h4>
+            <div class="config-grid single-col">
+              <div class="config-field full-width">
+                <label>DATABASE_URL</label>
+                <input type="text" id="cfg-database-url" placeholder="postgresql://user:pass@host:port/dbname" />
+                <span class="field-hint">Formato: postgresql://user:password@host:port/database</span>
+              </div>
+            </div>
+            <button class="btn-test" id="btn-test-db">
+              <i class="ph-bold ph-plugs-connected"></i>
+              Testar Conexão
+            </button>
+            <div class="test-result" id="db-test-result"></div>
+          </div>
+
+          <div class="config-section">
+            <h4><i class="ph-bold ph-stack"></i> Pool de Conexões</h4>
+            <div class="config-grid">
+              <div class="config-field">
+                <label>Pool Size</label>
+                <input type="number" id="cfg-pool-size" min="1" max="100" />
+                <span class="field-hint">Conexões base</span>
+              </div>
+              <div class="config-field">
+                <label>Max Overflow</label>
+                <input type="number" id="cfg-max-overflow" min="0" max="100" />
+                <span class="field-hint">Conexões extras</span>
+              </div>
+              <div class="config-field">
+                <label>Pool Recycle (s)</label>
+                <input type="number" id="cfg-pool-recycle" min="300" max="7200" />
+                <span class="field-hint">Tempo para reciclar</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REDIS TAB -->
+        <div class="config-tab-content" id="tab-redis">
+          <div class="config-section">
+            <h4><i class="ph-bold ph-plugs-connected"></i> Conexão Redis</h4>
+            <div class="config-grid single-col">
+              <div class="config-field full-width">
+                <label>REDIS_URL</label>
+                <input type="text" id="cfg-redis-url" placeholder="redis://host:port/db" />
+                <span class="field-hint">Formato: redis://host:port/database</span>
+              </div>
+              <div class="config-field full-width">
+                <label>Sentinel Stream</label>
+                <input type="text" id="cfg-sentinel-stream" placeholder="telemetry.received" />
+                <span class="field-hint">Stream para envio de telemetria</span>
+              </div>
+            </div>
+            <button class="btn-test" id="btn-test-redis">
+              <i class="ph-bold ph-lightning"></i>
+              Testar Conexão Redis
+            </button>
+            <div class="test-result" id="redis-test-result"></div>
+          </div>
+        </div>
+
+        <!-- SECURITY TAB -->
+        <div class="config-tab-content" id="tab-security">
+          <div class="config-section">
+            <h4><i class="ph-bold ph-key"></i> API Key</h4>
+            <div class="config-grid single-col">
+              <div class="config-field full-width">
+                <label>API Key</label>
+                <div class="password-field">
+                  <input type="password" id="cfg-api-key" placeholder="Your API Key" />
+                  <button class="btn-toggle-visibility" id="btn-toggle-api-key">
+                    <i class="ph-bold ph-eye"></i>
+                  </button>
+                </div>
+                <span class="field-hint">Usada para autenticação nas requisições</span>
+              </div>
+            </div>
+            <button class="btn-outline btn-generate-key" id="btn-generate-key">
+              <i class="ph-bold ph-arrows-clockwise"></i>
+              Gerar Nova API Key
+            </button>
+          </div>
+        </div>
+
+        <!-- SCHEDULING TAB -->
+        <div class="config-tab-content" id="tab-scheduling">
+          <div class="config-section">
+            <h4><i class="ph-bold ph-calendar"></i> Rotina Diária</h4>
+            <div class="config-grid">
+              <div class="config-field">
+                <label>Expressão Cron</label>
+                <input type="text" id="cfg-cron-schedule" placeholder="0 10 * * *" />
+              </div>
+              <div class="config-field">
+                <label>Descrição</label>
+                <input type="text" id="cfg-cron-description" readonly />
+              </div>
+            </div>
+            <div class="cron-presets">
+              <span class="preset-label">Presets:</span>
+              <button class="cron-preset" data-cron="0 10 * * *">07:00 BRT</button>
+              <button class="cron-preset" data-cron="0 13 * * *">10:00 BRT</button>
+              <button class="cron-preset" data-cron="0 21 * * *">18:00 BRT</button>
+              <button class="cron-preset" data-cron="*/5 * * * *">A cada 5 min</button>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <h4><i class="ph-bold ph-play"></i> Execução Manual</h4>
+            <p class="section-description">Execute a rotina diária manualmente (scraping + importação).</p>
+            <div class="routine-status" id="routine-status-box">
+              <i class="ph-bold ph-check-circle"></i>
+              <span id="routine-status-message">Última execução: --</span>
+            </div>
+            <button class="btn-primary btn-trigger" id="btn-trigger-routine">
+              <i class="ph-bold ph-play-circle"></i>
+              Executar Rotina Agora
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer config-modal-footer">
+        <div class="footer-left">
+          <button class="btn-danger" id="btn-restart-atlas">
+            <i class="ph-bold ph-arrow-clockwise"></i>
+            Reiniciar Atlas
+          </button>
+        </div>
+        <div class="footer-right">
+          <button class="btn-secondary" id="cancel-atlas-config">Cancelar</button>
+          <button class="btn-primary" id="save-atlas-config">
+            <i class="ph-bold ph-floppy-disk"></i>
+            Salvar Configurações
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STREAM DETAIL MODAL -->
+  <div class="modal stream-modal" id="stream-detail-modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content modal-large">
+      <div class="modal-header stream-modal-header">
+        <div class="stream-modal-title">
+          <i class="ph-fill ph-flow-arrow"></i>
+          <h3 id="stream-modal-name">Stream Name</h3>
+        </div>
+        <button class="modal-close" id="close-stream-modal">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="modal-body stream-modal-body">
+        <!-- STREAM STATS ROW -->
+        <div class="stream-stats-row">
+          <div class="stream-stat-card">
+            <i class="ph-fill ph-database"></i>
+            <div class="stat-info">
+              <span class="stat-value" id="stream-detail-length">--</span>
+              <span class="stat-label">Mensagens</span>
+            </div>
+          </div>
+          <div class="stream-stat-card">
+            <i class="ph-fill ph-users"></i>
+            <div class="stat-info">
+              <span class="stat-value" id="stream-detail-consumers">--</span>
+              <span class="stat-label">Consumers</span>
+            </div>
+          </div>
+          <div class="stream-stat-card">
+            <i class="ph-fill ph-clock-countdown"></i>
+            <div class="stat-info">
+              <span class="stat-value" id="stream-detail-pending">--</span>
+              <span class="stat-label">Pendentes</span>
+            </div>
+          </div>
+          <div class="stream-stat-card">
+            <i class="ph-fill ph-chart-line-up"></i>
+            <div class="stat-info">
+              <span class="stat-value" id="stream-detail-rate">--</span>
+              <span class="stat-label">msg/hora</span>
+            </div>
+          </div>
+          <div class="stream-stat-card">
+            <i class="ph-fill ph-timer"></i>
+            <div class="stat-info">
+              <span class="stat-value" id="stream-detail-hours">--</span>
+              <span class="stat-label">horas</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TWO COLUMN LAYOUT -->
+        <div class="stream-detail-columns">
+          <!-- LEFT: CONSUMERS -->
+          <div class="stream-detail-panel">
+            <div class="panel-header">
+              <h4><i class="ph-bold ph-users-three"></i> Consumer Groups</h4>
+              <span class="panel-badge" id="stream-groups-count">0 grupos</span>
+            </div>
+            <div class="panel-content" id="stream-consumers-list">
+              <div class="empty-state">
+                <i class="ph-bold ph-user-circle"></i>
+                <span>Nenhum consumer group</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: MESSAGES -->
+          <div class="stream-detail-panel messages-panel">
+            <div class="panel-header">
+              <h4><i class="ph-bold ph-envelope-simple"></i> Mensagens Recentes</h4>
+              <span class="panel-badge" id="stream-messages-count">0 mensagens</span>
+            </div>
+            <div class="panel-content messages-table-container" id="stream-messages-list">
+              <table class="messages-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Timestamp</th>
+                    <th>Payload</th>
+                  </tr>
+                </thead>
+                <tbody id="stream-messages-tbody">
+                  <tr>
+                    <td colspan="3" class="empty-row">Carregando mensagens...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer stream-modal-footer">
+        <span class="stream-modal-info" id="stream-modal-first-id">
+          <i class="ph-bold ph-arrow-line-left"></i> Primeiro: --
+        </span>
+        <span class="stream-modal-info" id="stream-modal-last-id">
+          <i class="ph-bold ph-arrow-line-right"></i> Último: --
+        </span>
+        <button class="btn-primary" id="refresh-stream-modal">
+          <i class="ph-bold ph-arrow-clockwise"></i>
+          Atualizar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/dashboard/assets/js/debug.js?v=1"></script>
+  <script src="/dashboard/assets/js/caos-dashboard.js?v=13"></script>
+</body>
+
+</html>

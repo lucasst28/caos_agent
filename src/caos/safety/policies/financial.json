@@ -1,0 +1,64 @@
+{
+  "category": "FINANCIAL",
+  "metadata": {
+    "name": "Regras Financeiras",
+    "description": "Controle de custos e budget",
+    "weight": 0.9
+  },
+  "rules": [
+    {
+      "id": "FIN_001",
+      "category": "FINANCIAL",
+      "name": "Budget Diário Excedido",
+      "condition": "daily_cost > llm_daily_cost_budget_usd",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Budget diário de LLM excedido. Operação vetada."
+    },
+    {
+      "id": "FIN_002",
+      "category": "FINANCIAL",
+      "name": "Token Budget Excedido",
+      "condition": "daily_tokens > llm_daily_token_budget",
+      "action": "DEGRADE",
+      "severity": "MEDIUM",
+      "message": "Budget de tokens excedido. Modo degradado ativado."
+    },
+    {
+      "id": "FIN_003",
+      "category": "FINANCIAL",
+      "name": "Custo de Ação Alto",
+      "condition": "estimated_cost > 1000",
+      "action": "REQUIRE_APPROVAL",
+      "severity": "HIGH",
+      "message": "Custo estimado > R$1000. Requer aprovação gerencial."
+    },
+    {
+      "id": "FIN_004",
+      "category": "FINANCIAL",
+      "name": "Custo de Ação Muito Alto",
+      "condition": "estimated_cost > 5000",
+      "action": "REQUIRE_APPROVAL",
+      "severity": "BLOCKING",
+      "message": "Custo estimado > R$5000. Requer aprovação diretoria."
+    },
+    {
+      "id": "FIN_005",
+      "category": "FINANCIAL",
+      "name": "Impacto Financeiro Oracle",
+      "condition": "oracle_forecast.financial_impact > 10000",
+      "action": "REQUIRE_APPROVAL",
+      "severity": "HIGH",
+      "message": "Impacto financeiro previsto > R$10000."
+    },
+    {
+      "id": "FIN_006",
+      "category": "FINANCIAL",
+      "name": "Rate Limit API",
+      "condition": "api_calls_per_minute > 100",
+      "action": "DEGRADE",
+      "severity": "MEDIUM",
+      "message": "Rate limit próximo. Reduzindo chamadas."
+    }
+  ]
+}

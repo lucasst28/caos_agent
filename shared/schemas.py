@@ -1,8 +1,21 @@
 # shared/schemas.py
 """
-Schemas Pydantic compartilhados para o CAOS Framework.
-Utilizados por todos os serviços do ecossistema.
+⚠️  DEPRECATED — Este módulo NÃO é utilizado pelo core CAOS (src/caos/).
+
+Os schemas canônicos do agente CAOS estão em ``src/caos/schemas/``.
+Este arquivo é mantido apenas por retrocompatibilidade com:
+  • services/atlas_supervisor/
+  • sdk/atlas/client.py
+
+Novos consumidores devem importar de ``src.caos.schemas`` em vez deste módulo.
+Este arquivo será removido numa versão futura.
 """
+import warnings as _warnings
+_warnings.warn(
+    "shared.schemas is deprecated. Use src.caos.schemas instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 from datetime import datetime
 from enum import Enum

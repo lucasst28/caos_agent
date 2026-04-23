@@ -1,0 +1,2830 @@
+\documentclass[12pt, a4paper]{article} 
+
+\usepackage[utf8]{inputenc}       
+\usepackage[T1]{fontenc}          
+\usepackage[brazil]{babel}        
+\usepackage{geometry}          
+\usepackage{graphicx}             
+\usepackage{array}              
+\usepackage{hyperref}             
+\usepackage{amsmath}
+\usepackage{lastpage}
+\usepackage[export]{adjustbox} 
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{shapes, arrows.meta, positioning, fit, shapes.geometric, backgrounds}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{appendix} 
+\usepackage{longtable} 
+\usepackage{url}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[table]{colortbl}
+\usepackage{tcolorbox}
+\usepackage{float}
+
+\pagestyle{fancy}           
+\fancyhf{}                  
+\renewcommand{\headrulewidth}{0pt} 
+\renewcommand{\footrulewidth}{0.4pt} 
+
+\fancyfoot[L]{\small \quad Vers. : \docVersion} 
+\fancyfoot[R]{\small Pagina : \thepage{} / \pageref{LastPage}} 
+
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0.4pt}
+  \fancyfoot[L]{\small \quad Vers. : \docVersion}
+  \fancyfoot[R]{\small Pagina : \thepage{} / \pageref{LastPage}}
+}
+
+\geometry{a4paper, top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+
+% === INFORMACOES DO DOCUMENTO ===
+\newcommand{\projectTitle}{CAOS Agent}
+\newcommand{\projectSubtitle}{Framework Agêntico \& Governança}
+\newcommand{\docType}{Documento de Especificação Técnica} 
+\newcommand{\docVersion}{18.2}
+\newcommand{\docDate}{\today} 
+\newcommand{\docCreationDate}{23 de janeiro de 2026} 
+\newcommand{\companyUnit}{VivAIOT - Ecossistema de Monitoramento IoT} 
+\newcommand{\companyAddress}{Sistema de Gestão de Ativos}
+\newcommand{\addressedTo}{Equipe de Desenvolvimento Viva AI} 
+\newcommand{\authorName}{Lucas Severino}
+
+% === CORES ===
+\definecolor{vivacolor}{RGB}{0,102,204}
+\definecolor{caoscolor}{RGB}{128,0,128} % Roxo para o CAOS
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% === CONFIGURACAO DE CODIGO ===
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{
+    style=mystyle,
+    inputencoding=utf8,
+    extendedchars=true,
+    literate={á}{{\'a}}1 {ã}{{\~a}}1 {é}{{\'e}}1 {ç}{{\c{c}}}1 {ó}{{\'o}}1 {õ}{{\~o}}1 {í}{{\'i}}1 {ú}{{\'u}}1 {Á}{{\'A}}1 {Ã}{{\~A}}1 {É}{{\'E}}1 {Ç}{{\c{C}}}1 {Ó}{{\'O}}1 {Õ}{{\~O}}1 {Í}{{\'I}}1 {Ú}{{\'U}}1 {â}{{\^a}}1 {ê}{{\^e}}1 {ô}{{\^o}}1 {Â}{{\^A}}1 {Ê}{{\^E}}1 {Ô}{{\^O}}1
+}
+
+% === CAIXAS ===
+\newtcolorbox{notabox}[1][]{
+    colback=caoscolor!5!white,
+    colframe=caoscolor,
+    title=#1,
+    fonttitle=\bfseries
+}
+
+\newtcolorbox{avisobox}[1][]{
+    colback=yellow!10!white,
+    colframe=orange!80!black,
+    title=#1,
+    fonttitle=\bfseries
+}
+
+\begin{document}
+
+% ============================================================================
+% CAPA
+% ============================================================================
+\begin{titlepage}
+    \centering 
+
+    \noindent 
+    \begin{tabular}[b]{@{}l@{}}
+        \includegraphics[height=3cm]{img/logo_vivaiot.png}
+    \end{tabular}
+    \hfill
+    \begin{tabular}[b]{@{}r@{}} 
+        \small 
+        Vers. : \docVersion \\
+        Data : \docDate \\
+        Pagina : \thepage{} / \pageref{LastPage} \\
+        Data de criação : \docCreationDate \\
+    \end{tabular}
+
+    \vspace{2cm} 
+
+    \large{\textbf{VivAIOT - Sistema de Monitoramento de Ativos IoT}} \\ 
+
+    \normalsize{\companyUnit} \\ 
+
+    \vspace{3cm} 
+
+    {\Huge\bfseries \docType} \\ 
+
+    \vspace{1cm} 
+
+    {\Large\bfseries \projectTitle} \\ 
+    {\large \projectSubtitle} \\ 
+    \vspace{2cm} 
+
+    \begin{flushleft} 
+        Destinado a : \\
+        \addressedTo \\ 
+    \end{flushleft}
+
+    \vfill 
+
+    \noindent 
+    \fbox{ 
+        \begin{minipage}{0.95\textwidth}
+            \begin{minipage}[t]{0.5\textwidth}
+                \raggedright
+                \textbf{Redigido por :} \\
+                \vspace{0.5cm} 
+                \authorName \\
+            \end{minipage}
+            \begin{minipage}[t]{0.5\textwidth}
+                \raggedleft
+            \end{minipage}
+            \vspace{1cm} 
+        \end{minipage}
+    }
+
+    \vspace{1cm}
+
+    \centering
+    \small
+
+    \companyAddress \\ 
+
+\end{titlepage}
+
+% ============================================================================
+% SUMARIO
+% ============================================================================
+\newpage
+\tableofcontents
+\newpage
+
+\listoffigures 
+\newpage 
+
+% ============================================================================
+% HISTORICO DE REVISOES
+% ============================================================================
+\section*{Histórico de Revisões}
+\vspace{0.5cm} 
+
+\begin{center} 
+    \begin{tabular}{|m{1.5cm}|m{3cm}|m{7.5cm}|m{2.5cm}|} 
+        \hline
+        \textbf{Versão} & \textbf{Data} & \textbf{Modificações} & \textbf{Autor} \\
+        \hline
+        1.0 & 23/01/2026 & Versão inicial do documento & \authorName \\
+        \hline
+        5.0 & 24/01/2026 & Adição da arquitetura LangGraph e Temporal.io & \authorName \\
+        \hline
+        10.0 & 25/01/2026 & Definição do algoritmo de veredito e faixas de decisão & \authorName \\
+        \hline
+        14.0 & 27/01/2026 & Motor de Guardrails e políticas JSON & \authorName \\
+        \hline
+        15.0 & 28/01/2026 & Catálogo completo de 38 Guardrails em 6 categorias & \authorName \\
+        \hline
+        16.0 & 28/01/2026 & Fluxos, contratos, observabilidade, testes e recovery & \authorName \\
+        \hline
+        17.0 & 28/01/2026 & Revisão estrutural: seções, tools expandidas & \authorName \\
+        \hline
+        17.5 & 28/01/2026 & Correções arquiteturais: 6 etapas, Oracle topology, Calibração, Extensibilidade & \authorName \\
+        \hline
+        18.0 & 28/01/2026 & Glossário expandido, Oracle no diagrama, seção de Limitações & \authorName \\
+        \hline
+        18.1 & 28/01/2026 & Diagrama de sequência com todos os 4 agentes + CAOS & \authorName \\
+        \hline
+        18.2 & 28/01/2026 & CARE como executor, 6 fases visuais no diagrama & \authorName \\
+        \hline
+        18.3 & 01/02/2026 & Substituição do Temporal.io por Google Cloud Workflows & \authorName \\
+        \hline
+    \end{tabular}
+\end{center} 
+\newpage 
+
+% ============================================================================
+% GLOSSARIO
+% ============================================================================
+\section*{Glossário} 
+\begin{description} 
+    \item[ASM :] Agentic State Machine - Máquina de Estados Agêntica
+    \item[CAOS :] Centralized Autonomous Operating System - Sistema Operacional Autônomo Centralizado
+    \item[Digital Twin :] Representação virtual de um ativo físico, sincronizada em tempo real
+    \item[FSM :] Finite State Machine - Máquina de Estados Finita
+    \item[Guardrail :] Regra de segurança que valida ações antes da execução
+    \item[HAL :] Hardware Abstraction Layer - Camada que traduz comandos lógicos em protocolos industriais
+    \item[Human-in-the-Loop :] Processo que exige aprovação humana
+    \item[LangGraph :] Framework para construir agentes com grafos e estado
+    \item[LOTO :] Lockout/Tagout - Protocolo de segurança que bloqueia equipamentos durante manutenção
+    \item[mTLS :] Mutual TLS - Autenticação mútua via certificados entre cliente e servidor
+    \item[Oracle :] Agente de predição que projeta cenários futuros usando modelos de ML
+    \item[Orquestração :] Coordenação centralizada de agentes e serviços
+    \item[Google Pub/Sub :] Sistema de mensageria para comunicação assíncrona global e serverless
+    \item[RAG :] Retrieval-Augmented Generation - Técnica que combina busca vetorial com geração de texto
+    \item[SLA :] Service Level Agreement - Acordo de Nível de Serviço
+    \item[Viva Co-Pilot :] Interface humana para interação e aprovação
+    \item[WORM :] Write Once Read Many - Armazenamento imutável para auditoria legal
+\end{description}
+\newpage
+
+% ============================================================================
+% SECAO 1: CONTEXTO E DEFINICAO CORE
+% ============================================================================
+% ============================================================================
+% CAPITULO 1: FUNDAÇÃO E METODOLOGIA
+% ============================================================================
+\section{Contexto e Objetivos}
+\label{sec:fundacao}
+
+O \textbf{CAOS (Centralized Autonomous Operating System)} representa uma mudança paradigmática na automação industrial: a transição de sistemas reativos (determinísticos) para sistemas cognitivos (probabilísticos).
+
+\subsection{O Conceito Judge-LM}
+
+Diferente de controladores tradicionais (PIDs, PLCs) que operam em lógica linear, o CAOS atua como um \textbf{Juiz Sintético}. Sua função não é apenas executar scripts, mas sim \textit{arbitrar} conflitos entre múltiplas fontes de dados (Sensores, Manuais, Previsões e Regras de Negócio) para determinar a ação ótima em cenários de alta incerteza.
+
+\subsection{Topologia do Sistema}
+
+A arquitetura do sistema é baseada em \textbf{Loops de Controle Cognitivo}. Conforme ilustrado na Figura \ref{fig:arquitetura_macro}, o sistema é composto por quatro domínios funcionais integrados via barramento de baixa latência:
+
+\begin{figure}[h!]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=1.0cm and 0.5cm, % Reduced Horizontal spacing
+        auto,
+        block/.style={
+            rectangle, 
+            draw=blue!60, 
+            fill=blue!5, 
+            thick, 
+            text width=2.5cm, % Slightly narrower blocks
+            align=center, 
+            rounded corners, 
+            minimum height=1.5cm
+        },
+        cloud/.style={
+            ellipse, 
+            draw=gray!40, 
+            fill=gray!5, 
+            dashed, 
+            minimum height=1.5cm,
+            text width=2.2cm,
+            align=center
+        },
+        line/.style={
+            draw, 
+            -Latex, 
+            thick
+        }
+    ]
+
+    % Nodes
+    \node [cloud] (world) {Mundo Físico\\(Fábrica)};
+    
+    % Sensors and Manuals stacked
+    \node [block, right=of world, yshift=1.2cm] (sensors) {Sensores \&\\Telemetria};
+    \node [block, right=of world, yshift=-1.2cm] (manuals) {Manuais \&\\Contexto};
+    
+    % Core centrally placed to the right of inputs
+    \node [block, right=of sensors, yshift=-1.2cm, minimum height=3.5cm, text width=3.2cm, fill=blue!10] (core) {\textbf{CAOS CORE}\\(Judge-LM)};
+    
+    \node [block, right=of core] (hal) {HAL\\(Care)};
+    
+    \node [cloud, right=of hal] (actuators) {Atuadores\\(Motores)};
+
+    % Labels inside Core
+    \node [font=\scriptsize, below=0.2cm of core.north] {Decision Engine};
+
+    % Paths
+    \path [line] (world.north) |- (sensors.west);
+    \path [line] (world.south) |- (manuals.west);
+    
+    \path [line] (sensors) -- node[above, font=\scriptsize, sloped] {Dados} (core.160);
+    \path [line] (manuals) -- node[below, font=\scriptsize, sloped] {Metadados} (core.200);
+    
+    \path [line] (core) -- node[midway, font=\scriptsize, align=center] {Comando} (hal);
+    \path [line] (hal) -- node[midway, font=\scriptsize, align=center] {Protocolo} (actuators);
+    
+    % Feedback loop
+    \draw [line, dashed] (actuators.south) |- ++(0,-1.0) -| (world.south) node[pos=0.25, below, font=\scriptsize] {Feedback};
+
+    \end{tikzpicture}
+    }
+    \caption{Diagrama de Blocos: Loop Cibernético de Controle}
+    \label{fig:arquitetura_macro}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Contexto (ATLAS)}: Ingestão de estado contextual. Fornece ao CAOS o \textit{significado} dos valores (ex: especificações técnicas indicam que 90°C é crítico para \textit{este} modelo específico).
+    \item \textbf{Instinto (SENTINEL)}: Detecção de anomalias em tempo real (<10ms). Detecta \textit{quando} os limites foram violados e classifica a severidade do alerta.
+    \item \textbf{Predição (ORACLE)}: Projeção de futuros possíveis. Agente \textbf{Opcional/Condicional} para otimização de custos de tokens. Calcula probabilidades: "Se executar ação X, qual a chance de resultado Y?".
+    \item \textbf{Deliberação (CAOS Core)}: O núcleo de inferência. Consome dados de ATLAS, SENTINEL e (se necessário) ORACLE para calcular o Veredito matemático ($V$).
+    \item \textbf{Verificação (GUARDRAILS)}: Sistema Imunológico. Veta ou aprova a ação proposta com base em políticas de segurança.
+    \item \textbf{Atuação (CARE)}: Camada de atuação ("os músculos") motorizada pelo \textbf{Google Cloud Workflows}. Traduz decisões lógicas em protocolos industriais seguros via HAL.
+\end{enumerate}
+
+\subsection{A Lógica de Julgamento (The Judgment Loop)}
+
+O CAOS opera em um loop contínuo de percepção e decisão. Diferente de sistemas baseados em regras rígidas ("Se/Então"), ele calcula um \textbf{Veredito Matemático} ($V$) para cada frame de realidade:
+
+\begin{equation}
+V = \frac{\text{Benesses (Atlas + } \hat{\text{O}}\text{racle)} - \text{Riscos (Sentinel)}}{\text{Guardrails (Leis)}}
+\end{equation}
+
+\noindent \textit{Nota: Esta é uma representação conceitual. Para a equação multi-dimensional exata e calibração de pesos, consulte a Seção \ref{sec:verdict_formula}.}
+
+O processo ocorre em \textbf{6 etapas cíclicas}:
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|c|l|l|l|}
+\hline
+\textbf{Etapa} & \textbf{Agente} & \textbf{Função} & \textbf{Domínio} \\ \hline
+1. Contexto & ATLAS & Coleta fatos (Digital Twin, manuais, specs) & Memória \\ \hline
+2. Instinto & SENTINEL & Detecta anomalias e alertas & Percepção \\ \hline
+3. Simulação & ORACLE & Projeta futuros possíveis (\textbf{Opcional/ROI}) & Predição \\ \hline
+4. Julgamento & CAOS & Aplica fórmula do Veredito ($V$) & Decisão \\ \hline
+5. Verificação & GUARDRAILS & Veta ou aprova a ação proposta & Segurança \\ \hline
+6. Execução & CARE & Executa ação física (HAL → Device) & Atuação \\ \hline
+\end{tabular}
+\caption{Ciclo Cognitivo de 6 Etapas}
+\end{table}
+
+\subsection{Topologia de Fluxo de Dados (Arquitetura Híbrida)}
+
+O CAOS utiliza uma arquitetura híbrida onde os \textbf{Guardrails funcionam como uma constituição interna} — um conjunto de princípios que o CAOS consulta para decidir qual ação tomar. Isso significa que, se a IA não alucinar, a ação proposta já foi verificada internamente e está ``dentro da lei''.
+
+Para ações de \textbf{alto risco}, o sistema adiciona camadas de verificação externa:
+\begin{itemize}
+    \item \textbf{Risco Baixo (LOW)}: Ação vai diretamente para o CARE.
+    \item \textbf{Risco Médio (MEDIUM)}: Verificação automática adicional (regras de negócio, limites).
+    \item \textbf{Risco Alto (HIGH)}: Requer aprovação humana explícita (Human-in-the-Loop).
+\end{itemize}
+
+\begin{figure}[h!]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=1.2cm and 1.5cm,
+        % Styles
+        agent/.style={rectangle, draw=black, thick, fill=pink!30, minimum width=2.2cm, minimum height=0.9cm, align=center, font=\footnotesize},
+        core/.style={rectangle, draw=purple!80, thick, fill=purple!20, minimum width=3cm, minimum height=3cm, align=center, font=\footnotesize\bfseries},
+        guardrail/.style={rectangle, draw=purple!60, thick, fill=purple!10, minimum width=2.2cm, minimum height=0.7cm, align=center, font=\scriptsize},
+        decision/.style={diamond, draw=orange!80, thick, fill=orange!10, aspect=1.8, font=\scriptsize\bfseries, inner sep=1pt},
+        verify/.style={rectangle, draw=blue!80, thick, fill=blue!10, minimum width=1.8cm, minimum height=0.7cm, align=center, font=\scriptsize},
+        hitl/.style={rectangle, draw=orange!80, thick, fill=orange!20, minimum width=1.8cm, minimum height=0.7cm, align=center, font=\scriptsize},
+        exec/.style={rectangle, draw=green!80, thick, fill=green!20, minimum width=2.2cm, minimum height=1.2cm, align=center, font=\footnotesize\bfseries},
+        device/.style={ellipse, draw=gray!60, dashed, fill=gray!5, minimum width=1.8cm, minimum height=0.9cm, align=center, font=\footnotesize},
+        arrow/.style={->, thick, >=stealth},
+        dashedarrow/.style={->, thick, >=stealth, dashed}
+    ]
+    
+    % === INPUT AGENTS (LEFT) ===
+    \node [agent] (atlas) at (0, 1.5) {ATLAS\\(Contexto)};
+    \node [agent] (sentinel) at (0, 0) {SENTINEL\\(Instinto)};
+    \node [agent] (oracle) at (0, -1.5) {ORACLE\\(Predição)};
+    
+    % === CAOS CORE WITH GUARDRAILS INSIDE ===
+    \node [core] (caos) at (4, 0) {};
+    \node [font=\footnotesize\bfseries, purple!80] at (4, 0.8) {CAOS};
+    \node [font=\scriptsize] at (4, 0.3) {(Judge)};
+    \node [guardrail] (guardrails) at (4, -0.6) {GUARDRAILS\\(Constituição)};
+    
+    % === RISK CLASSIFICATION ===
+    \node [decision] (risk) at (7.5, 0) {Risco?};
+    
+    % === VERIFICATION PATHS ===
+    \node [verify] (autoverify) at (10, 0) {Verificação\\Auto};
+    \node [hitl] (human) at (10, -2) {HITL\\(Humano)};
+    
+    % === EXECUTION ===
+    \node [exec] (care) at (13, 0) {CARE\\(Execução)};
+    \node [device] (device) at (16, 0) {Device};
+    
+    % === ARROWS: Agents -> CAOS ===
+    \draw [arrow] (atlas.east) -- node[above, font=\tiny] {$A$} (caos.155);
+    \draw [arrow] (sentinel.east) -- node[above, font=\tiny] {$S$} (caos.180);
+    \draw [dashedarrow] (oracle.east) -- node[above, font=\tiny] {$O$} (caos.205);
+    
+    % === ARROWS: CAOS -> Risk Decision ===
+    \draw [arrow] (caos.east) -- node[above, font=\tiny] {Ação Candidata} (risk.west);
+    
+    % === ARROWS: Risk Paths ===
+    % LOW - Direct to CARE
+    \draw [arrow, green!60!black] (risk.north) -- ++(0, 1.2) -| node[pos=0.15, above, font=\tiny, green!60!black] {LOW} (care.north);
+    
+    % MEDIUM - Auto Verification
+    \draw [arrow, blue!60!black] (risk.east) -- node[above, font=\tiny, blue!60!black] {MEDIUM} (autoverify.west);
+    \draw [arrow] (autoverify.east) -- (care.west);
+    
+    % HIGH - Human in the Loop
+    \draw [arrow, orange!80!black] (risk.south) -- node[left, font=\tiny, orange!80!black] {HIGH} (human.north);
+    \draw [arrow] (human.east) -| (care.south);
+    
+    % === ARROWS: CARE -> Device ===
+    \draw [arrow] (care.east) -- node[above, font=\tiny] {Command} (device.west);
+    
+    % === FEEDBACK LOOP ===
+    \draw [dashedarrow, gray] (device.south) -- ++(0,-1.5) -| node[below, font=\tiny, pos=0.15] {Feedback} (caos.south);
+    
+    \end{tikzpicture}
+    }
+    \caption{Topologia de Fluxo Híbrido: Agentes → CAOS (c/ Guardrails) → Classificação de Risco → Execução}
+    \label{fig:data_flow}
+\end{figure}
+
+\noindent (Para a definição matemática exata e pesos, consulte o \textbf{Capítulo \ref{sec:judge_algo}}).
+
+\subsection{Stack Tecnológica de Suporte}
+
+Apesar da mudança conceitual, a infraestrutura base permanece robusta para suportar a "Consciência":
+
+% ============================================================================
+% CAPITULO 2: ARQUITETURA MACRO E STACK
+% ============================================================================
+\section{Arquitetura}
+\label{sec:arquitetura_macro}
+
+
+
+\subsection{Decisões Tecnológicas (Rationale)}
+\begin{itemize}
+    \item \textbf{Cérebro (LangGraph on Cloud Run)}: O LangGraph é o \textit{Framework de Lógica} que gerencia o estado e loops cognitivos. Ele roda empacotado dentro de containers serverless no \textbf{Google Cloud Run}, garantindo escalabilidade.
+    \item \textbf{Inteligência (Vertex AI)}: O LangGraph não "pensa", ele "orquestra". O pensamento real vem do \textbf{Gemini 1.5 Pro}, acessado via API do Vertex AI.
+    \item \textbf{Memória (Firestore)}: O estado dos agentes é persistido no Firestore, permitindo que o Cloud Run escale a zero sem perder o contexto (Memory Saver).
+    \item \textbf{Atuação (Agente CARE via Cloud Workflows)}: O \textbf{Google Cloud Workflows} é o motor que dá vida ao Agente CARE. Ele recebe as decisões do CAOS e as transforma em uma sequência resiliente de comandos para os drivers do HAL, garantindo retentativas e tratamento de erros sem sobrecarregar a lógica cognitiva do CAOS.
+\end{itemize}
+
+\subsection{Infraestrutura Atual}
+Abaixo, o fluxo de dados entre os componentes da stack:
+
+\begin{figure}[h!]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=2.0cm,
+        auto,
+        >=stealth,
+        % Styles
+        container/.style={
+            rectangle, draw=black!50, dashed, fill=white, inner sep=0.3cm, rounded corners,
+            label={[anchor=north west, font=\tiny, color=gray]north west:#1}
+        },
+        component/.style={
+            rectangle, draw=black, thick, fill=white, 
+            minimum width=2.5cm, minimum height=1.0cm, align=center, font=\footnotesize
+        },
+        db/.style={
+            cylinder, shape border rotate=90, draw=black, thick, aspect=0.25,
+            minimum width=1.5cm, minimum height=1.5cm, align=center, font=\footnotesize
+        },
+        bus/.style={
+            rectangle, draw=red!80, fill=red!5, thick,
+            minimum width=12cm, minimum height=0.6cm, align=center, font=\bfseries\small
+        }
+    ]
+
+    % BUS (Pub/Sub)
+    \node [bus] (bus) {GOOGLE PUB/SUB (Global Event Bus)};
+
+    % BRAIN CLUSTER (LangGraph)
+    \node [component, above=2.0cm of bus.center, fill=blue!10] (cortex) {\textbf{Cortex}\\(LangGraph)};
+    \node [component, left=0.8cm of cortex, fill=blue!5] (sense) {\textbf{Sense}\\(Fusion)};
+    \node [component, right=0.8cm of cortex, fill=blue!5] (act) {\textbf{Act}\\(Planning)};
+    
+    % Container drawn on background layer to avoid covering nodes
+    \begin{pgfonlayer}{background}
+        \node [container={LangGraph Runtime}, fit=(sense)(cortex)(act), fill=blue!2] (brain) {};
+    \end{pgfonlayer}
+
+    % MEMORY (Postgres)
+    \node [db, above=1.5cm of cortex, fill=gray!10] (pg) {\textbf{Postgres}\\(Vector Store\\+ Checkpointer)};
+
+    % MOTOR (CARE Agent / Cloud Workflows)
+    \node [component, below=2.5cm of bus.center, fill=orange!10, text width=4.5cm] (care_wf) {\textbf{CARE Agent}\\(Cloud Workflows)};
+    \node [component, right=1.5cm of care_wf, fill=green!10] (hal_exec) {\textbf{HAL Drivers}\\(Cloud Run)};
+
+    % IOT SENSOR NODE - positioned to the left of CARE to avoid overlap
+    \node [component, left=1.5cm of care_wf, fill=gray!10] (iot_sensor) {\textbf{Sensor IoT}\\(Edge)};
+
+    % CONNECTIONS
+    % Telemetry arrow - from IoT Sensor to Bus (left side, no overlap)
+    \draw [->, thick, red] (iot_sensor.north) -- node[midway, left, font=\tiny, text=red] {Telemetry (100Hz)} (iot_sensor.north |- bus.south);
+    
+    \draw [->, thick] (bus.north -| sense.south) -- node[left, font=\tiny, pos=0.5] {Pull} (sense.south);
+    \draw [->, thick] (act.south) -- node[right, font=\tiny, pos=0.5] {Push Event} (bus.north -| act.south);
+    
+    \draw [<->, dashed] (cortex) -- node[right, font=\tiny] {RAG / State} (pg);
+
+    % 4. Bus -> CARE -> HAL
+    \draw [->, thick] (bus.south) -- node[right, font=\tiny] {Trigger CARE} (care_wf.north);
+    \draw [->, thick] (care_wf) -- node[above, font=\tiny] {HTTP/LOTO} (hal_exec);
+
+    % 5. HAL -> Physical Effect -> IoT Sensor (feedback loop)
+    \draw [->, thick, dashed] (hal_exec.south) -- ++(0,-0.8) -| (iot_sensor.south) node[pos=0.25, below, font=\tiny] {Effect (Side-Effect)};
+
+    \end{tikzpicture}
+    }
+    \caption{Arquitetura de Sistemas: Cérebro (CAOS) e Músculos (CARE)}
+    \label{fig:stack_flow}
+\end{figure}
+
+A tabela abaixo detalha cada escolha:
+
+\begin{table}[h!]
+\centering
+\renewcommand{\tabularxcolumn}[1]{m{#1}} % Force vertical centering
+\begin{tabularx}{\textwidth}{|>{\centering\arraybackslash}m{1.5cm}|l|l|X|}
+\hline
+\textbf{Logo} & \textbf{Categoria} & \textbf{Tecnologia} & \textbf{Função} \\ \hline
+\includegraphics[height=0.8cm]{img/langgraph-color.png} & Orquestração & LangGraph & Loop de Inferência Cognitiva (O Cérebro) \\ \hline
+\includegraphics[height=0.8cm]{img/vertexai.png} & Mensageria & \textbf{Google Cloud Pub/Sub} & Sistema Nervoso (Ingestão de Eventos) \\ \hline
+\includegraphics[height=0.8cm]{img/vertexai.png} & Instinto & \textbf{Google Pub/Sub} & Canal de Ingestão de Alertas (via Sentinel) \\ \hline
+\includegraphics[height=0.8cm]{img/vertexai.png} & Inteligência & \textbf{Vertex AI} & API de Inferência (Cérebro Auxiliar) \\ \hline
+\includegraphics[height=0.8cm]{img/vertexai.png} & Atuação & \textbf{CARE (via Workflows)} & Execução Serverless e Orquestração de HAL \\ \hline
+\end{tabularx}
+\caption{Infraestrutura Cognitiva}
+\end{table}
+
+\subsection{Análise de Redundância: LangGraph vs Cloud Workflows}
+Uma dúvida comum na arquitetura do CAOS é a aparente redundância entre usar dois orquestradores. Ambos gerenciam grafo e estado, mas operam em domínios de execução distintos.
+
+\subsubsection{Separação de Responsabilidades (Cérebro vs Operação)}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|p{6cm}|p{6cm}|}
+\hline
+\textbf{Característica} & \textbf{LangGraph (Cérebro)} & \textbf{Cloud Workflows (Músculo)} \\ \hline
+\textbf{Foco Principal} & Raciocínio, Contexto e Decisão. & Orquestração Serverless e Chamadas de API. \\ \hline
+\textbf{Tipo de Estado} & \textbf{Cognitivo (Short-Lived)}. Mantém o histórico da conversa e do pensamento atual. & \textbf{Operacional (Event-Driven)}. Gerencia o fluxo de execução de passos. \\ \hline
+\textbf{Loop de Controle} & Dinâmico/Probabilístico (LLM decide o próximo passo). & Sequencial/Determinístico (YAML define os gatilhos e passos). \\ \hline
+\textbf{Exemplo de Uso} & "Devo desligar este compressor com base nestes 3 manuais?" & "Recebi ordem de desligar. Enviando sinal HTTP e verificando feedback em 5s." \\ \hline
+\end{tabular}
+\caption{Matriz de Responsabilidade: LangGraph vs Cloud Workflows}
+\end{table}
+
+\subsubsection{Resolução de Conflitos}
+Para evitar "dois chefes" mandando na mesma tarefa, estabelecemos a regra de ouro:
+\begin{itemize}
+    \item \textbf{LangGraph é o Legislador}: Ele define \textbf{O QUE} deve ser feito. Ele não executa a ação, ele emite a "Ordem de Serviço".
+    \item \textbf{Cloud Workflows é o Executor}: Ele define \textbf{COMO} e \textbf{QUANDO} a ação será concluída. Ele recebe a ordem e coordena as chamadas técnicas aos drivers do CARE.
+\end{itemize}
+
+Esta separação resolve o problema de concorrência/redundância ao desacoplar estritamente a decisão da execução.
+% ============================================================================
+% 2.3 Detalhamento da Stack
+% ============================================================================
+\subsection{Detalhamento da Implementação por Tecnologia}
+
+Esta seção destrincha o papel e a implementação de cada componente da stack:
+
+\subsubsection{LangGraph on Cloud Run (O Cérebro)}
+\textbf{Implementação}: Utiliza o conceito de \textit{StateGraph} onde cada nó é uma função Python pura que recebe e retorna um estado tipado (`JudgeState`).
+\textbf{Uso}: Centraliza a lógica de decisão. Diferente de uma "Chain" linear, o Grafo permite ciclos, rodando em containers \textit{stateless} (Cloud Run) que escalam conforme a demanda cognitiva.
+\begin{lstlisting}[language=Python, basicstyle=\tiny\ttfamily]
+workflow = StateGraph(JudgeState)
+workflow.add_node("sense", sense_node)
+workflow.add_node("oracle", oracle_node)
+workflow.add_node("cortex", cortex_node)
+workflow.add_node("guardrails", guardrails_node)
+workflow.add_node("act", act_node)
+workflow.set_entry_point("sense")
+\end{lstlisting}
+
+\subsubsection{Firestore (Interface de Memória)}
+\textbf{Papel}: O CAOS não gerencia o banco de dados diretamente. Ele consome o estado do ativo (Digital Twin) mantido pelo agente Atlas via leituras no Firestore. O CAOS trata o Firestore como uma API de "Leitura de Estado".
+
+\subsubsection{Google Pub/Sub (O Sistema Nervoso)}
+\textbf{Implementação}: Utiliza tópicos globais dessacoplados. Sensores enviam JSON para `projects/vivaiot/topics/telemetry`.
+\textbf{Uso}: Gatilho primário. Garante que se o Cérebro estiver "dormindo" (Cold Start), a mensagem fica na fila (persistência de 7 dias) e nenhum sinal vital é perdido.
+
+\subsubsection{Firestore (A Memória)}
+\textbf{Implementação}:
+\begin{itemize}
+    \item \textbf{Gêmeo Digital}: Banco NoSQL Realtime. Cada ativo é um documento: `assets/pump-01`.
+    \item \textbf{Eventos}: O Firestore dispara um evento para o Cloud Run sempre que um campo crítico (ex: `temp`) muda.
+\end{itemize}
+\textbf{Uso}: "Qual o estado atual?". O Agente não pergunta ao sensor, ele pergunta ao Firestore (Single Source of Truth).
+
+\subsubsection{Sentinel Subscription (Interface de Instinto)}
+\textbf{Integração}: O CAOS é agnóstico à implementação do Sentinel. Ele apenas assina o tópico \texttt{sentinel.alerts} e espera um JSON validado. O processamento de stream ocorre fora do perímetro do CAOS.
+
+\subsubsection{Google Vertex AI (O Córtex)}
+\textbf{Uso}: Onde o raciocínio acontece. O LangGraph estrutura os dados e invoca o Vertex AI para obter o "Veredito". O CAOS utiliza o modelo Gemini 1.5 Pro configurado para determinismo (Temperature=0).
+
+\newpage
+
+% ============================================================================
+% CAPITULO 3: MAQUINA DE ESTADOS (FSM)
+% ============================================================================
+\section{Máquina de Estados}
+\label{sec:fsm}
+
+O CAOS opera sob uma Máquina de Estados Finita (FSM) global que governa o ciclo de vida de cada ticket ou anomalia:
+
+\begin{enumerate}
+    \item \textbf{IDLE}: Estado de repouso (Zero custo de computação).
+    \item \textbf{TRIGGERED}: Recebimento de evento via Sentinel ou Oracle.
+    \item \textbf{PERCEIVING}: Data Fusion (Atlas + Contexto).
+    \item \textbf{PREDICTING}: Simulação via Oracle (Opcional).
+    \item \textbf{JUDGING}: Raciocínio Híbrido (Analyze Impacts $\rightarrow$ Calculate S \& V $\rightarrow$ Check Guardrails $\rightarrow$ Classify Risk).
+    \item \textbf{EXECUTING}: Módulo Care envia comando ao hardware.
+    \item \textbf{RESOLVED}: Sucesso confirmado.
+    \item \textbf{BLOCKED}: Guardrail impediu ação.
+    \item \textbf{ESCALATED}: Humano convocado.
+\end{enumerate}
+
+\begin{figure}[h!]
+    \centering
+    \begin{tikzpicture}[
+        node distance=2cm, 
+        auto, 
+        thick, 
+        scale=0.8, 
+        every node/.style={transform shape},
+        state/.style={circle, draw=blue!50, fill=blue!5, thick, minimum size=1.2cm, font=\scriptsize}
+    ]
+        \node[state] (idle) {IDLE};
+        \node[state] (trig) [right of=idle] {TRIGGER};
+        \node[state] (perceive) [right of=trig] {PERCEIVE};
+        \node[state] (judge) [below of=perceive] {JUDGE};
+        \node[state] (exec) [left of=judge] {EXECUTE};
+        
+        \draw[->] (idle) -- (trig);
+        \draw[->] (trig) -- (perceive);
+        \draw[->] (perceive) -- (judge);
+        \draw[->] (judge) -- (exec);
+        \draw[->] (exec) -| (idle);
+    \end{tikzpicture}
+    \caption{Ciclo de Vida Global do CAOS}
+    \label{fig:global_fsm}
+\end{figure}
+
+\subsection{O Grafo Cognitivo (Agentic State Machine - ASM)}
+\label{sec:cognitive_graph}
+
+A inteligência do CAOS não reside em um único prompt longo, mas em um \textbf{Estado Agêntico Orquestrado} via LangGraph. O sistema opera como um grafo cíclico dirigido onde o estado flui e evolui entre nós especializados.
+
+\subsubsection{1. O Contrato de Dados (BrainState)}
+O Grafo compartilha um único objeto de estado imutável que persiste no Firestore:
+\begin{itemize}
+    \item \texttt{input\_event}: O gatilho vindo do Sentinel.
+    \item \texttt{context\_chunks}: Memórias recuperadas pelo Atlas.
+    \item \texttt{reasoning\_trace}: A trilha de pensamento acumulada.
+    \item \texttt{safety\_score}: Validação contínua dos Guardrails.
+\end{itemize}
+
+\subsubsection{2. Definição dos Nós (Estações de Pensamento)}
+Cada nó representa uma competência cognitiva específica:
+
+\begin{enumerate}
+    \item \textbf{Nó: Sense (Percepção)}: Responsável pelo \textit{Data Fusion}. Consolida alertas do Sentinel com o contexto do Atlas (Manuais, Contratos e Digital Twin).
+    \item \textbf{Nó: Oracle (Simulação)}: Nó opcional (bypassável em \textit{Fast-Track}). Realiza projeções de impacto financeiro e técnico.
+    \item \textbf{Nó: Cortex (Julgamento)}: O "Core" cognitivo. Executa o raciocínio híbrido em 4 etapas: (1) Análise de Dimensões, (2) Cálculo de $S$ e $V$, (3) Aplicação de Guardrails contextuais e (4) Classificação de Risco. Propõe a ação final.
+    \item \textbf{Nó: Guardrails (Enforcement)}: Nó determinístico de segurança final. Valida a ação proposta contra as leis imutáveis. Em caso de violação, força o \textbf{Veto} ou o \textit{Reciclo} (re-planejamento).
+    \item \textbf{Nó: Act (Despacho)}: Finaliza o estado da decisão e publica o comando de execução para o Agente CARE (Cloud Workflows).
+\end{enumerate}
+
+\subsubsection{3. Fluxo e Bordas Condicionais}
+O grafo utiliza \textbf{Conditional Edges} para decidir o caminho dinamicamente, priorizando a segurança sobre a latência ou o custo:
+\begin{itemize}
+    \item \texttt{Sense} $\rightarrow$ \texttt{Cortex} (\textbf{Bypass Oracle}): Ativado em \textbf{Risco Crítico}. O sistema prioriza a latência zero para proteção imediata do ativo, ignorando simulações futuras.
+    \item \texttt{Sense} $\rightarrow$ \texttt{Oracle} (\textbf{Otimização}): Ativado em \textbf{Risco Baixo/Médio}. O sistema utiliza o tempo disponível para projetar cenários e otimizar custos operacionais.
+    \item \texttt{Guardrails} $\rightarrow$ \texttt{Cortex} (\textbf{Reciclo}): Se a proposta for vetada, o fluxo retorna para re-planejamento.
+\end{itemize}
+
+\begin{figure}[h!]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=1.5cm,
+        block/.style={rectangle, draw=blue!50, thick, fill=blue!5, minimum width=2.5cm, minimum height=0.8cm, align=center, rounded corners},
+        decision/.style={diamond, draw=red!50, thick, fill=red!5, aspect=2, font=\tiny\bfseries},
+        arrow/.style={-Latex, thick}
+    ]
+        \node [block] (sense) {Sense};
+        \node [decision, right=of sense] (risk) {Crítico?};
+        \node [block, below=1.2cm of risk] (oracle) {Oracle};
+        \node [block, right=of risk] (cortex) {Cortex};
+        \node [block, right=of cortex] (guard) {Guardrails};
+        \node [block, right=of guard] (act) {Act};
+
+        \draw [arrow] (sense) -- (risk);
+        \draw [arrow] (risk) -- node[above, font=\tiny] {Sim} (cortex);
+        \draw [arrow] (risk) -- node[left, font=\tiny] {Não} (oracle);
+        \draw [arrow] (oracle) -| (cortex);
+        \draw [arrow] (cortex) -- (guard);
+        \draw [arrow] (guard.north) -- ++(0,0.5) -| node[pos=0.25, above, font=\tiny] {Veto (Reciclo)} (cortex.north);
+        \draw [arrow] (guard) -- node[above, font=\tiny] {Ok} (act);
+    \end{tikzpicture}
+    }
+    \caption{Fluxo de Orquestração Cognitiva (LangGraph)}
+    \label{fig:langgraph_flow}
+\end{figure}
+O CAOS não é um monólito. Ele é composto por serviços desacoplados que escalam independentemente:
+
+\begin{enumerate}
+    \item \textbf{Ingestion Service (Sentinel)}: O "pulmão" do sistema. Recebe milhares de mensagens de telemetria por segundo, filtra ruídos e descarta dados inúteis antes de acionar o cérebro.
+    \item \textbf{Cognitive Service (Cortex)}: Onde roda o LangGraph. Este serviço escala baseado em consumo de CPU/Tokens. É "Stateless" (o estado fica no Postgres).
+    \item \textbf{Action Service (Care)}: Google Cloud Workflows. Responsável pelos efeitos colaterais. Se a rede cair, o sistema retenta a orquestração com backoff exponencial.
+\end{enumerate}
+
+Essa separação garante que um pico de tráfego de IoT (Sentinel) não derrube a capacidade de raciocínio (Cortex) nem a execução de tarefas críticas (Care).
+
+% ============================================================================
+% CAPITULO 3: O CEREBRO (ORQUESTRACAO COGNITIVA)
+% ============================================================================
+\section{Orquestrador (LangGraph)}
+\label{sec:brain}
+
+O fluxo de pensamento do Judge-LM é modelado como um grafo direcionado cíclico (LangGraph). A Figura \ref{fig:multi_agent} ilustra o papel do CAOS como o maestro desta orquestra cognitiva:
+
+\begin{figure}[h!]
+    \centering
+    \resizebox{0.9\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=2.5cm,
+        auto,
+        font=\small\sffamily,
+        % Styles
+        hub/.style={
+            circle, draw=blue!80, fill=blue!10, very thick, 
+            minimum size=3.5cm, align=center, text width=2.5cm, font=\bfseries
+        },
+        agent/.style={
+            rectangle, draw=black!60, fill=white, thick, 
+            minimum width=3cm, minimum height=1.5cm, align=center, rounded corners
+        },
+        arrow/.style={->, >=stealth, thick, color=gray!80, text=black}
+    ]
+
+    % CENTRAL HUB
+    \node [hub] (caos) {CAOS\\Orchestrator\\(Judge-LM)};
+
+    % SATELLITE AGENTS
+    \node [agent, above left=of caos, fill=purple!5] (atlas) {\textbf{ATLAS}\\(Memória \& Contexto)};
+    \node [agent, above right=of caos, fill=red!5] (sentinel) {\textbf{SENTINEL}\\(Instinto \& Alerta)};
+    \node [agent, below left=of caos, fill=cyan!5] (oracle) {\textbf{ORACLE}\\(Predição Futura)};
+    \node [agent, below right=of caos, fill=orange!5] (care) {\textbf{CARE}\\(Ação \& HAL)};
+
+    % CONNECTIONS (Star Topology)
+    
+    % Atlas <-> CAOS
+    \draw [arrow] (caos.135) -- node[midway, right, font=\tiny] {Query} (atlas.315);
+    \draw [arrow] (atlas.300) -- node[midway, left, font=\tiny] {RAG} (caos.150);
+    
+    % Sentinel <-> CAOS
+    \draw [arrow] (sentinel.240) -- node[midway, right, font=\tiny] {Alert} (caos.30);
+    \draw [arrow] (caos.45) -- node[midway, left, font=\tiny] {Ack} (sentinel.225);
+
+    % Oracle <-> CAOS
+    \draw [arrow, dashed] (caos.225) -- node[midway, left, font=\tiny] {Simulate (On-demand)} (oracle.45);
+    \draw [arrow, dashed] (oracle.60) -- node[midway, right, font=\tiny] {Forecast} (caos.210);
+
+    % Care <-> CAOS
+    \draw [arrow] (caos.315) -- node[midway, left, font=\tiny] {Plan} (care.135);
+    \draw [arrow] (care.120) -- node[midway, right, font=\tiny] {Result} (caos.330);
+
+    \end{tikzpicture}
+    }
+    \caption{Topologia Estrela: Orquestração Multi-Agente}
+    \label{fig:multi_agent}
+\end{figure}
+
+\subsection{Contratos de Dados e Tipos}
+
+Para garantir a interoperabilidade entre os 5 agentes, o CAOS utiliza schemas Pydantic estritos.
+
+\subsubsection{1. Entrada (TriggerPayload)}
+O dado que "acorda" o CAOS via Pub/Sub. Todo agente (Sentinel, Oracle, Co-Pilot) deve respeitar este contrato:
+\begin{lstlisting}[language=Python]
+class TriggerPayload(BaseModel):
+    event_id: str = Field(..., description="UUID único do evento")
+    source: Literal["sentinel", "oracle", "manual"]
+    timestamp: datetime
+    
+    # [POR QUE DICT?] Flexibilidade para diferentes fontes.
+    # Ex Sentinel: {"sensor": "chiller-01", "temp": 95.5}
+    # Ex Oracle: {"forecast_metric": "failure_prob", "value": 0.89}
+    payload: Dict[str, Any] 
+    
+    # Metadados de rastreabilidade (Tenant, Asset ID)
+    context: Dict[str, str]
+\end{lstlisting}
+
+\subsubsection{2. Memória de Trabalho (JudgeState)}
+O estado compartilhado no LangGraph, enriquecido passo a passo:
+\begin{lstlisting}[language=Python]
+class JudgeState(TypedDict):
+    # Identidade e Gatilho
+    trigger: TriggerPayload
+    
+    # Camada 1 - Sense (Percepção)
+    atlas_context: Optional[AssetContext]        # Digital Twin + Manuais + Contratos
+    risk_assessment: Optional[RiskAssessment]    # Sentinel Data
+    
+    # Camada 2 - Cortex (Raciocínio & Decisão)
+    oracle_forecast: Optional[Prediction]        # Simulação Oracle (se houver)
+    
+    # [NOVO] Dimensões e Escores (Fórmula 4.5)
+    risk_dimensions: Dict[str, float]            # {R_F, R_Fin, R_C, R_K}
+    severity_score: float                        # Escore S
+    verdict_score: float                         # Escore V (-1.0 a +1.0)
+    
+    # Explicação e Ação
+    reasoning_trace: List[str]                   # Chain-of-Thought
+    proposed_action: Optional[ActionSchema]      # Ação gerada pelo LLM
+    guardrail_violations: List[str]              # Lista de IDs (ex: PHYS_001)
+    is_fast_track: bool                          # Se Oracle foi bypassado
+\end{lstlisting}
+
+\subsubsection{3. Saída (ActionSchema)}
+O comando final enviado ao Google Cloud Workflows para execução física:
+\begin{lstlisting}[language=Python]
+class ActionSchema(BaseModel):
+    action_type: Literal["shutdown", "notification", "ticket"]
+    target_resource: str  # ex: "chiller-04"
+    
+    # [POR QUE DICT?] Cada ação exige parâmetros únicos.
+    # Ex Shutdown: {"force": True, "delay_seconds": 0}
+    # Ex Ticket: {"priority": "High", "assignee": "maintenance_team"}
+    parameters: Dict[str, Any] 
+    
+    # Justificativa dada pelo LLM para auditoria
+    reasoning: str
+    confidence: float
+\end{lstlisting}
+
+\subsection{Nós do Pensamento}
+\begin{enumerate}
+    \item \textbf{sensory\_integration}: Coleta dados do Atlas e Sentinel (Data Fusion).
+    \item \textbf{frontal\_cortex}: Nó \textbf{condicional}. Invoca o Oracle apenas se a severidade for menor que CRITICAL ou se houver alta incerteza no veredito prévio, economizando tokens em ações de segurança imediata.
+    \item \textbf{conscious\_judgement}: Aplica a Equação do Veredito.
+    \item \textbf{motor\_planning}: Converte decisão em sinais para o HAL.
+\end{enumerate}
+
+\subsection{Data Fusion (Percepção Unificada)}
+O nó \textit{sensory\_integration} realiza a fusão vetorial necessária para o Oracle e para o Veredito:
+
+\begin{equation}
+S_{t} = \Phi(Sentinel_{raw}) \oplus \Psi(Atlas_{context})
+\end{equation}
+
+E a projeção oracular que depende deste estado:
+
+\begin{equation}
+O_{forecast} = \Omega(S_t, \text{Proposed Action})
+\end{equation}
+
+Onde cada operador possui uma função epistemológica específica:
+
+\begin{itemize}
+    \item \textbf{$S_t$} (State at $t$): O estado unificado da realidade no tempo $t$.
+    \item \textbf{$\Phi$ (Normalização)}: Função que padroniza inputs brutos (ex: converte $mV$ para $^\circ C$).
+    \item \textbf{$\Psi$ (Contextualização)}: Função que injeta metadados estáticos (ex: limites de garantia).
+    \item \textbf{$\Omega$ (Projeção)}: Função oracular que estima $S_{t+1}$ baseada em tendências.
+    \item \textbf{$\oplus$ (Merge Seguro)}: Operador de união imutável com validação de schema Pydantic.
+\end{itemize}
+
+Se o Sentinel reportar "Vibração Alta" ($\Phi$) mas o Atlas informar "Manutenção Agendada" ($\Psi$), a fusão ($\oplus$) resulta logicamente em \textit{Maintenance State}, desativando alertas de pânico.
+
+\subsection{Exemplo de Cadeia de Raciocínio (Chain-of-Thought)}
+Abaixo, um log real extraído do \textit{frontal\_cortex} durante um incidente de alta temperatura:
+
+\begin{lstlisting}[language=Python, caption=Trace de Raciocínio do Judge-LM, basicstyle=\tiny\ttfamily]
+{
+  "thought_process": [
+    {
+      "step": 1,
+      "observation": "Input Sensor: Temp=92C on Chiller-04",
+      "memory_recall": "Atlas says MaxOpTemp=90C. Warranty void if >95C."
+    },
+    {
+      "step": 2,
+      "hypothesis": "If I do nothing, asset likely fails in <5min.",
+      "risk_assessment": "Sentinel reports P1 (Critical). People nearby."
+    },
+    {
+      "step": 3,
+      "tool_check": "Can I use 'emergency_shutdown'? Yes. Guardrails allow P1.",
+      "alternative": "Can I use 'fan_boost'? No, fan is already at 100%."
+    },
+    {
+      "step": 4,
+      "verdict": {
+        "action": "EMERGENCY_SHUTDOWN",
+        "confidence": 0.98,
+        "justification": "Imminent hardware destruction. Cost of downtime < Cost of asset."
+      }
+    }
+  ]
+}
+\end{lstlisting}
+
+\newpage
+
+% ============================================================================
+% CAPITULO 4: O JUIZ (ALGORITMO DE DECISAO)
+% ============================================================================
+\subsection{O Juiz: Algoritmo de Decisão}
+\label{sec:judge_algo}
+
+A decisão final ($V$) não é fruto de aleatoriedade, mas sim de uma \textbf{Balança Matemática Rigorosa}.
+
+\begin{figure}[h!]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.5cm,
+        auto,
+        startstop/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=red!10},
+        process/.style={rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!10},
+        decision/.style={diamond, aspect=2, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!10},
+        arrow/.style={thick,->,>=stealth}
+    ]
+
+    \node (inputs) [startstop] {Inputs (A, S)};
+    \node (decide_oracle) [decision, below=of inputs] {Exige Oracle?};
+    \node (oracle_sim) [process, right=of decide_oracle, xshift=0.5cm] {ORACLE ($O$)};
+    \node (weights) [process, below=of decide_oracle] {Pesos ($W_x$)};
+    \node (sum) [process, below=of weights] {Soma ($V_{raw}$)};
+    \node (guard) [decision, below=of sum] {Guardrails?};
+    
+    % VETO to the right
+    \node (veto) [startstop, right=of guard, xshift=0.5cm] {VETO};
+    
+    \node (classify) [process, below=of guard] {Classificação};
+    \node (action) [startstop, below=of classify] {Ação Final};
+
+    \draw [arrow] (inputs) -- (decide_oracle);
+    \draw [arrow] (decide_oracle) -- node[above] {Sim} (oracle_sim);
+    \draw [arrow] (decide_oracle) -- node[right] {Não ($O=1$)} (weights);
+    \draw [arrow] (oracle_sim) |- (weights);
+    \draw [arrow] (weights) -- (sum);
+    \draw [arrow] (sum) -- (guard);
+    
+    \draw [arrow] (guard) -- node[above] {Não} (veto);
+    \draw [arrow] (guard) -- node[right] {Sim} (classify);
+    \draw [arrow] (classify) -- (action);
+    
+    \end{tikzpicture}
+    \caption{Fluxograma Lógico do Algoritmo de Decisão}
+    \label{fig:veredicto}
+\end{figure}
+
+Conforme a Figura \ref{fig:veredicto}, o processo de julgamento coloca em pratos opostos os benefícios da ação e os riscos detectados.
+No prato esquerdo, acumulamos os \textbf{Fatos} (dados do Atlas) e \textbf{Benefícios} (previsões de lucro do Oracle). No prato direito, empilhamos os \textbf{Riscos} (alertas do Sentinel).
+O resultado dessa pesagem deve, obrigatoriamente, passar pelo funil dos \textbf{Guardrails}. Se qualquer regra de segurança for maior que o benefício, o funil bloqueia a saída, resultando em um VETO inquestionável.
+
+A equação formal, que expande a visão simplificada apresentada no Capítulo 1, é dada por:
+
+\begin{equation}
+V = \frac{(W_A \cdot Norm(A)) + (W_O \cdot \hat{O}) - (W_S \cdot (1 + S))}{1 + \sum (P_G \cdot V_G)}
+\end{equation}
+
+Onde o termo oracular $\hat{O}$ é definido de forma binária conforme a necessidade de simulação:
+
+\begin{equation}
+\hat{O} = 
+\begin{cases} 
+Norm(O) & \text{se } S < \text{THRESHOLD}_{critical} \text{ (Prioridade: Inteligência/Otimização)} \\
+1.0 & \text{se } S \geq \text{THRESHOLD}_{critical} \text{ (Prioridade: Sobrevivência/Latência)}
+\end{cases}
+\end{equation}
+
+Onde cada componente pondera a decisão final em um espaço vetorial:
+
+\begin{itemize}
+    \item \textbf{$V$} (Veredito Final): Score normalizado entre $-1.0$ (Veto) e $+1.0$ (Ação Prioritária).
+    \item \textbf{$W_A, W_O, W_S$} (Pesos): Configurações ajustáveis de importância (ex: $W_S=0.3$ equilibra segurança).
+    \item \textbf{$Norm(A), \hat{O}$}: Funções de normalização que convertem a saída qualitativa do LLM (baseada em Atlas) e a simulação do Oracle em um escalar $[0, 1]$.
+    \item \textbf{$S$} (Severidade): Grau de risco medido pelo Sentinel (0=Seguro, 1=Catastrófico).
+    \item \textbf{$P_G \cdot V_G$} (Penalidade de Guardrail): Se um guardrail ativo ($V_G=1$) for violado com alta penalidade ($P_G$), o denominador cresce tendendo ao infinito, zerando $V$.
+\end{itemize}
+
+\subsection{Calculadora de Cenários (Exemplos Reais)}
+Para validar a equação, submetemos 5 cenários de borda ao sistema. Considere $W_A=0.6, W_O=0.6, W_S=0.3$.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|c|c|c|c|c|l|}
+\hline
+\textbf{Cenário} & \textbf{A} & \textbf{O} & \textbf{S} & \textbf{Guard} & \textbf{$V_{calc}$} & \textbf{Ação} \\ \hline
+1. Normal Operation & 1.0 & 0.8 & 0.0 & OK (1.0) & \textbf{0.78} & \textit{Executar} \\ \hline
+2. Fogo (Compressor) & 0.2 & 0.0 & \textbf{1.0} & OK (1.0) & \textbf{-0.48} & \textbf{SHUTDOWN} \\ \hline
+3. Lucro Alto/Risco Médio & 1.0 & 0.9 & 0.4 & OK (1.0) & \textbf{0.72} & \textit{Executar} \\ \hline
+4. Bloqueio Físico (Porta) & 1.0 & 1.0 & 0.0 & \textbf{VETO} & \textbf{ERR} & \textbf{BLOCK} \\ \hline
+5. Override Humano & 1.0 & 1.0 & 0.8 & OK (1.0) & \textbf{0.66} & \textit{Sugerir} \\ \hline
+\end{tabular}
+\caption{Matriz de Validação da Equação de Veredito}
+\label{tab:calc_cenarios}
+\end{table}
+
+\noindent \textbf{Análise do Cenário 2 (Fogo)}:
+Mesmo sem benefício (O=0), a alta severidade do Sentinel ($S=1.0$) empurra o score para negativo ($0.12 - 0.6 = -0.48$), o que cai na faixa de \textbf{VETO/SHUTDOWN} imediato, ignorando qualquer tentativa de "otimização".
+
+\subsection{Definição das Faixas de Decisão}
+Com base nos cálculos acima, calibramos os seguintes thresholds definitivos para o Judge-LM:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|l|l|}
+\hline
+\textbf{Score ($V$)} & \textbf{Decisão (Enum)} & \textbf{Comportamento do Sistema} \\ \hline
+$V \leq 0.0$ & \textbf{BLOCKED} & Bloqueio imediato. Nenhuma ação é tomada. \\ \hline
+$0.0 < V \leq 0.3$ & \textbf{ALERT} & Baixa confiança. Notifica operador sem sugerir ação. \\ \hline
+$0.3 < V \leq 0.7$ & \textbf{SUGGEST} & Confiança moderada. Sugere ação para aprovação humana. \\ \hline
+$V > 0.7$ & \textbf{EXECUTE} & Alta confiança. Executa ação autonomamente (se $P_G=0$). \\ \hline
+\end{tabular}
+\caption{Tabela de Faixas de Decisão (Decision Bands)}
+\label{tab:decision_thresholds}
+\end{table}
+
+\subsection{Validação e Calibração de Pesos}
+
+Os pesos $W_A$, $W_O$ e $W_S$ não são arbitrários. Eles são calibrados através de um processo rigoroso:
+
+\begin{enumerate}
+    \item \textbf{Backtesting Histórico}: Aplicar a fórmula em incidentes passados e verificar se o Veredito $V$ teria gerado a ação correta. Métricas: precisão, recall, F1-score.
+    \item \textbf{A/B Testing em Staging}: Rodar duas versões do sistema com pesos diferentes e medir outcomes (tempo de resolução, custo de downtime, satisfação do cliente).
+    \item \textbf{RLHF (Reinforcement Learning from Human Feedback)}: Quando operadores sobrescrevem decisões do CAOS, o sistema registra o delta e ajusta os pesos via gradiente.
+    \item \textbf{Análise de Sensibilidade}: Variar cada peso individualmente ($\pm 0.1$) e observar o impacto na distribuição de decisões.
+\end{enumerate}
+
+\begin{notabox}[Pesos Iniciais (Heurísticos)]
+$W_A = 0.6$, $W_O = 0.6$, $W_S = 0.3$ — Equilíbrio entre autonomia e segurança. Estes valores são ponto de partida e devem ser calibrados por vertical (varejo vs indústria) e por tenant.
+\end{notabox}
+
+\subsection{Integração com Vertex AI (Onde o LLM Pensa)}
+
+A fórmula $V$ é calculada por código determinístico, mas os \textbf{scores de entrada} ($A$, $O$) e a \textbf{proposição da ação} são gerados pelo LLM (Gemini via Vertex AI). A tabela abaixo detalha os pontos exatos de chamada:
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|c|l|l|}
+\hline
+\textbf{Etapa} & \textbf{Executor} & \textbf{O que acontece} \\ \hline
+1. Alerta & SENTINEL (Código) & Detecta anomalia, envia $S$ \\ \hline
+2. Contexto & ATLAS (RAG) & Retorna manuais e specs \\ \hline
+3. Propor Ação & \textbf{Vertex AI (LLM)} & "Recomendo SHUTDOWN" \\ \hline
+4. Calcular $A$ & \textbf{Vertex AI (LLM)} & "Manual apoia? A=0.9" \\ \hline
+6. Simular & \textbf{ORACLE (Opcional)} & Recebe $S_t$ se necessário para ROI/Simulação \\ \hline
+6. Calcular $V$ & CÓDIGO (Python) & $V = 0.6(0.9) + 0.6(0.7) - 0.3(1.0)$ \\ \hline
+7. Guardrails & CÓDIGO (Regras) & Verifica violações \\ \hline
+8. Explicar & \textbf{Vertex AI (LLM)} & Gera justificativa textual \\ \hline
+\end{tabular}
+\caption{Pontos de Integração com Vertex AI}
+\end{table}
+
+A Figura \ref{fig:llm_flow} ilustra a posição do LLM no fluxo de decisão:
+
+\begin{figure}[h!]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.5cm and 2cm,
+        box/.style={rectangle, draw=black, thick, minimum width=2.2cm, minimum height=1cm, align=center, font=\footnotesize, rounded corners=2pt},
+        llm/.style={rectangle, draw=blue!80, thick, fill=blue!10, minimum width=3cm, minimum height=1.2cm, align=center, font=\footnotesize\bfseries, rounded corners=3pt},
+        formula/.style={rectangle, draw=orange!80, thick, fill=orange!10, minimum width=5cm, minimum height=1cm, align=center, font=\footnotesize, rounded corners=3pt},
+        guard/.style={rectangle, draw=red!60, thick, fill=red!5, minimum width=2.5cm, minimum height=0.8cm, align=center, font=\footnotesize, rounded corners=2pt},
+        arrow/.style={->, thick, >=stealth},
+        curved/.style={->, thick, >=stealth, bend left=20},
+        curvedR/.style={->, thick, >=stealth, bend right=20}
+    ]
+    
+    % Row 1: Inputs (spread out more)
+    \node [box, fill=gray!5] (sentinel) {SENTINEL\\$S$};
+    \node [box, fill=gray!5, right=2.5cm of sentinel] (atlas) {ATLAS\\Contexto};
+    \node [box, fill=gray!5, right=2.5cm of atlas] (oracle) {ORACLE\\Previsão};
+    
+    % Row 2: LLM (centered under Atlas)
+    \node [llm, below=2cm of atlas] (llm) {VERTEX AI\\(Gemini LLM)\\Propor Ação, Calcular $A$};
+    
+    % Row 3: Formula (centered, wider)
+    \node [formula, below=1.8cm of llm] (formula) {FÓRMULA: $V = W_A \cdot A + W_O \cdot O - W_S \cdot (1+S)$};
+    
+    % Row 4: Guardrails
+    \node [guard, below=1.5cm of formula] (guard) {GUARDRAILS};
+    
+    % Arrows with curves
+    % Oracle -> LLM (curved left)
+    \node [left=0.5cm of llm, font=\tiny, text=blue] (fused) {Fused $(S, A)$};
+    \draw [arrow, blue] (sentinel.south) to[bend right] (llm.north west);
+    \draw [arrow, blue] (atlas.south) -- (llm.north);
+    \draw [arrow, red, thick, dashed] (llm.east) to[bend left] node[right, font=\tiny] {Simulate (Opcional)} (oracle.south);
+    \draw [arrow, forestgreen, thick, dashed] (oracle.west) to[bend right] node[above, font=\tiny] {Forecast} (llm.south east);
+    
+    % Oracle -> Formula (dashed, O goes direct)
+    \draw [curved, dashed, gray] (oracle.south) to[out=-90, in=30] node[right, font=\tiny, pos=0.7] {$O$} (formula.east);
+    
+    % LLM -> Formula (straight, with A, Ação)
+    \draw [arrow] (llm.south) -- node[right, font=\tiny] {$A$, Ação} (formula.north);
+    
+    % Sentinel -> Formula (curved left, bypass LLM - S goes direct)
+    \draw [curvedR, dashed, gray] (sentinel.south) to[out=-90, in=150] node[left, font=\tiny, pos=0.7] {$S$} (formula.west);
+    
+    % Formula -> Guardrails
+    \draw [arrow] (formula.south) -- node[right, font=\tiny] {$V$} (guard.north);
+    
+    \end{tikzpicture}
+    \caption{Posição do LLM no Fluxo de Decisão}
+    \label{fig:llm_flow}
+\end{figure}
+
+\begin{avisobox}[Importante]
+O LLM \textbf{não calcula} a fórmula $V$. Ele \textbf{propõe a ação} e \textbf{avalia conformidade} com documentos. A fórmula serve como validação matemática auditável do raciocínio do LLM.
+\end{avisobox}
+
+
+\subsection{Thresholds Configuráveis por Contexto}
+
+As faixas de decisão \textbf{não são universais}. Elas podem ser customizadas por múltiplas dimensões:
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Dimensão} & \textbf{Exemplo} & \textbf{Impacto} \\ \hline
+Tenant & Cliente conservador & EXECUTE só se $V > 0.85$ \\ \hline
+Tipo de Ativo & Freezer de sorvete vs Chiller & Thresholds térmicos diferentes \\ \hline
+Modo de Operação & Horário comercial vs noturno & Tolerância maior à noite \\ \hline
+Contrato & SLA Premium vs Basic & Velocidade de resposta diferente \\ \hline
+Região & Brasil vs Europa & Regulamentações diferentes \\ \hline
+\end{tabular}
+\caption{Dimensões de Customização de Thresholds}
+\end{table}
+
+A configuração é feita via JSON no nível do Tenant:
+
+\begin{lstlisting}[language=Python, caption=Exemplo de Configuração de Thresholds, basicstyle=\tiny\ttfamily]
+{
+  "tenant_id": "cliente_xyz",
+  "decision_bands": {
+    "BLOCKED": { "max": 0.0 },
+    "ALERT": { "min": 0.0, "max": 0.25 },
+    "SUGGEST": { "min": 0.25, "max": 0.85 },
+    "EXECUTE": { "min": 0.85 }
+  },
+  "weights": { "W_A": 0.25, "W_O": 0.25, "W_S": 0.50 }
+}
+\end{lstlisting}
+
+\subsection{Dinâmica de Julgamento Não-Linear (O Fim do If/Else)}
+A principal inovação do CAOS é a transição da \textbf{Lógica Booleana (Clássica)} para o \textbf{Controle Cognitivo (Fuzzy)}.
+
+\paragraph{O Problema da Lógica Rígida}
+Em sistemas tradicionais, o mundo é binário. Um sensor acusando $95.1^\circ C$ dispara um alarme se o limite for $95.0^\circ C$. Toda a complexidade da realidade (nuances, contextos, exceções) precisa ser hardcoded em milhares de linhas de `if/else`, tornando a manutenção impossível.
+
+\paragraph{A Solução: Espaço Vetorial de Decisão}
+O CAOS não "testa condições". Ele "pesa princípios".
+O Veredito $V$ não é um interruptor, é um gradiente.
+\begin{enumerate}
+    \item \textbf{Recuperação Semântica (Atlas)}: Em vez de consultar variáveis, o agente lê manuais e normas. Ele entende que "96ºC é aceitável por 10 min apenas durante o degelo". Isso transforma \textit{Dados} em \textit{Conhecimento}.
+    \item \textbf{Ponderação Multidimensional}: O sistema avalia vetores conflitantes simultaneamente:
+    \begin{itemize}
+        \item Vetor Financeiro: "Parar agora custa \$50k."
+        \item Vetor de Segurança: "Continuar tem Risco=0.4."
+        \item Vetor Operacional: "O backup está disponível?"
+    \end{itemize}
+    \item \textbf{Decisão Emergente}: A ação final não é programada explicitamente. Ela \textbf{emerge} da soma vetorial. Se a segurança pesa muito ($W_S=0.4$) e o risco é real, o veto surge naturalmente da equação, sem que nenhum programador tenha escrito `if fire: stop`.
+\end{enumerate}
+
+Isso permite que o sistema lide com o inesperado. Ele sabe que "Fogo" é ruim não porque existe um `if`, mas porque o conceito de "Fogo" gera um vetor de Risco/Safety que anula qualquer vetor de Lucro.
+
+\newpage
+
+% ============================================================================
+% CAPITULO 4.5: FLUXO DE RACIOCÍNIO E DIMENSÕES DE RISCO
+% ============================================================================
+\section{Fluxo de Raciocínio e Dimensões de Risco}
+\label{sec:risk_dimensions}
+
+O processo de raciocínio do CAOS (via Vertex AI) segue uma sequência rigorosa de 4 etapas, onde as \textbf{4 Dimensões de Risco} servem como princípios fundamentais que guiam toda a deliberação.
+
+\subsection{As 4 Dimensões de Risco}
+
+Antes de propor qualquer ação, o CAOS deve avaliar o impacto potencial em \textbf{4 dimensões fundamentais}:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|l|p{8cm}|}
+\hline
+\textbf{Dim.} & \textbf{Nome} & \textbf{Pergunta Chave} \\ \hline
+$R_F$ & \textbf{Física} & Esta ação pode causar dano físico a equipamentos, infraestrutura ou pessoas? \\ \hline
+$R_{Fin}$ & \textbf{Financeira} & Esta ação pode gerar perda financeira direta (downtime, reparos) ou indireta (perda de contrato)? \\ \hline
+$R_C$ & \textbf{Contratual} & Esta ação pode violar SLAs, contratos, regulações ou compliance? \\ \hline
+$R_K$ & \textbf{Comunicação} & Os stakeholders corretos serão notificados? Há risco de falha comunicacional? \\ \hline
+\end{tabular}
+\caption{As 4 Dimensões de Risco do CAOS}
+\label{tab:risk_dimensions}
+\end{table}
+
+\subsubsection{Responsabilidade de Cálculo (Híbrido)}
+
+A arquitetura adota uma abordagem \textbf{Híbrida} para garantir precisão e flexibilidade:
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{|l|l|l|>{\raggedright\arraybackslash}X|}
+\hline
+\textbf{Dimensão} & \textbf{Executor} & \textbf{Fonte Primária} & \textbf{Justificativa} \\ \hline
+Física ($R_F$) & \textbf{CÓDIGO} & SENTINEL + ATLAS & Dados quantitativos e limites explícitos no manual. \\ \hline
+Financeira ($R_{Fin}$) & \textbf{CÓDIGO} & ATLAS (+ ORACLE*) & Cálculo matemático (Tempo $\times$ Custo). *Oracle bypassado em Fast-Track. \\ \hline
+Contratual ($R_C$) & \textbf{LLM} & ATLAS (Contratos) & Requer interpretação semântica de cláusulas legais. \\ \hline
+Comunicação ($R_K$) & \textbf{CÓDIGO} & Sistema & Verificação binária de disponibilidade de canais. \\ \hline
+\end{tabularx}
+\caption{Matriz de Responsabilidade de Cálculo de Risco}
+\end{table}
+\subsubsection{Estratégia de Eficiência (Oracle Bypass)}
+
+Para otimizar custos (tokens) e latência, o CAOS adota uma estratégia de **Fast-Track** onde a consulta ao ORACLE é ignorada em cenários de baixo risco inerente.
+
+\begin{itemize}
+    \item \textbf{Quando o Oracle é bypassado:}
+    \begin{itemize}
+        \item Ações de leitura/consulta (\texttt{read\_*}, \texttt{get\_*}).
+        \item Ativos classificados como \texttt{CRITICALITY=LOW} no ATLAS.
+        \item Ações reversíveis instantaneamente.
+    \end{itemize}
+    \item \textbf{Impacto no Cálculo de $R_{Fin}$:}
+    \begin{itemize}
+        \item Se \texttt{Oracle\_Call = Skipped}, o sistema assume um valor proxy seguro: $R_{Fin} = 0.1$ (Risco Mínimo).
+        \item Isso garante que a equação $S$ continue funcional sem dados externos caros.
+    \end{itemize}
+\end{itemize}
+\newpage
+\subsection{Fluxo de Raciocínio em 4 Etapas}
+
+O CAOS processa cada situação seguindo uma ordem rigorosa:
+
+\begin{figure}[H]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=0.8cm and 1.5cm,
+        etapa/.style={rectangle, draw=blue!80, thick, fill=blue!5, minimum width=14cm, minimum height=2.2cm, align=left, font=\footnotesize, rounded corners=3pt},
+        numero/.style={circle, draw=blue!80, thick, fill=blue!20, minimum size=0.8cm, font=\bfseries},
+        arrow/.style={->, thick, >=stealth, blue!60}
+    ]
+    
+    % Etapa 1
+    \node [etapa] (e1) at (0, 0) {
+        \hspace{0.5cm}\textbf{ANÁLISE DE IMPACTO HÍBRIDA}\\[0.2cm]
+        \hspace{0.5cm}O sistema combina cálculo determinístico e inferência:\\
+        \hspace{0.5cm}$\bullet$ $R_F, R_{Fin}, R_K$ (CÓDIGO): Calculados via regras rígidas e dados de sensores.\\
+        \hspace{0.5cm}$\bullet$ $R_C$ (LLM): Interpretado semanticamente ("Há violação contratual?").\\
+        \hspace{0.5cm}\textit{Resultado:} 4 scores normalizados entre 0.0 e 1.0.
+    };
+    \node [numero] at (-7.5, 0) {1};
+    
+    % Etapa 2
+    \node [etapa, below=of e1] (e2) {
+        \hspace{0.5cm}\textbf{ALGORITMO DE DECISÃO (Cálculo do Veredito)}\\[0.2cm]
+        \hspace{0.5cm}Os 4 riscos são consolidados em um Score de Severidade ($S$):\\
+        \hspace{0.5cm}$S = W_F \cdot R_F + W_{Fin} \cdot R_{Fin} + W_C \cdot R_C + W_K \cdot R_K$\\[0.1cm]
+        \hspace{0.5cm}O Veredito Final é calculado: $V = \frac{(W_A \cdot A) + (W_O \cdot O) - (W_S \cdot S)}{1 + \sum(P_G \cdot V_G)}$
+    };
+    \node [numero] at (-7.5, -3.2) {2};
+    
+    % Etapa 3
+    \node [etapa, below=of e2, minimum height=1.5cm] (e3) {
+        \hspace{0.5cm}\textbf{CONSULTA AOS GUARDRAILS (Constituição)}\\[0.2cm]
+        \hspace{0.5cm}``A ação proposta viola alguma lei/regra imutável?''\\
+        \hspace{0.5cm}$\bullet$ Se SIM: Veto automático ($V = -1.0$)\\
+        \hspace{0.5cm}$\bullet$ Se NÃO: Prossegue para classificação final
+    };
+    \node [numero] at (-7.5, -5.7) {3};
+    
+    % Etapa 4
+    \node [etapa, below=of e3, minimum height=1.8cm] (e4) {
+        \hspace{0.5cm}\textbf{CLASSIFICAÇÃO DE RISCO E ROTEAMENTO}\\[0.2cm]
+        \hspace{0.5cm}Baseado no Veredito ($V$) + Severidade das 4 dimensões:\\
+        \hspace{0.5cm}$\bullet$ \textcolor{green!60!black}{\textbf{LOW}}: $V > 0.7$ e nenhum $R_x$ crítico $\rightarrow$ Direto para CARE\\
+        \hspace{0.5cm}$\bullet$ \textcolor{blue!60!black}{\textbf{MEDIUM}}: $0.3 < V \leq 0.7$ ou algum $R_x$ médio $\rightarrow$ Verificação Automática\\
+        \hspace{0.5cm}$\bullet$ \textcolor{orange!80!black}{\textbf{HIGH}}: $V \leq 0.3$ ou algum $R_x$ crítico $\rightarrow$ Human-in-the-Loop (HITL)
+    };
+    \node [numero] at (-7.5, -8.4) {4};
+    
+    % Arrows
+    \draw [arrow] (e1.south) -- (e2.north);
+    \draw [arrow] (e2.south) -- (e3.north);
+    \draw [arrow] (e3.south) -- (e4.north);
+    
+    \end{tikzpicture}
+    }
+    \caption{Fluxo de Raciocínio do CAOS em 4 Etapas}
+    \label{fig:reasoning_flow}
+\end{figure}
+\subsection{Equação de Severidade de Risco ($S$)}
+
+A "intuição" do Sentinel sobre o perigo da situação é formalizada matematicamente através da **Equação de Severidade ($S$)**. Este índice normalizado (0.0 a 1.0) compõe o Veredito final, atuando como um vetor de penalidade que reduz a confiança da ação proposta quanto maior for o risco detectado.
+
+A equação é definida pela soma ponderada das 4 dimensões:
+
+\begin{equation}
+S = (W_F \cdot R_F) + (W_{Fin} \cdot R_{Fin}) + (W_C \cdot R_C) + (W_K \cdot R_K)
+\end{equation}
+
+Onde:
+\begin{itemize}
+    \item \textbf{$S$} é o Índice de Severidade Global (0.0 = Seguro, 1.0 = Catastrófico).
+    \item \textbf{$R_x$} é o score individual da dimensão $x$ (0.0 a 1.0), calculado via Código ou LLM.
+    \item \textbf{$W_x$} é o peso estratégico da dimensão $x$ (\% de importância), tal que $\sum W_x = 1.0$.
+\end{itemize}
+
+O valor de $S$ entra na fórmula principal do Veredito ($V$) subtraindo valor dos benefícios ($A + O$). Portanto, em cenários de alto risco ($S \to 1.0$), o termo $W_S \cdot S$ tende a negativar o Veredito, forçando o bloqueio ou a escalação para humano, a menos que os benefícios ($A, O$) sejam extremamente altos e os Guardrails permitam.
+\subsection{Pesos das Dimensões de Risco}
+
+Os pesos das 4 dimensões podem ser calibrados por vertical ou cliente:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|c|c|c|c|l|}
+\hline
+\textbf{Perfil} & $W_F$ & $W_{Fin}$ & $W_C$ & $W_K$ & \textbf{Justificativa} \\ \hline
+Padrão & 0.35 & 0.25 & 0.25 & 0.15 & Equilíbrio geral \\ \hline
+Indústria Pesada & 0.50 & 0.20 & 0.20 & 0.10 & Segurança física prioritária \\ \hline
+Varejo/Serviços & 0.25 & 0.35 & 0.25 & 0.15 & Impacto financeiro prioritário \\ \hline
+Healthcare & 0.40 & 0.15 & 0.35 & 0.10 & Compliance e segurança \\ \hline
+Enterprise & 0.30 & 0.25 & 0.30 & 0.15 & SLAs rigorosos \\ \hline
+\end{tabular}
+\caption{Pesos das Dimensões de Risco por Vertical}
+\label{tab:risk_weights}
+\end{table}
+
+\subsection{Classificação de Risco e Roteamento}
+
+A classificação final combina o Veredito ($V$) com a análise das 4 dimensões:
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{|c|>{\raggedright\arraybackslash}X|l|>{\raggedright\arraybackslash}X|}
+\hline
+\textbf{Nível} & \textbf{Critério} & \textbf{Caminho} & \textbf{Exemplos} \\ \hline\hline
+\cellcolor{green!20}\textbf{LOW} & $V > 0.7$ e todos os $R_x < 0.3$ & Direto CARE & Leitura de sensor, ajuste menor \\ \hline
+\cellcolor{yellow!20}\textbf{MEDIUM} & $0.3 < V \leq 0.7$ ou algum $R_x$ entre 0.3 e 0.7 & Verif. Auto & Alteração de setpoint \\ \hline
+\cellcolor{orange!20}\textbf{HIGH} & $V \leq 0.3$ ou algum $R_x > 0.7$ & HITL (Analítico) & Shutdown, firmware \\ \hline
+\cellcolor{red!20}\textbf{VETO} & $V = -1.0$ (Violação de Guardrail) & \textbf{BLOCKED + HITL} & Operação proibida por lei física/segurança \\ \hline
+\end{tabularx}
+\caption{Matriz de Classificação de Risco e Roteamento}
+\label{tab:risk_classification}
+\end{table}
+
+\subsubsection{Resolução de Deadlocks: Por que o Humano no Veto?}
+
+Uma dúvida arquitetural chave é: \textit{"Se a ação foi vetada, por que não apenas parar o sistema em vez de chamar um humano?"}. O CAOS resolve isso através do princípio da \textbf{Resiliência Operacional}:
+
+\begin{itemize}
+    \item \textbf{Segurança (Veto)}: O Guardrail impede que a IA execute uma ação catastrófica. O estado físico é preservado (\textit{Fail-Safe}).
+    \item \textbf{Resiliência (Escalação)}: O fato de uma ação ter sido vetada significa que o problema original (a anomalia) continua sem solução. O humano é convocado não para "desbloquear" a ação proibida, mas para encontrar um novo caminho ou realizar um reparo manual que a lógica agêntica não conseguiu processar.
+\end{itemize}
+
+O objetivo é evitar que o sistema entre em um \textit{loop} de vetos infinitos (\textit{Livelock}), garantindo que uma inteligência superior (humana) arbitre o impasse.
+
+\subsubsection{Overrides (Regras Absolutas)}
+
+Algumas ações têm classificação forçada, independente do cálculo:
+
+\begin{lstlisting}[language=Python, caption=Regras de Override de Risco, basicstyle=\tiny\ttfamily]
+RISK_OVERRIDES = {
+    # Sempre HIGH (forca HITL)
+    "always_high": [
+        "delete_*",      # Qualquer deleção
+        "firmware_*",    # Atualizações de firmware
+        "security_*",    # Alterações de segurança
+        "admin_*",       # Operações administrativas
+        "contract_*",    # Alterações contratuais
+    ],
+    
+    # Sempre LOW (bypass para emergências)
+    "always_low": [
+        "emergency_stop",  # Segurança > burocracia
+        "read_*",          # Leituras são seguras
+        "query_*",         # Consultas são seguras
+    ],
+}
+\end{lstlisting}
+
+\subsection{Exemplo Prático de Raciocínio}
+
+Considere o cenário: \textit{Compressor-01 com temperatura 95°C (limite: 85°C)}
+
+\begin{tcolorbox}[colback=blue!5, colframe=blue!50, title=Raciocínio do CAOS (Vertex AI)]
+\small
+
+\textbf{ETAPA 1: Análise de Impacto}
+\begin{itemize}
+    \item $R_F$ (Física) = \textbf{0.9} (ALTO) — Temperatura 10°C acima do limite pode danificar rolamentos
+    \item $R_{Fin}$ (Financeira) = \textbf{0.5} (MÉDIO) — Downtime estimado 2h = R\$5.000
+    \item $R_C$ (Contratual) = \textbf{0.2} (BAIXO) — SLA é de 4h, temos margem
+    \item $R_K$ (Comunicação) = \textbf{0.1} (BAIXO) — Canais de notificação operacionais
+\end{itemize}
+
+\textbf{ETAPA 2: Cálculo do Veredito}
+\begin{itemize}
+    \item $S = 0.35(0.9) + 0.25(0.5) + 0.25(0.2) + 0.15(0.1) = 0.50$
+    \item $A = 0.8$ (Manual apoia ação), $O = 0.7$ (Oracle prevê sucesso), $S = 0.50$
+    \item $V = (0.4 \times 0.8 + 0.3 \times 0.7 - 0.3 \times 0.5) / 1.0 = 0.38$
+\end{itemize}
+
+\textbf{ETAPA 3: Guardrails}
+\begin{itemize}
+    \item Nenhuma violação de regra imutável detectada
+\end{itemize}
+
+\textbf{ETAPA 4: Classificação}
+\begin{itemize}
+    \item $V = 0.45$ (MEDIUM) + $R_F = 0.9$ (crítico) $\Rightarrow$ \textbf{HIGH}
+    \item Roteamento: Human-in-the-Loop (aguardar aprovação)
+\end{itemize}
+
+\textbf{Ação Proposta}: Reduzir carga do compressor em 30\% e agendar inspeção.
+\end{tcolorbox}
+
+\newpage
+
+% ============================================================================
+% CAPITULO 5: SISTEMA IMUNOLOGICO (GUARDRAILS)
+% ============================================================================
+\section{Motor de Guardrails}
+\label{sec:guardrails}
+
+Os Guardrails são a Constituição do CAOS. Eles não são "sugestões", são \textbf{Leis Imutáveis} codificadas no motor de inferência. Se uma ação violar um Guardrail, o Veredito é automaticamente vetado ($V=-1.0$).
+
+\subsection{Os 3 Momentos dos Guardrails (Defense in Depth)}
+
+Os Guardrails aparecem em \textbf{três momentos distintos} do fluxo de decisão, cada um com um propósito específico. Essa abordagem de "defesa em profundidade" garante segurança mesmo que uma camada falhe.
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabularx}{\textwidth}{|c|l|X|}
+\hline
+\textbf{Momento} & \textbf{Propósito} & \textbf{Descrição} \\ \hline
+\textbf{1. Fórmula V} & Penalidade contextual & Guardrails que se aplicam ao \textit{contexto} (ex: "há humano no local") aumentam o denominador da fórmula, reduzindo $V$ e forçando escalação para humano. \\ \hline
+\textbf{2. Contexto LLM} & Instrução prévia & O LLM recebe a lista de Guardrails \textit{antes} de propor a ação, permitindo que ele proponha algo que já respeite as regras. Isso economiza tokens e evita re-processamento. \\ \hline
+\textbf{3. Pós-Check} & Validação final & Após o LLM propor uma ação, o código verifica se ela viola algum Guardrail. Isso é \textit{defense in depth} — LLMs podem "esquecer" instruções (alucinação). \\ \hline
+\end{tabularx}
+\caption{Os 3 Momentos dos Guardrails}
+\end{table}
+
+\textbf{Analogia}: É como a segurança de um aeroporto:
+\begin{enumerate}
+    \item \textbf{Check-in (Fórmula V)}: Verifica se você pode embarcar (documentos ok?).
+    \item \textbf{Informação (Contexto LLM)}: Você sabe as regras (sem líquidos >100ml).
+    \item \textbf{Raio-X (Pós-Check)}: Mesmo sabendo as regras, todos passam pelo detector.
+\end{enumerate}
+
+\subsubsection{Estrutura do Input para o LLM}
+
+Para que o LLM tome decisões informadas, ele recebe os Guardrails como parte do contexto:
+
+\begin{lstlisting}[language=Python, caption=Exemplo de Input com Guardrails para o LLM]
+{
+  "context": {
+    "alert": { "asset": "CHILLER-04", "metric": "temperature", "value": 95.2 },
+    "risks": { "R_F": 0.9, "R_Fin": 0.5, "R_C": 0.2, "R_K": 0.1 },
+    "severity": 0.65,
+    "verdict": 0.32,
+    "risk_level": "HIGH"
+  },
+  "guardrails": [
+    "PHYS_003: Nao desligue equipamento se ha humano no local",
+    "FIN_001: Gastos >$5000 requerem aprovacao humana",
+    "COMM_002: Sempre notifique o gerente em alertas CRITICAL"
+  ],
+  "instruction": "Proponha uma acao que RESPEITE todos os guardrails listados."
+}
+\end{lstlisting}
+
+
+\begin{figure}[h!]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=1.5cm,
+        auto,
+        block/.style={rectangle, draw=black, thick, fill=white, minimum width=2.5cm, minimum height=1cm, align=center},
+        guard/.style={rectangle, draw=red!80, thick, fill=red!5, minimum width=3cm, minimum height=1cm, align=center, rounded corners},
+        arrow/.style={thick,->,>=stealth}
+    ]
+
+    % Nodes
+    \node [block, fill=blue!10] (input) {Ação Proposta\\(LLM)};
+    
+    \node [guard, right=of input] (g1) {\textbf{G1. Físico}\\(Segurança)};
+    \node [guard, right=of g1] (g2) {\textbf{G2. Financeiro}\\(Custo)};
+    \node [guard, right=of g2] (g3) {\textbf{G3. Compliance}\\(SLA/Legal)};
+    \node [guard, right=of g3] (g4) {\textbf{G4. Comunicação}\\(Tom/Brand)};
+    
+    \node [block, fill=green!10, right=of g4] (output) {Ação\\Executável};
+    
+    % Trash centered (approx) between G2 and G3
+    \node [block, fill=gray!20, below=1.5cm of g2, xshift=0.75cm] (trash) {Lixeira\\(Blocked)};
+
+    % Path
+    \draw [arrow] (input) -- (g1);
+    \draw [arrow] (g1) -- node[font=\scriptsize] {Pass} (g2);
+    \draw [arrow] (g2) -- node[font=\scriptsize] {Pass} (g3);
+    \draw [arrow] (g3) -- node[font=\scriptsize] {Pass} (g4);
+    \draw [arrow] (g4) -- node[font=\scriptsize] {Pass} (output);
+    
+    % Veto Paths
+    \draw [arrow, red] (g1.south) -- ++(0,-0.5) -| (trash.west) node[pos=0.25, below, font=\scriptsize] {Veto};
+    \draw [arrow, red] (g2.south) -- ++(0,-0.5) -| (trash.130);
+    \draw [arrow, red] (g3.south) -- ++(0,-0.5) -| (trash.50);
+    \draw [arrow, red] (g4.south) -- ++(0,-0.5) -| (trash.east);
+
+    \end{tikzpicture}
+    }
+    \caption{O Funil de Veto dos Guardrails}
+    \label{fig:guardrails_funnel}
+\end{figure}
+
+\subsection{1. As 4 Regras Cardinais de Validação (A Camada Final)}
+O CAOS não apenas verifica regras estáticas, mas submete \textbf{toda} proposta de ação (especialmente as geradas pelo módulo Care) a quatro questionamentos críticos de validação antes de qualquer execução. Esta bateria de testes garante que nenhuma decisão algorítmica viole os princípios operacionais da Viva AI.
+
+\begin{enumerate}
+    \item \textbf{Regra Física (Integridade Patrimonial)}: 
+    O sistema realiza a pergunta fundamental: \textit{"Esta ação traz qualquer risco risco ao ativo, ao produto armazenado ou à estrutura da loja?"}.
+    \begin{itemize}
+        \item Se a resposta for \textbf{SIM}, a ação é imediatamente \textbf{BLOQUEADA}.
+        \item Exemplo: O sistema impede o desligamento de um freezer se a temperatura interna estiver próxima do limite de descongelamento, protegendo o produto (sorvetes/carnes), mesmo que isso economize energia.
+    \end{itemize}
+
+    \item \textbf{Regra Financeira (Viabilidade e Budget)}:
+    O sistema verifica a saúde financeira da decisão: \textit{"Esta ação implica custo extra? Está dentro do budget aprovado para este cliente?"}.
+    \begin{itemize}
+        \item Isso impede gastos imprevistos sem autorização prévia (ex: chamar um técnico em horário de plantão com taxa extra), a menos que seja uma emergência classificada como Catastrófica (P0).
+    \end{itemize}
+
+    \item \textbf{Regra Contratual (Compliance e SLA)}:
+    Validação jurídica da automação: \textit{"Existe previsão no contrato e SLA para executar esta ação autonomamente?"}.
+    \begin{itemize}
+        \item Garante que o CAOS atue apenas dentro do perímetro contratado. Se o contrato do cliente é apenas de "Monitoramento", o agente é proibido de enviar comandos de "Controle", limitando-se a notificar.
+    \end{itemize}
+
+    \item \textbf{Regra de Comunicação (Brand Assurance)}:
+    Antes de enviar qualquer mensagem para humanos (via WhatsApp, Email ou Ticket), o sistema analisa: \textit{"A mensagem é apropriada? Está no tom de voz correto da marca?"}.
+    \begin{itemize}
+        \item Utiliza um modelo de linguagem menor (SLM) para análise de sentimento e tom, garantindo que notificações de erro não soem alarmistas ou rudes, mantendo a cordialidade e profissionalismo do Viva Co-Pilot.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Regras de Escalonamento (Human-in-the-Loop)}
+\label{sec:escalonamento}
+
+Mesmo com autonomia avançada, o CAOS reconhece seus limites. O sistema possui protocolos rígidos de \textit{Handover} para transferir o controle para um operador humano (Viva Co-Pilot) quando a incerteza ou o risco superam os limiares aceitáveis.
+
+O escalonamento é acionado automaticamente nos seguintes cenários:
+
+\begin{itemize}
+    \item \textbf{Ambiguidade de Dados ou Risco Financeiro}:
+    Quando os sensores reportam dados conflitantes (ex: Temperatura alta mas Corrente elétrica zero) ou a ação proposta tem um custo financeiro elevado (acima de um threshold configurável, ex: R\$ 500,00). O sistema cria uma \textbf{Sugestão de Ação} e aguarda o "De Acordo" do humano.
+
+    \item \textbf{Exigência Contratual Específica}:
+    Certos contratos exigem, por cláusula, que intervenções críticas (como Reset de fábrica ou Desligamento total) sejam aprovadas manualmente. O CAOS identifica o \texttt{contract\_id} e respeita essa restrição, colocando a ação em uma fila de aprovação.
+
+    \item \textbf{Classificação "Exige Validação" pelos Guardrails}:
+    Se qualquer uma das 4 Regras Cardinais retornar um status de "Incerteza" (score de confiança entre 0.3 e 0.7) ou se a ação for classificada explicitamente como \textit{Requires Validation} na matriz de decisão, o fluxo é interrompido. O agente notifica o Viva Co-Pilot com um resumo do contexto, a ação sugerida e a razão do bloqueio, solicitando intervenção.
+\end{itemize}
+
+\subsection{2. Validação de Inputs de Agentes (Input Guardrails)}
+O CAOS não confia cegamente nos agentes externos. Todo payload recebido passa por regras de validação antes de entrar no fluxo cognitivo.
+
+\subsubsection{Validação do Sentinel (Instinto)}
+\begin{enumerate}
+    \item \textbf{S1. Schema Check}: Se o payload não contiver \texttt{severity} ou \texttt{asset\_id}, o alerta é rejeitado na porta de entrada (Dead Letter Queue).
+    \item \textbf{S2. Prioridade P1}: Se o campo \texttt{severity} for "CRITICAL", o CAOS bypassa filas de baixa prioridade e processa imediatamente.
+\end{enumerate}
+
+\subsubsection{Validação do Atlas (Contexto)}
+\begin{enumerate}
+    \item \textbf{A1. Verificação de PII}: O CAOS escaneia o texto recebido do Atlas buscando padrões de Email. Se encontrar, veta a memória por risco de vazamento.
+    \item \textbf{A2. Relevância}: Se o documento recuperado não corresponder ao \texttt{model\_id} do ativo em questão, ele é descartado para evitar alucinação por contexto errado.
+\end{enumerate}
+
+\subsubsection{Validação do Oracle (Predição)}
+\begin{enumerate}
+    \item \textbf{O1. Threshold de Confiança}: Se a predição vier com \texttt{confidence < 0.75}, o CAOS rebaixa a informação para "Ruído" e não a utiliza no Veredito.
+    \item \textbf{O2. Horizonte Temporal}: Predições com horizonte $>7$ dias são ignoradas para ações imediatas.
+\end{enumerate}
+
+\subsubsection{Validação do Care (Ação)}
+\begin{enumerate}
+    \item \textbf{C2. Limite Financeiro}: Antes de despachar para o Cloud Workflows, verifica se o custo estimado no \texttt{ActionSchema} viola o budget do cliente.
+\end{enumerate}
+
+\subsection{3. Guardrails Operacionais e de Segurança (SecOps)}
+Além das regras de negócio, o sistema implementa proteções de infraestrutura:
+
+\begin{itemize}
+    \item \textbf{SO1. Anti-Flapping (Hysteresis)}: Bloqueia oscilações rápidas de decisão. Se o Veredito mudar de "Ligar" para "Desligar" em $<30s$, o sistema congela no estado mais seguro.
+    \item \textbf{SO2. Input Sanitization}: Todo payload de texto passa por uma verificação de *Prompt Injection* (ex: "Ignore all instructions") antes de atingir o LLM.
+    \item \textbf{SO3. Fail-Safe Protocol}: Em caso de falha catastrófica dos serviços (Pub/Sub/Firestore down), o CAOS entra em modo "Local Fallback", emitindo apenas logs locais e não tomando ações físicas.
+\end{itemize}
+
+\subsection{4. Guardrails de Robustez e Convivência}
+Cenários complexos exigem regras sociais e econômicas para garantir a longevidade do sistema.
+
+\begin{enumerate}
+    \item \textbf{R1. Mutex Global (Race Conditions)}: Dois workflows não podem atuar no mesmo `asset\_id` simultaneamente. O segundo aguarda o término do primeiro (Locking via Firestore Transaction).
+    \item \textbf{R2. Anti-Spam (Fadiga de Alarme)}: Se o mesmo alerta for gerado $>5$ vezes em 1 minuto, o CAOS agrupa as notificações em um único "Digest", evitando spam no WhatsApp do operador.
+    \item \textbf{R3. Lockout/Tagout (LOTO Virtual)}: Se o Atlas indicar que um humano está em manutenção física no local (flag `under\_maintenance=True`), TODA ação automática é suspensa, independente da gravidade.
+    \item \textbf{R4. Circuit Breaker Econômico}: Se o consumo de tokens LLM exceder o budget diário do Tenant (\$50/dia), o sistema reverte para lógica determinística (If/Else) sem IA até virar o dia.
+\end{enumerate}
+
+\subsection{5. Protocolo de Mitigação de Alucinação}
+Como garantir que o Agente não "invente" fatos ou ações perigosas? O CAOS utiliza uma abordagem de \textit{Defense in Depth}:
+
+\begin{itemize}
+    \item \textbf{Camada 1: Enforcement de Schema (Estrutural)}: O LLM nunca gera texto livre. Ele é forçado (via \textit{function calling}) a preencher schemas Pydantic. Se o JSON for inválido, o output é rejeitado antes de ser lido.
+    \item \textbf{Camada 2: Prioridade Epistemológica (Lógica)}: Dados do Sentinel (Sensores/Física) sempre sobrescrevem dados do Oracle (LLM). Se o LLM diz "A sala está fria" mas o sensor diz "40ºC", a Física vence ($S=1.0$).
+    \item \textbf{Camada 3: Loop de Autocrítica (Reflexiva)}: Antes de emitir a ação, o nó `Cortex` executa um passo de \textit{Self-Correction}: "Esta ação viola meus Guardrails?". Se sim, ele mesmo regenera a resposta.
+    \item \textbf{Camada 4: Fallback Determinístico (Segurança)}: Se a confiança do modelo for baixa ($<0.75$) ou houver erro de API, o sistema ignora o LLM e roda um script \textit{hardcoded} de segurança (ex: desligar tudo e chamar humano).
+\end{itemize}
+
+\subsection{5.6 Safety Layers (Camadas de Segurança)}
+
+A segurança do CAOS não depende apenas da ``boa vontade'' da IA generativa. Ela é implementada via um \textbf{sanduíche de validação} com 3 camadas de código determinístico envolvendo o LLM:
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|l|l|c|}
+\hline
+\textbf{Camada} & \textbf{Nome} & \textbf{Função} & \textbf{Latência} \\ \hline
+\textbf{0} & Reflexo (Hard Rules) & Bypassa o LLM para emergências críticas & \textbf{<10ms} \\ \hline
+\textbf{1} & Cognitiva (LLM) & O julgamento do Judge-LM (Gemini) & \textbf{$\sim$2s} \\ \hline
+\textbf{2} & Auditoria (Pós-Check) & Valida a saída da IA antes de executar & \textbf{<50ms} \\ \hline
+\end{tabular}
+\caption{Safety Layers: Estrutura de Segurança em 3 Camadas}
+\end{table}
+
+\subsubsection{Camada 0: Reflexo (Pré-Check)}
+Regras \textit{hard-coded} que rodam \textbf{antes} de qualquer chamada ao LLM. São reflexos automáticos que não pensam, apenas reagem:
+\begin{itemize}
+    \item \textbf{Trigger}: Alarme de incêndio, sensor de gás, presença humana em zona de perigo.
+    \item \textbf{Ação}: Ignora completamente a IA e executa protocolo de emergência (Power Cut Off, Evacuação).
+    \item \textbf{Latência}: $<$10ms (código Python puro, sem network call).
+\end{itemize}
+
+\subsubsection{Camada 1: Cognitiva (O Cérebro)}
+O julgamento do LLM (Gemini via Vertex AI). Esta é a camada onde o CAOS ``pensa'':
+\begin{itemize}
+    \item \textbf{Input}: Estado do Atlas + Alertas do Sentinel + Previsões do Oracle.
+    \item \textbf{Processamento}: Aplica a fórmula do Veredito ($V$) e gera ação proposta.
+    \item \textbf{Latência}: $\sim$2s (inclui network + inferência do modelo).
+\end{itemize}
+
+\subsubsection{Camada 2: Auditoria (Pós-Check)}
+Validação determinística que roda \textbf{depois} que a IA decide, mas \textbf{antes} do CARE executar:
+\begin{itemize}
+    \item \textbf{Função}: Verificar se a decisão da IA viola algum Guardrail ou limite financeiro.
+    \item \textbf{Exemplo}: IA mandou gastar \$10.000, mas limite automático é \$500 $\rightarrow$ VETO + Escalar para humano.
+    \item \textbf{Latência}: $<$50ms (validação de regras JSON).
+\end{itemize}
+
+\begin{avisobox}[Segurança Crítica]
+As Camadas 0 e 2 são \textbf{código Python puro} (determinístico). Elas nunca ``alucinam'' e garantem que mesmo se o LLM falhar ou gerar uma saída perigosa, a ação será bloqueada antes de chegar ao mundo físico.
+\end{avisobox}
+
+
+
+\subsubsection{Resumo do Fluxo de Segurança (Exemplo Real)}
+No cenário industrial de risco de explosão de um compressor, o fluxo é:
+\begin{enumerate}
+    \item \textbf{Sentinel} detecta o risco físico crítico (Vibração Extrema).
+    \item \textbf{Oracle} confirma que parar a máquina é mais barato que a explosão ("Better Safe than Sorry").
+    \item \textbf{Guardrail Físico} é acionado: "Risco de segurança exige parada imediata".
+    \item \textbf{Veredito}: O CAOS ordena o \textbf{Power Cut Off}, ignorando qualquer meta de produção ("Safety First").
+\end{enumerate}
+
+As regras são carregadas dinamicamente via arquivos JSON versionados:
+
+\subsection{Política Física (physical.json)}
+\begin{lstlisting}[language=Python, caption=Regra de Segurança Térmica]
+{
+  "policy_id": "PHYS_001",
+  "criticality": "BLOCKING",
+  "rules": [
+    {
+      "condition": "inputs.atlas.temperature > 90",
+      "action": "VETO",
+      "reason": "Risk of component melting (Safety Boundary)"
+    },
+    {
+      "condition": "inputs.sentinel.vibration_level > 8.5",
+      "action": "VETO",
+      "reason": "Mechanical structural failure imminent"
+    }
+  ]
+}
+\end{lstlisting}
+
+\subsection{Política Financeira (financial.json)}
+\begin{lstlisting}[language=Python, caption=Regra de Aprovação de Custos]
+{
+  "policy_id": "FIN_001",
+  "rules": [
+    {
+      "condition": "action.estimated_cost > 500.00",
+      "action": "REQUIRE_APPROVAL",
+      "role": "MANAGER",
+      "params": { "timeout_hours": 4 }
+    }
+  ]
+}
+\end{lstlisting}
+
+
+% ============================================================================
+% DEFINIÇÃO COMPLETA DE GUARDRAILS
+% ============================================================================
+\subsection{Catálogo Completo de Guardrails}
+\label{sec:guardrails_catalog}
+
+Esta seção apresenta a definição exaustiva de todas as guardrails implementadas no sistema CAOS. Cada regra possui um identificador único, condição de disparo, ação resultante e nível de severidade.
+
+\subsubsection{Legenda de Ações e Severidades}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\textbf{Ação} & \textbf{Descrição} \\ \hline
+\texttt{VETO} & Bloqueio imediato. A ação proposta é cancelada. \\ \hline
+\texttt{REQUIRE\_APPROVAL} & Ação pausada até aprovação humana (Viva Co-Pilot). \\ \hline
+\texttt{ALERT} & Notificação enviada, mas ação prossegue. \\ \hline
+\texttt{LOG} & Apenas registro para auditoria. \\ \hline
+\texttt{DEGRADE} & Sistema entra em modo de capacidade reduzida. \\ \hline
+\end{tabular}
+\caption{Tipos de Ações de Guardrails}
+\end{table}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|l|p{8cm}|}
+\hline
+\textbf{Severidade} & \textbf{Prioridade} & \textbf{Comportamento} \\ \hline
+\texttt{BLOCKING} & P0 & Veto incondicional. Não pode ser sobrescrito. \\ \hline
+\texttt{HIGH} & P1 & Requer aprovação gerencial. Timeout de 4h. \\ \hline
+\texttt{MEDIUM} & P2 & Requer aprovação de operador. Timeout de 24h. \\ \hline
+\texttt{LOW} & P3 & Apenas alerta. Auto-aprovado após 72h. \\ \hline
+\end{tabular}
+\caption{Níveis de Severidade}
+\end{table}
+
+% --------------------------------------------------------------------------
+% GUARDRAILS FÍSICAS (SAFETY)
+% --------------------------------------------------------------------------
+\subsubsection{1. Guardrails Físicas (Safety)}
+
+Regras de proteção de ativos, pessoas e produtos. Estas são as regras de maior criticidade e não podem ser sobrescritas por nenhum outro componente do sistema.
+
+{\small
+\begin{longtable}{|p{2cm}|p{2.8cm}|p{5.5cm}|p{2cm}|p{2cm}|}
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endhead
+
+PHYS\_001 & Temperatura Máxima Crítica & \texttt{temp\_c > MAX\_CRITICAL\_TEMP} (padrão: 110°C) & VETO & BLOCKING \\ \hline
+
+PHYS\_002 & Temperatura Mínima Crítica & \texttt{temp\_c < MIN\_CRITICAL\_TEMP} (padrão: -40°C) & VETO & BLOCKING \\ \hline
+
+PHYS\_003 & Vibração Estrutural & \texttt{vibration\_level > 8.5} (escala 0-10) & VETO & BLOCKING \\ \hline
+
+PHYS\_004 & Detecção de Incêndio & \texttt{sensor.fire\_detected == true} & VETO & BLOCKING \\ \hline
+
+PHYS\_005 & Detecção de Fumaça & \texttt{sensor.smoke\_level > SMOKE\_THRESHOLD} & REQUIRE\_ APPROVAL & HIGH \\ \hline
+
+PHYS\_006 & Sobrecarga Elétrica & \texttt{current\_amps > MAX\_AMPS} & VETO & BLOCKING \\ \hline
+
+PHYS\_007 & Proteção de Produto & \texttt{freezer.temp\_c > PRODUCT\_SPOIL\_TEMP} AND \texttt{action == "shutdown"} & VETO & BLOCKING \\ \hline
+
+PHYS\_008 & Zona LOTO Ativa & \texttt{asset.under\_maintenance == true} & VETO & BLOCKING \\ \hline
+
+PHYS\_009 & Pressão de Sistema & \texttt{pressure\_psi > MAX\_PRESSURE} & VETO & BLOCKING \\ \hline
+
+PHYS\_010 & Vazamento de Fluido & \texttt{sensor.leak\_detected == true} & REQUIRE\_ APPROVAL & HIGH \\ \hline
+
+\caption{Guardrails Físicas (PHYS\_001 a PHYS\_010)}
+\end{longtable}
+}
+
+% --------------------------------------------------------------------------
+% GUARDRAILS FINANCEIRAS
+% --------------------------------------------------------------------------
+\subsubsection{2. Guardrails Financeiras}
+
+Regras de controle de custos e orçamento. Protegem o sistema contra gastos não autorizados ou que excedam limites estabelecidos.
+
+{\small
+\begin{longtable}{|p{2cm}|p{2.8cm}|p{5.5cm}|p{2cm}|p{2cm}|}
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endhead
+
+FIN\_001 & Limite de Custo por Ação & \texttt{action.cost > ACTION\_COST\_LIMIT} (padrão: R\$ 500) & REQUIRE\_ APPROVAL & HIGH \\ \hline
+
+FIN\_002 & Budget Diário Excedido & \texttt{tenant.daily\_spend > DAILY\_BUDGET} & VETO & HIGH \\ \hline
+
+FIN\_003 & Budget Mensal Excedido & \texttt{tenant.monthly\_spend > MONTHLY\_BUDGET} & VETO & BLOCKING \\ \hline
+
+FIN\_004 & Consumo de Tokens LLM & \texttt{daily\_tokens > TOKEN\_BUDGET\_USD} (padrão: \$50/dia) & DEGRADE & MEDIUM \\ \hline
+
+FIN\_005 & Hora Extra de Técnico & \texttt{action == "dispatch\_tech"} AND \texttt{is\_overtime == true} & REQUIRE\_ APPROVAL & MEDIUM \\ \hline
+
+\caption{Guardrails Financeiras (FIN\_001 a FIN\_005)}
+\end{longtable}
+}
+
+% --------------------------------------------------------------------------
+% GUARDRAILS CONTRATUAIS
+% --------------------------------------------------------------------------
+\subsubsection{3. Guardrails Contratuais}
+
+Regras de conformidade com SLA e contratos. Garantem que o sistema atue apenas dentro do perímetro acordado com cada cliente.
+
+{\small
+\begin{longtable}{|p{2cm}|p{2.8cm}|p{5.5cm}|p{2cm}|p{2cm}|}
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endhead
+
+CONT\_001 & Escopo Contratual & \texttt{action.type} NOT IN \texttt{contract.allowed\_actions} & VETO & BLOCKING \\ \hline
+
+CONT\_002 & SLA de Resposta & \texttt{alert.age > SLA\_RESPONSE\_TIME} & ALERT & MEDIUM \\ \hline
+
+CONT\_003 & Janela de Manutenção & \texttt{action == "maintenance"} AND \texttt{NOT in\_maintenance\_window} & REQUIRE\_ APPROVAL & MEDIUM \\ \hline
+
+CONT\_004 & Ação Controlada & \texttt{contract.tier == "MONITORING\_ONLY"} AND \texttt{action.type == "control"} & VETO & BLOCKING \\ \hline
+
+CONT\_005 & Aprovação Manual Obrigatória & \texttt{contract.requires\_manual\_approval} AND \texttt{action.type IN ["reset", "shutdown"]} & REQUIRE\_ APPROVAL & HIGH \\ \hline
+
+\caption{Guardrails Contratuais (CONT\_001 a CONT\_005)}
+\end{longtable}
+}
+
+% --------------------------------------------------------------------------
+% GUARDRAILS DE COMUNICAÇÃO
+% --------------------------------------------------------------------------
+\subsubsection{4. Guardrails de Comunicação}
+
+Regras de qualidade de mensagens e tom de voz. Garantem que as comunicações externas mantenham os padrões da marca Viva AI.
+
+{\small
+\begin{longtable}{|p{2cm}|p{2.8cm}|p{5.5cm}|p{2cm}|p{2cm}|}
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endhead
+
+COMM\_001 & Análise de Tom de Voz & \texttt{message.sentiment} NOT IN \texttt{["professional", "cordial"]} & REQUIRE\_ APPROVAL & MEDIUM \\ \hline
+
+COMM\_002 & Anti-Spam (Fadiga) & \texttt{same\_alert\_count > 5} PER \texttt{MINUTE} & LOG & LOW \\ \hline
+
+COMM\_003 & Limite de Comprimento & \texttt{message.length > MAX\_MSG\_LENGTH} (padrão: 500 chars) & ALERT & LOW \\ \hline
+
+COMM\_004 & Canal Inapropriado & \texttt{severity == "LOW"} AND \texttt{channel == "whatsapp"} & ALERT & LOW \\ \hline
+
+\caption{Guardrails de Comunicação (COMM\_001 a COMM\_004)}
+\end{longtable}
+}
+
+% --------------------------------------------------------------------------
+% GUARDRAILS OPERACIONAIS (SECOPS)
+% --------------------------------------------------------------------------
+\subsubsection{5. Guardrails Operacionais (SecOps)}
+
+Regras de infraestrutura, cibersegurança e integridade operacional do sistema.
+
+{\small
+\begin{longtable}{|p{1.5cm}|p{2.8cm}|p{6cm}|p{2cm}|p{2cm}|}
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endhead
+
+SO\_001 & Anti-Flapping & \texttt{decision\_changed IN < 30s} & VETO & HIGH \\ \hline
+
+SO\_002 & Prompt Injection & Payload contém padrões de injection & VETO & BLOCKING \\ \hline
+
+SO\_003 & Input Sanitization & \texttt{NOT valid\_schema(payload)} & VETO & BLOCKING \\ \hline
+
+SO\_004 & Fail-Safe Protocol & \texttt{services.pubsub == "DOWN"} OR \texttt{services.firestore == "DOWN"} & DEGRADE & BLOCKING \\ \hline
+
+SO\_005 & Rate Limiting & \texttt{requests\_per\_minute > RATE\_LIMIT} (padrão: 1000/min) & VETO & HIGH \\ \hline
+
+SO\_006 & Schema Validation & Payload não passa validação Pydantic & VETO & BLOCKING \\ \hline
+
+SO\_007 & Timeout de Execução & \texttt{workflow.duration > MAX\_TIMEOUT} (padrão: 5min) & VETO & HIGH \\ \hline
+
+SO\_008 & Anomalia Comportamental & \texttt{action\_frequency > 3x\_baseline} & ALERT & MEDIUM \\ \hline
+
+\caption{Guardrails Operacionais - SecOps (SO\_001 a SO\_008)}
+\end{longtable}
+}
+
+% --------------------------------------------------------------------------
+% GUARDRAILS DE ROBUSTEZ
+% --------------------------------------------------------------------------
+\subsubsection{6. Guardrails de Robustez}
+
+Regras de estabilidade, resiliência e convivência do sistema em cenários de alta carga ou falhas parciais.
+
+{\small
+\begin{longtable}{|p{2cm}|p{2.8cm}|p{5.5cm}|p{2cm}|p{2cm}|}
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endfirsthead
+\hline
+\textbf{ID} & \textbf{Nome} & \textbf{Condição} & \textbf{Ação} & \textbf{Sever.} \\ \hline
+\endhead
+
+ROB\_001 & Mutex Global & \texttt{asset.has\_active\_workflow == true} & VETO & HIGH \\ \hline
+
+ROB\_002 & Circuit Breaker Econômico & \texttt{token\_spend > daily\_limit} & DEGRADE & MEDIUM \\ \hline
+
+ROB\_003 & Lockout/Tagout Virtual & \texttt{asset.loto\_flag == true} & VETO & BLOCKING \\ \hline
+
+ROB\_004 & Dedupe de Eventos & \texttt{event.id} IN \texttt{processed\_cache} & LOG & LOW \\ \hline
+
+ROB\_005 & Backpressure Management & \texttt{queue.depth > MAX\_QUEUE\_DEPTH} & DEGRADE & MEDIUM \\ \hline
+
+ROB\_006 & Graceful Degradation & \texttt{llm.response\_time > 5000ms} & DEGRADE & MEDIUM \\ \hline
+
+\caption{Guardrails de Robustez (ROB\_001 a ROB\_006)}
+\end{longtable}
+}
+
+\subsection{Extensibilidade (Custom Guardrails)}
+
+Os 38 guardrails listados acima constituem o \textbf{Catálogo Base} do sistema. No entanto, o motor de políticas foi desenhado para ser extensível, suportando regras customizadas em quatro níveis hierárquicos:
+
+\begin{enumerate}
+    \item \textbf{Guardrails por Tenant}: Regras de negócio específicas de um cliente (ex: "Cliente X proíbe manutenção aos domingos"). Sobrescrevem regras P2/P3, mas nunca P0/P1.
+    \item \textbf{Guardrails por Ativo}: Regras vinculadas ao modelo do equipamento (ex: "Chiller Model Y tem limite térmico de 105°C ao invés de 110°C").
+    \item \textbf{Guardrails Temporários}: Regras com TTL (Time-To-Live). Úteis para janelas de manutenção (ex: "Ignorar alertas de pressão por 2 horas durante teste").
+    \item \textbf{Guardrails Emergentes}: Regras criadas dinamicamente pelo Viva Co-Pilot em resposta a incidentes novos (ex: "Enquanto não houver patch, bloquear comando Z").
+\end{enumerate}
+
+Essa arquitetura garante que o CAOS possa se adaptar a contratos específicos sem necessidade de alteração no código-fonte do núcleo.
+
+% --------------------------------------------------------------------------
+% RESUMO DO CATÁLOGO
+% --------------------------------------------------------------------------
+\subsubsection{Resumo do Catálogo}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Categoria} & \textbf{Qtd} & \textbf{BLOCKING} & \textbf{HIGH} & \textbf{MEDIUM/LOW} \\ \hline
+Físicas (Safety) & 10 & 8 & 2 & 0 \\ \hline
+Financeiras & 5 & 1 & 2 & 2 \\ \hline
+Contratuais & 5 & 2 & 1 & 2 \\ \hline
+Comunicação & 4 & 0 & 0 & 4 \\ \hline
+Operacionais & 8 & 4 & 3 & 1 \\ \hline
+Robustez & 6 & 1 & 1 & 4 \\ \hline
+\textbf{Total} & \textbf{38} & \textbf{16} & \textbf{9} & \textbf{13} \\ \hline
+\end{tabular}
+\caption{Resumo do Catálogo de Guardrails}
+\end{table}
+
+\newpage
+
+% ============================================================================
+% CAPITULO 6: FLUXOS E CONTRATOS
+% ============================================================================
+\section{Fluxos Operacionais e Contratos}
+\label{sec:fluxos}
+
+
+
+\begin{figure}[h!]
+    \centering
+    \resizebox{\textwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=2cm,
+        actor/.style={rectangle, draw=black, thick, fill=gray!10, minimum width=1.6cm, minimum height=0.9cm, align=center, font=\scriptsize},
+        msg/.style={->, thick, >=stealth},
+        msglabel/.style={font=\tiny, fill=white, inner sep=1pt},
+        phase/.style={rectangle, draw=none, fill=gray!20, minimum width=2.2cm, minimum height=0.6cm, align=center, font=\scriptsize\bfseries, rounded corners=3pt}
+    ]
+    
+    % Actors at y=0
+    \node [actor] (sensor) at (0,0) {Sensor\\IoT};
+    \node [actor] (pubsub) at (2.2,0) {Pub/Sub};
+    \node [actor, fill=purple!15] (atlas) at (4.4,0) {ATLAS};
+    \node [actor, fill=red!15] (sentinel) at (6.6,0) {SENTINEL};
+    \node [actor, fill=cyan!15] (oracle) at (8.8,0) {ORACLE};
+    \node [actor, fill=blue!20] (caos) at (11,0) {CAOS\\(Judge)};
+    \node [actor, fill=green!15] (care) at (13.2,0) {CARE\\(HAL)};
+    \node [actor] (device) at (15.4,0) {Device};
+    
+    % Lifelines
+    \foreach \n in {sensor, pubsub, atlas, sentinel, oracle, caos, care, device} {
+        \draw [dashed, gray] (\n.south) -- ++(0,-14);
+    }
+    
+    % === FASE 1: INGESTÃO (Msgs 1-3) ===
+    \node [phase, fill=purple!20, text width=2.5cm] at (-2.5,-1.75) {1. Ingestão\\(Msgs 1-3)};
+    \draw [msg] (0,-1) -- node[msglabel, above] {1. Telemetry} (2.2,-1);
+    \draw [msg] (2.2,-1.5) -- node[msglabel, above] {2. Raw Data} (4.4,-1.5);
+    \draw [msg] (4.4,-2.2) -- ++(0.5,0) -- ++(0,-0.25) -- ++(-0.5,0) node[msglabel, right, xshift=0.5cm, yshift=0.1cm] {3. Update Twin};
+    
+    % === FASE 2: PERCEPÇÃO (Msgs 4-5) ===
+    \node [phase, fill=red!20, text width=2.5cm] at (-2.5,-3.6) {2. Percepção\\(Msgs 4-5)};
+    \draw [msg] (4.4,-3.2) -- node[msglabel, above] {4. State + Thresholds} (6.6,-3.2);
+    \draw [msg] (6.6,-3.9) -- node[msglabel, above] {5. Anomaly Alert} (11,-3.9);
+    
+    % === FASE 3: PREDIÇÃO (Opcional - Msgs 6-7) ===
+    \node [phase, fill=cyan!20, text width=2.5cm] at (-2.5,-5.0) {3. Predição\\(Opcional)};
+    % 5.5. CAOS queries ATLAS for context (implicit, before reasoning)
+    \draw [msg, dashed] (11,-4.3) -- node[msglabel, above] {Context Query} (4.4,-4.3);
+    \draw [msg, dashed] (4.4,-4.6) -- node[msglabel, above] {RAG Memory} (11,-4.6);
+    % 6. CAOS asks ORACLE for prediction
+    \draw [msg, dashed] (11,-5.0) -- node[msglabel, above] {6. Simulate} (8.8,-5.0);
+    \draw [msg, dashed] (8.8,-5.5) -- node[msglabel, above] {7. Forecast} (11,-5.5);
+    
+    % === FASE 4: JULGAMENTO HÍBRIDO (Msgs 8-11) ===
+    \node [phase, fill=blue!20, text width=2.5cm] at (-2.5,-7.2) {4. Julgamento\\(Msgs 8-11)};
+    % 4 sub-steps as self-loops on CAOS (labels in BLACK for readability)
+    \draw [msg] (11,-6.2) -- ++(0.5,0) -- ++(0,-0.25) -- ++(-0.5,0) node[msglabel, right, xshift=0.5cm, yshift=0.1cm] {8. Analyze Impacts};
+    \draw [msg] (11,-6.7) -- ++(0.5,0) -- ++(0,-0.25) -- ++(-0.5,0) node[msglabel, right, xshift=0.5cm, yshift=0.1cm] {9. Calculate S \& V};
+    \draw [msg] (11,-7.2) -- ++(0.5,0) -- ++(0,-0.25) -- ++(-0.5,0) node[msglabel, right, xshift=0.5cm, yshift=0.1cm] {10. Check Guardrails};
+    \draw [msg] (11,-7.7) -- ++(0.5,0) -- ++(0,-0.25) -- ++(-0.5,0) node[msglabel, right, xshift=0.5cm, yshift=0.1cm] {11. Classify Risk};
+    
+    % === FASE 5: EXECUÇÃO (Msgs 12-15) ===
+    \node [phase, fill=green!20, text width=2.5cm] at (-2.5,-9.5) {5. Execução\\(Msgs 12-15)};
+    \draw [msg] (11,-8.5) -- node[msglabel, above] {12. Execute Plan} (13.2,-8.5);
+    \draw [msg] (13.2,-9.2) -- node[msglabel, above] {13. HAL Command} (15.4,-9.2);
+    \draw [msg] (15.4,-9.9) -- node[msglabel, above] {14. ACK} (13.2,-9.9);
+    \draw [msg] (13.2,-10.6) -- node[msglabel, above] {15. Result} (11,-10.6);
+    
+    % === FASE 6: COMUNICAÇÃO (Msgs 16-17) ===
+    \node [phase, fill=orange!20, text width=2.5cm] at (-2.5,-12) {6. Comunicação\\(Msgs 16-17)};
+    \draw [msg] (13.2,-11.3) -- ++(0.5,0) -- ++(0,-0.25) -- ++(-0.5,0) node[msglabel, right, xshift=0.5cm, yshift=0.1cm] {16. Notify Human};
+    \draw [msg] (13.2,-12) -- ++(-11.2,0) node[msglabel, above, pos=0.5] {17. Status Update (Co-Pilot)};
+
+    \end{tikzpicture}
+    }
+    \caption{Diagrama de Sequência: 6 Fases do Ciclo de Decisão Autônoma}
+    \label{fig:sequence_diagram}
+\end{figure}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|c|c|l|l|l|}
+\hline
+\textbf{Fase} & \textbf{\#} & \textbf{De → Para} & \textbf{Mensagem} & \textbf{Latência} \\ \hline
+\multirow{3}{*}{\textbf{1. Ingestão}} & 1 & Sensor → Pub/Sub & Telemetry JSON & <10ms \\ \cline{2-5}
+& 2 & Pub/Sub → ATLAS & Raw Data & <20ms \\ \cline{2-5}
+& 3 & ATLAS (interno) & Update Digital Twin & <50ms \\ \hline
+\multirow{2}{*}{\textbf{2. Percepção}} & 4 & ATLAS → SENTINEL & State + Thresholds & <30ms \\ \cline{2-5}
+& 5 & SENTINEL → CAOS & Anomaly Alert & <50ms \\ \hline
+\multirow{4}{*}{\textbf{3. Predição (Opcional)}} & 5.1 & CAOS → ATLAS & Context Query & <30ms \\ \cline{2-5}
+& 5.2 & ATLAS → CAOS & RAG Memory & <100ms \\ \cline{2-5}
+& 6 & CAOS → ORACLE & Simulate & <50ms \\ \cline{2-5}
+& 7 & ORACLE → CAOS & Forecast & <300ms \\ \hline
+\multirow{4}{*}{\textbf{4. Julgamento}} & 8 & CAOS (interno) & Analyze Impacts & <50ms \\ \cline{2-5}
+& 9 & CAOS (interno) & Calculate S \& V & <100ms \\ \cline{2-5}
+& 10 & CAOS (interno) & Check Guardrails & <50ms \\ \cline{2-5}
+& 11 & CAOS (interno) & Classify Risk & <20ms \\ \hline
+\multirow{4}{*}{\textbf{5. Execução}} & 12 & CAOS → CARE & Execute Plan & <50ms \\ \cline{2-5}
+& 13 & CARE → Device & HAL Command & <200ms \\ \cline{2-5}
+& 14 & Device → CARE & ACK & <100ms \\ \cline{2-5}
+& 15 & CARE → CAOS & Result & <50ms \\ \hline
+\multirow{2}{*}{\textbf{6. Comunicação}} & 16 & CARE → Humano & Notify & <50ms \\ \cline{2-5}
+& 17 & CARE → Co-Pilot & Status Update & <50ms \\ \hline
+\multicolumn{2}{|c|}{\textbf{Total E2E}} & \multicolumn{2}{l|}{\textbf{Sensor → Notificação}} & \textbf{<1.5s} \\ \hline
+\end{tabular}
+\caption{Latências por Fase (17 Mensagens do Ciclo de Decisão)}
+\end{table}
+
+\subsection{Contratos de Interface}
+
+O CAOS opera como um \textbf{event-driven agent}. Ele não expõe APIs REST, mas define contratos rígidos de entrada e saída.
+
+\subsubsection{Input: Evento de Alerta (Sentinel)}
+
+\begin{lstlisting}[language=Python, caption=Schema de Entrada - AlertEvent]
+{
+  "event_id": "evt_a1b2c3d4",
+  "timestamp": "2026-01-28T10:00:00Z",
+  "source": "sentinel",
+  "asset_id": "CHILLER-04",
+  "tenant_id": "tenant_abc",
+  "severity": "CRITICAL",  // CRITICAL | HIGH | MEDIUM | LOW
+  "metric": "temperature",
+  "value": 95.2,
+  "unit": "celsius",
+  "threshold_violated": 90.0,
+  "context": {
+    "location": "Loja 042 - São Paulo",
+    "model": "Carrier 30XA"
+  }
+}
+\end{lstlisting}
+
+\subsubsection{Output: Ação para Cloud Workflows (ActionSchema)}
+
+\begin{lstlisting}[language=Python, caption=Schema de Saída - ActionSchema (destinado ao CARE)]
+{
+  "action_id": "act_x1y2z3",
+  "workflow_name": "EmergencyShutdownWorkflow",
+  "created_at": "2026-01-28T10:00:01Z",
+  "verdict_score": -0.34,
+  "decision": "BLOCKED",
+  "asset_id": "CHILLER-04",
+  "tenant_id": "tenant_abc",
+  "command": {
+    "type": "shutdown",
+    "target": "compressor",
+    "params": { "graceful": false }
+  },
+  "guardrails_passed": ["PHYS_001", "FIN_001"],
+  "guardrails_violated": [],
+  "requires_approval": false,
+  "estimated_cost": 0.00,
+  "justification": "Temperatura crítica. Risco de dano ao ativo."
+}
+\end{lstlisting}
+
+\subsubsection{APIs Consumidas}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Agente} & \textbf{Endpoint} & \textbf{Método} & \textbf{Descrição} \\ \hline
+Atlas & \texttt{/api/v1/assets/\{id\}/twin} & GET & Digital Twin do ativo \\ \hline
+Atlas & \texttt{/api/v1/assets/\{id\}/manuals} & GET & RAG de manuais técnicos \\ \hline
+Sentinel & \texttt{/api/v1/alerts/active} & GET & Alertas ativos \\ \hline
+Oracle & \texttt{/api/v1/predict/\{asset\_id\}} & POST & Predição de falha \\ \hline
+\end{tabular}
+\caption{APIs Consumidas pelo CAOS}
+\end{table}
+
+\subsection{Fluxo de Escalation (Viva Co-Pilot)}
+
+Quando o Veredito requer aprovação humana (\texttt{REQUIRE\_APPROVAL}), o CAOS aciona o fluxo de escalation.
+
+\subsubsection{Canais de Notificação}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Canal} & \textbf{Severidade} & \textbf{Timeout} & \textbf{Auto-Approve} \\ \hline
+WhatsApp & CRITICAL, HIGH & 30min & Não \\ \hline
+Dashboard & Todos & 4h & Sim (após timeout) \\ \hline
+Email & MEDIUM, LOW & 24h & Sim (após timeout) \\ \hline
+SMS & CRITICAL only & 15min & Não \\ \hline
+\end{tabular}
+\caption{Matriz de Canais de Escalation}
+\end{table}
+
+\subsubsection{Estados de Aprovação}
+
+\begin{enumerate}
+    \item \textbf{PENDING}: Aguardando resposta humana.
+    \item \textbf{APPROVED}: Humano aprovou a ação.
+    \item \textbf{REJECTED}: Humano rejeitou a ação.
+    \item \textbf{TIMEOUT}: Tempo expirou. Aplica política padrão.
+    \item \textbf{AUTO\_APPROVED}: Timeout + política permite auto-approve.
+\end{enumerate}
+
+\newpage
+
+\subsection{Políticas JSON Completas}
+
+Abaixo, exemplos de políticas para cada categoria de guardrail.
+
+\subsubsection{physical.json}
+\begin{lstlisting}[language=Python, caption=Política Física, basicstyle=\tiny\ttfamily]
+{
+  "policy_id": "PHYS",
+  "version": "1.0",
+  "rules": [
+    { "id": "PHYS_001", "condition": "temp_c > 110", "action": "VETO", "severity": "BLOCKING" },
+    { "id": "PHYS_004", "condition": "fire_detected == true", "action": "VETO", "severity": "BLOCKING" },
+    { "id": "PHYS_008", "condition": "under_maintenance == true", "action": "VETO", "severity": "BLOCKING" }
+  ]
+}
+\end{lstlisting}
+
+\subsubsection{financial.json}
+\begin{lstlisting}[language=Python, caption=Política Financeira, basicstyle=\tiny\ttfamily]
+{
+  "policy_id": "FIN",
+  "version": "1.0",
+  "rules": [
+    { "id": "FIN_001", "condition": "action.cost > 500", "action": "REQUIRE_APPROVAL", "role": "MANAGER" },
+    { "id": "FIN_003", "condition": "monthly_spend > budget", "action": "VETO", "severity": "BLOCKING" }
+  ]
+}
+\end{lstlisting}
+
+\subsubsection{contractual.json}
+\begin{lstlisting}[language=Python, caption=Política Contratual, basicstyle=\tiny\ttfamily]
+{
+  "policy_id": "CONT",
+  "version": "1.0",
+  "rules": [
+    { "id": "CONT_001", "condition": "action NOT IN contract.allowed", "action": "VETO" },
+    { "id": "CONT_004", "condition": "tier == 'MONITORING_ONLY'", "action": "VETO" }
+  ]
+}
+\end{lstlisting}
+
+\subsubsection{communication.json}
+\begin{lstlisting}[language=Python, caption=Política de Comunicação, basicstyle=\tiny\ttfamily]
+{
+  "policy_id": "COMM",
+  "version": "1.0",
+  "rules": [
+    { "id": "COMM_001", "condition": "sentiment NOT IN ['professional']", "action": "REQUIRE_APPROVAL" },
+    { "id": "COMM_002", "condition": "same_alert_count > 5 PER MINUTE", "action": "LOG" }
+  ]
+}
+\end{lstlisting}
+
+\subsubsection{secops.json}
+\begin{lstlisting}[language=Python, caption=Política SecOps, basicstyle=\tiny\ttfamily]
+{
+  "policy_id": "SO",
+  "version": "1.0",
+  "rules": [
+    { "id": "SO_001", "condition": "decision_changed IN < 30s", "action": "VETO" },
+    { "id": "SO_002", "condition": "payload.contains(INJECTION)", "action": "VETO", "severity": "BLOCKING" }
+  ]
+}
+\end{lstlisting}
+
+\subsubsection{robustness.json}
+\begin{lstlisting}[language=Python, caption=Política de Robustez, basicstyle=\tiny\ttfamily]
+{
+  "policy_id": "ROB",
+  "version": "1.0",
+  "rules": [
+    { "id": "ROB_001", "condition": "asset.has_active_workflow", "action": "VETO" },
+    { "id": "ROB_003", "condition": "loto_flag == true", "action": "VETO", "severity": "BLOCKING" }
+  ]
+}
+\end{lstlisting}
+
+\newpage
+
+\subsection{Métricas e Observabilidade}
+
+\subsubsection{Dashboards (Google Cloud Monitoring)}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Dashboard} & \textbf{Métricas} & \textbf{Alerta} \\ \hline
+CAOS Latency & P50, P95, P99 de decisão & P99 > 2s \\ \hline
+CAOS Throughput & Decisões/min por tenant & < 10/min warn \\ \hline
+Guardrail Violations & Contagem por categoria & > 50/hora \\ \hline
+Workflows Health & Workflows pending/failed & Failed > 5 \\ \hline
+LLM Token Usage & Tokens/dia, custo USD & > \$100/dia \\ \hline
+\end{tabular}
+\caption{Dashboards de Observabilidade}
+\end{table}
+
+\subsubsection{Latency Targets (SLOs)}
+
+\begin{itemize}
+    \item \textbf{P50}: < 500ms (decisão típica)
+    \item \textbf{P95}: < 1.5s (decisão com RAG)
+    \item \textbf{P99}: < 3s (edge cases com múltiplos agentes)
+    \item \textbf{Availability}: 99.9\% uptime mensal
+\end{itemize}
+
+\subsection{Rollback e Recovery}
+
+\subsubsection{Cenários de Falha e Recuperação}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Falha} & \textbf{Comportamento} & \textbf{Recovery} \\ \hline
+Cloud Workflows down & Workflows pausados & Auto-resume ao subir \\ \hline
+Firestore down & State read fails & Fallback para cache Redis \\ \hline
+Vertex AI quota & LLM calls fail & Fallback determinístico \\ \hline
+Pub/Sub timeout & Events queued & Retry com backoff \\ \hline
+Execution error & Step fails & Workflow retry (3x) \\ \hline
+\end{tabular}
+\caption{Matriz de Falha e Recovery}
+\end{table}
+
+\subsubsection{Idempotência}
+
+Todas as ações do CAOS são \textbf{idempotentes}. Se um comando \texttt{shutdown} for enviado 2x, o Worker verifica o estado atual antes de executar. Se o device já está desligado, retorna \texttt{NOOP}.
+
+\subsection{Testes de Integração}
+
+\subsubsection{Framework de Testes}
+\begin{itemize}
+    \item \textbf{Unit Tests}: pytest + mocks para LangGraph nodes
+    \item \textbf{Integration Tests}: Cloud Workflows Emulator + fixtures
+    \item \textbf{E2E Tests}: Pub/Sub emulator + real LLM calls (staging)
+\end{itemize}
+
+\subsubsection{Cenários de Teste Automatizados}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Cenário} & \textbf{Input} & \textbf{Expected Output} \\ \hline
+Fire Detection & severity=CRITICAL, fire=true & V < 0, VETO \\ \hline
+Normal Operation & severity=LOW, all OK & V > 0.5, MONITOR \\ \hline
+Budget Exceeded & cost > budget & REQUIRE\_APPROVAL \\ \hline
+LOTO Active & under\_maintenance=true & VETO \\ \hline
+Prompt Injection & payload="ignore all" & VETO, BLOCKED \\ \hline
+\end{tabular}
+\caption{Cenários de Teste Automatizados}
+\end{table}
+
+\subsection{Rate Limits e Graceful Degradation}
+
+\subsubsection{Limites do Vertex AI (Gemini)}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Recurso} & \textbf{Limite} & \textbf{Ação se Excedido} \\ \hline
+Requests/min & 60 RPM (default) & Queue + backoff \\ \hline
+Tokens/day & 2M tokens & Switch to cache \\ \hline
+Cost/day & \$50 (configurável) & Fallback determinístico \\ \hline
+\end{tabular}
+\caption{Limites de API e Ações}
+\end{table}
+
+\subsubsection{Fallback Determinístico}
+
+Quando a API do LLM está indisponível, o CAOS entra em \textbf{Modo Degradado}:
+\begin{enumerate}
+    \item \textbf{Alertas CRITICAL}: Executa regras hardcoded (shutdown automático)
+    \item \textbf{Alertas HIGH}: Envia para Co-Pilot sem análise LLM
+    \item \textbf{Alertas MEDIUM/LOW}: Loga e ignora até recovery
+\end{enumerate}
+
+\newpage
+
+
+% ============================================================================
+% CAPITULO 7: SINAPSES (PROTOCOLOS)
+% ============================================================================
+\section{Integração com Agentes}
+\label{sec:sinapses}
+
+\subsection{Topologia (Google Pub/Sub)}
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Canal} & \textbf{De -> Para} & \textbf{Conteúdo} \\ \hline
+\texttt{sentinel.alerts} & Sentinel -> CAOS & Trigger JSON \\ \hline
+\texttt{oracle.predictions} & Oracle -> CAOS & Probabilidades \\ \hline
+\texttt{caos.actions} & CAOS -> Care & Command Object \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Payloads Estritos}
+\begin{lstlisting}[language=Python, caption=Exemplo de Trigger]
+{
+  "source": "sentinel", 
+  "payload": { "asset_id": "PUMP-04", "metric": "vibration", "val": 12.5 }
+}
+\end{lstlisting}
+
+\newpage
+
+
+
+% ============================================================================
+% CAPITULO 8: INTERFACES (API & TOOLS)
+% ============================================================================
+\section{Ferramentas (Tools)}
+\label{sec:tools}
+
+O Cortex não apenas "fala", ele "faz". As seguintes funções estão disponíveis para o LLM via \textit{Function Calling}:
+
+\subsection{Catálogo de Tools}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|l|p{6cm}|}
+\hline
+\textbf{Tool} & \textbf{Parâmetros} & \textbf{Descrição} \\ \hline
+\texttt{mqtt\_publish} & topic, payload, qos & Envia comando direto a device IoT via broker MQTT \\ \hline
+\texttt{open\_ticket} & severity, queue, title, description & Abre chamado no Jira/ServiceNow \\ \hline
+\texttt{send\_whatsapp} & user\_id, template\_id, params & Notificação urgente via Twilio \\ \hline
+\texttt{sql\_query} & query (read-only) & Consulta analítica no TimescaleDB \\ \hline
+\texttt{get\_asset\_state} & asset\_id & Recupera Digital Twin do Atlas \\ \hline
+\texttt{schedule\_maintenance} & asset\_id, datetime, type & Agenda manutenção preventiva \\ \hline
+\end{tabular}
+\caption{Catálogo de Ferramentas do CAOS}
+\end{table}
+
+\subsection{Exemplo de Uso (Function Calling)}
+
+\begin{lstlisting}[language=Python, caption=Exemplo de Tool Call pelo LLM, basicstyle=\tiny\ttfamily]
+{
+  "tool": "mqtt_publish",
+  "parameters": {
+    "topic": "devices/chiller-04/commands",
+    "payload": {"action": "shutdown", "graceful": true},
+    "qos": 1
+  },
+  "reasoning": "Temperatura critica detectada. Shutdown preventivo."
+}
+\end{lstlisting}
+
+\newpage
+
+\section{API REST}
+\label{sec:api}
+
+O CAOS expõe endpoints via FastAPI para integração com sistemas legados (ERPs) ou Dashboards.
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Método} & \textbf{Endpoint} & \textbf{Função} \\ \hline
+POST & \texttt{/v1/event} & Ingestão Manual de Eventos \\ \hline
+GET & \texttt{/v1/trace/\{id\}} & Consulta de Cadeia de Pensamento \\ \hline
+POST & \texttt{/v1/feedback} & Reinforcement Learning Human Feedback \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Exemplo de Requisicão (Ingestão)}
+\begin{lstlisting}[language=bash]
+curl -X POST https://api.vivaiot.com/v1/event \
+  -H "Authorization: Bearer <token>" \
+  -d '{
+    "source": "maintenance_app",
+    "type": "alert_ack",
+    "payload": {
+       "alert_id": "ALT-99",
+       "user": "technician_01",
+       "action": "investigating"
+    }
+  }'
+\end{lstlisting}
+
+\subsection{Exemplo de Resposta (Trace)}
+\begin{lstlisting}[language=Python]
+{
+  "trace_id": "abc-123",
+  "status": "processing",
+  "steps": [
+    {"agent": "Sentinel", "output": "Anomaly detected"},
+    {"agent": "Atlas", "output": "Context found: Maintenance Window"},
+    {"agent": "Oracle", "output": "Decision: Suppress Alert"}
+  ]
+}
+\end{lstlisting}
+
+\newpage
+
+% ============================================================================
+% CAPITULO 9: SEGURANÇA (ENTERPRISE)
+% ============================================================================
+\section{Segurança e Conformidade}
+\label{sec:security}
+
+\subsection{Proteção na Borda (mTLS)}
+O Gateway Edge e a Nuvem CAOS utilizam \textbf{Mutual TLS}. Ambos os lados apresentam certificados assinados pela CA interna. Tokens de execução têm TTL de 5 minutos.
+
+\subsection{Provas Jurídicas (WORM)}
+Os logs de veredito são armazenados em buckets S3 com \textbf{Object Lock} (WORM) por 5 anos. Garantia de imutabilidade para auditoria.
+
+\newpage
+
+% ============================================================================
+% CAPITULO 10: RESILIENCIA (DR)
+% ============================================================================
+\section{Resiliência e Recuperação}
+\label{sec:dr}
+
+\subsection{Protocolo Brain Death}
+Se o LLM falhar (timeout > 5s):
+\begin{enumerate}
+    \item \textbf{Fallback}: CAOS entra em "Modo Reptiliano".
+    \item \textbf{Lógica}: Ignora Oracle. Usa apenas Sentinel + Guardrails.
+    \item \textbf{Restrição}: Apenas ações de Segurança (P1) são permitidas.
+\end{enumerate}
+
+\subsection{Circuit Breaker}
+Se um ativo falhar o reset 3x, o circuito abre por 4 horas.
+
+\newpage
+
+% ============================================================================
+% CAPITULO 11: ESTRATEGIA DE TESTES (QA)
+% ============================================================================
+\section{Estratégia de Qualidade}
+\label{sec:qa}
+
+\subsection{Pirâmide de Testes}
+\begin{enumerate}
+    \item \textbf{Unitários (80\%)}: Foco nos Guardrails (Input fixo -> Block/Allow).
+    \item \textbf{Integração (15\%)}: Teste de conversores HAL (Modbus -> JSON).
+    \item \textbf{End-to-End (5\%)}: Simulação completa via "Digital Twin" (Mock do Sentinel).
+\end{enumerate}
+
+\newpage
+
+% ============================================================================
+% CAPITULO 12: OPERAÇÃO E OBSERVABILIDADE OPS
+% ============================================================================
+\section{Observabilidade}
+\label{sec:ops}
+
+Como garantir que o sistema está saudável sem olhar os logs manualmente?
+
+\subsection{Tracing Cognitivo (LangSmith)}
+Diferente de sistemas comuns, o CAOS precisa de debugging *semântico*. Utilizamos o \textbf{LangSmith} para visualizar a Cadeia de Pensamento.
+
+\begin{figure}[h!]
+    \centering
+    \begin{tcolorbox}[title=Exemplo de Trace Log, colback=black!5!white]
+    \small
+    \textbf{[Trace ID: 9f8a...]} \\
+    \texttt{> User Input: "Vibração alta na Bomba 1"} \\
+    \texttt{  |-- Agent: Sentinel (Output: Severity HIGH)} \\
+    \texttt{  |-- Agent: Atlas (Tool: vector\_search "manual bomba 1")} \\
+    \texttt{  |   |-- Chunk 1: "Vibração acima de 80\% requer parada."} \\
+    \texttt{  |-- Agent: Oracle (Thinking...)} \\
+    \texttt{  |-- Agent: Oracle (Decision: STOP\_MACHINE)} \\
+    \texttt{  |-- Guardrail: "Stop Machine" is SAFE? -> YES} \\
+    \texttt{< System Action: mqtt\_publish("STOP")}
+    \end{tcolorbox}
+    \caption{Visualização de um Trace Cognitivo}
+\end{figure}
+
+\subsection{Infraestrutura-como-Código (Terraform)}
+Todo o ambiente Google Cloud (Vertex AI, Cloud Run, PubSub, Postgres) é provisionado via Terraform.
+
+\begin{lstlisting}[language=bash, caption=Exemplo de Recurso Terraform]
+resource "google_cloud_run_service" "caos_agent" {
+  name     = "caos-agent-v1"
+  location = "us-central1"
+
+  template {
+    spec {
+      containers {
+        image = "gcr.io/vivaiot/caos-agent:latest"
+        env {
+          name = "PUBSUB_PROJECT"
+          value = "vivaiot-prod-001"
+        }
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+\newpage
+\section{Deploy}
+O CAOS roda em containers \textit{Serverless}:
+\begin{itemize}
+    \item \textbf{Escala Zero}: Se não houver alertas, custo é zero (exceto DB).
+    \item \textbf{Isolamento}: Cada Tenant (Cliente) roda em uma instância isolada.
+\end{itemize}
+
+\subsection{Dockerfile de Produção}
+\begin{lstlisting}[language=bash]
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY src/ .
+CMD ["uvicorn", "caos.api.main:app", "--host", "0.0.0.0", "--port", "8080"]
+\end{lstlisting}
+
+
+\newpage
+
+% ============================================================================
+% CAPITULO 12: MATRIZ DE CENARIOS
+% ============================================================================
+\section{Exemplos de Fluxo}
+\label{sec:scenarios}
+
+\subsection{Indústria (Compressor Superaquecido)}
+
+\begin{enumerate}
+    \item \textbf{Evento}: Sensor IoT reporta temperatura de 105°C (Limite 100°C).
+    \item \textbf{Sentinel}: Classifica como "Crítico" (Score 0.98).
+    \item \textbf{Atlas}: Busca manual. "Reset permitido se < 110°C". Busca agenda: "Produção ativa".
+    \item \textbf{Oracle (se acionado)}: Decide "Tentar Reset Remoto antes de parar linha" para otimização de custo.
+    \item \textbf{Guardrail}: Checa "Reset Remoto". Seguro? Sim.
+    \item \textbf{Action}: \texttt{mqtt\_publish("cmd/reset", \{"force": true\})}
+    \item \textbf{Resultado}: Temperatura cai para 95°C. Ticket de "Atenção" aberto.
+\end{enumerate}
+
+\subsection{Varejo (Smart Fridge)}
+\textbf{Cenário}: Porta aberta por 10min.
+\begin{itemize}
+    \item \textbf{Decisão}: Não desligar (prejuízo de estoque).
+    \item \textbf{Ação}: Enviar WhatsApp para Gerente da Loja.
+    \item \textbf{Output}: \texttt{send\_whatsapp("Marta", "Geladeira 4 aberta!")}
+\end{itemize}
+
+\subsection{Segurança (Fraude)}
+\textbf{Cenário}: Tentativa de acesso com cartão clonado.
+\begin{itemize}
+    \item \textbf{Sentinel}: Padrão de anomalia geo-espacial.
+    \item \textbf{Guardrail}: Bloqueio Imediato (P1).
+    \item \textbf{Ação}: Bloquear porta + Acionar Câmera.
+\end{itemize}
+
+\newpage
+
+% ============================================================================
+% CAPITULO 13: ESPECIFICAÇÕES DE IMPLEMENTAÇÃO (CÓDIGO)
+% ============================================================================
+\section{Especificações de Implementação}
+\label{sec:specs}
+
+Esta seção define a estrutura física do projeto Python e os padrões de desenvolvimento.
+
+\subsection{Estrutura de Diretórios}
+\begin{lstlisting}[language=bash]
+src/
+|-- caos/
+|   |-- core/           # O "Cérebro"
+|   |   |-- brain.py    # LangGraph StateGraph
+|   |   |-- judge.py    # Lógica de Veredicto (Fórmula)
+|   |-- integration/    # Clientes de Serviços Externos
+|   |   |-- atlas_client.py     # Consulta Digital Twin
+|   |   |-- workflows_client.py # Disparo para o Agente CARE
+|   |-- safety/            # O "Sistema Imunológico"
+|   |   |-- guardrail.py   # Validador de Policies
+|-- actions/               # Camada CARE (Cloud Run/Functions)
+|   |-- action_api.py      # Executor HAL
+|   |-- steps/
+|   |   |-- iot_actions.py  # (Ex: Mqtt Publish)
+|   |   |-- notifications.py
+|   |-- workflows/
+|   |   |-- remediation.yaml # Workflow YAML (CARE engine)
+|-- tests/              # Pirâmide de Testes (Unit/Int/E2E)
+|-- main.py             # Entrypoint (FastAPI)
+\end{lstlisting}
+
+\subsection{Interfaces Centrais (Abstrações)}
+
+\textbf{1. O Protocolo HAL (IActuator)}
+Todo driver deve implementar esta interface para garantir desacoplamento.
+\begin{lstlisting}[language=Python]
+class IActuator(ABC):
+    @abstractmethod
+    async def execute(self, command: Command) -> Result:
+        """Envia sinal físico ao hardware"""
+        pass
+        
+    @abstractmethod
+    async def health_check(self) -> bool:
+        """Heartbeat do driver"""
+        pass
+\end{lstlisting}
+
+\textbf{2. O Contrato Cognitivo (JudgeState)}
+O estado que flui pelo LangGraph e persiste no checkpointer.
+\begin{lstlisting}[language=Python]
+class JudgeState(TypedDict):
+    trigger: TriggerPayload      # Gatilho (Sentinel/Oracle)
+    atlas_context: AssetContext  # Contexto (Digital Twin/Docs)
+    risk_dimensions: Dict[str, float] # {R_F, R_Fin, R_C, R_K}
+    severity_score: float        # Escore S (0.0 a 1.0)
+    verdict_score: float         # Escore V (-1.0 a 1.0)
+    reasoning_trace: List[str]   # Chain-of-Thought
+    proposed_action: Action      # Acao sugerida pelo LLM
+    guardrail_violations: List[str] # Lista de bloqueios
+\end{lstlisting}
+
+\newpage
+
+% ============================================================================
+% CAPITULO 14: LIMITAÇÕES CONHECIDAS
+% ============================================================================
+\section{Limitações Conhecidas}
+\label{sec:limitations}
+
+Esta seção documenta as limitações atuais do sistema CAOS, garantindo transparência sobre cenários não cobertos ou parcialmente suportados.
+
+\subsection{Limitações Técnicas}
+
+\begin{enumerate}
+    \item \textbf{Dependência de LLM}: O sistema depende da disponibilidade do Vertex AI (Gemini). Em caso de indisponibilidade prolongada (>5min), apenas ações P0/P1 são processadas via fallback determinístico.
+    
+    \item \textbf{Latência de Predição}: O Oracle adiciona 200-500ms ao fluxo. Para alertas CRITICAL (<1s SLA), a predição pode ser bypassada.
+    
+    \item \textbf{Cold Start}: Containers Cloud Run levam 2-5s para inicializar. Alertas durante cold start ficam enfileirados no Pub/Sub.
+    
+    \item \textbf{Versionamento de Modelo}: Mudanças no modelo LLM (ex: Gemini 1.5 → 2.0) podem alterar comportamento de decisão. Requer re-calibração de pesos.
+    
+    \item \textbf{Offline Edge}: Dispositivos IoT sem conectividade não recebem comandos até reconexão. O CAOS não possui cache local.
+\end{enumerate}
+
+\subsection{Limitações de Escopo}
+
+\begin{enumerate}
+    \item \textbf{Multi-Tenant Isolation}: Cada tenant roda em instância isolada, mas não há suporte a hierarquias complexas (ex: holding → subsidiárias).
+    
+    \item \textbf{Idioma}: O sistema é otimizado para Português (BR). Suporte a outros idiomas requer ajuste de prompts e guardrails de comunicação.
+    
+    \item \textbf{Protocolos Industriais}: Suporte nativo a MQTT e Modbus. Outros protocolos (BACnet, OPC-UA) requerem adaptadores customizados no HAL.
+    
+    \item \textbf{Explainability}: A justificativa do LLM é textual. Não há visualização gráfica do raciocínio (ex: árvore de decisão).
+\end{enumerate}
+
+\subsection{Edge Cases Não Cobertos}
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Cenário} & \textbf{Comportamento Atual} & \textbf{Mitigação Futura} \\ \hline
+Conflito entre guardrails & Prioridade por severidade & Resolver via mediador \\ \hline
+Ataque adversarial ao LLM & Bloqueio por prompt injection & Red team contínuo \\ \hline
+Falha simultânea de 3+ serviços & Sistema para & Circuit breaker global \\ \hline
+Rollback de ação física & Não suportado & Implementar compensação \\ \hline
+\end{tabular}
+\caption{Edge Cases e Mitigações Futuras}
+\end{table}
+
+\newpage
+
+% ============================================================================
+% CAPITULO 15: REFERENCIAS
+% ============================================================================
+\section{Referências}
+\begin{itemize}
+    \item LangGraph Documentation - \url{https://langchain-ai.github.io/langgraph/}
+    \item Google Cloud Pub/Sub Documentation - \url{https://cloud.google.com/pubsub/docs}
+    \item Google Cloud Workflows Documentation - \url{https://cloud.google.com/workflows/docs}
+    \item Vertex AI Gemini API - \url{https://cloud.google.com/vertex-ai/docs/generative-ai/}
+\end{itemize}
+
+\end{document}
+

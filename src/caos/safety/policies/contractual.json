@@ -1,0 +1,64 @@
+{
+  "category": "CONTRACTUAL",
+  "metadata": {
+    "name": "Regras Contratuais",
+    "description": "Compliance com SLAs e contratos",
+    "weight": 0.8
+  },
+  "rules": [
+    {
+      "id": "CONTR_001",
+      "category": "CONTRACTUAL",
+      "name": "Contrato Monitoring Only",
+      "condition": "atlas_context.contract_tier == 'MONITORING_ONLY'",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Contrato só permite monitoramento. Ação vetada."
+    },
+    {
+      "id": "CONTR_002",
+      "category": "CONTRACTUAL",
+      "name": "Ação Não Permitida",
+      "condition": "proposed_action.command.type not in atlas_context.allowed_actions",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Tipo de ação não permitido pelo contrato."
+    },
+    {
+      "id": "CONTR_003",
+      "category": "CONTRACTUAL",
+      "name": "SLA Response Time",
+      "condition": "processing_time_ms > atlas_context.sla_response_time_minutes * 60000",
+      "action": "ALERT",
+      "severity": "MEDIUM",
+      "message": "Tempo de resposta próximo do SLA."
+    },
+    {
+      "id": "CONTR_004",
+      "category": "CONTRACTUAL",
+      "name": "Contrato Básico - Limite Ações",
+      "condition": "atlas_context.contract_tier == 'BASIC' and daily_actions > 10",
+      "action": "REQUIRE_APPROVAL",
+      "severity": "MEDIUM",
+      "message": "Limite de ações diárias do contrato BASIC."
+    },
+    {
+      "id": "CONTR_005",
+      "category": "CONTRACTUAL",
+      "name": "Horário Fora do Expediente",
+      "condition": "current_hour < 6 or current_hour > 22",
+      "action": "REQUIRE_APPROVAL",
+      "severity": "LOW",
+      "message": "Ação fora do horário comercial."
+    },
+    {
+      "id": "CONTR_006",
+      "category": "CONTRACTUAL",
+      "name": "Contrato Expirado",
+      "condition": "atlas_context.contract_expired == true",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Contrato expirado. Renovar antes de agir."
+    }
+  ]
+}

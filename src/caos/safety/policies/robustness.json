@@ -1,0 +1,73 @@
+{
+  "category": "ROBUSTNESS",
+  "metadata": {
+    "name": "Regras de Robustez",
+    "description": "Resiliência e fallback",
+    "weight": 0.6
+  },
+  "rules": [
+    {
+      "id": "ROBUST_001",
+      "category": "ROBUSTNESS",
+      "name": "Oracle Timeout",
+      "condition": "oracle_response_time_ms > 3000",
+      "action": "DEGRADE",
+      "severity": "MEDIUM",
+      "message": "Oracle lento. Usando Fast-Track."
+    },
+    {
+      "id": "ROBUST_002",
+      "category": "ROBUSTNESS",
+      "name": "Atlas Indisponível",
+      "condition": "atlas_context == null",
+      "action": "DEGRADE",
+      "severity": "HIGH",
+      "message": "Atlas indisponível. Modo conservador."
+    },
+    {
+      "id": "ROBUST_003",
+      "category": "ROBUSTNESS",
+      "name": "LLM Fallback",
+      "condition": "llm_response_empty == true",
+      "action": "DEGRADE",
+      "severity": "HIGH",
+      "message": "LLM não respondeu. Usando regras hardcoded."
+    },
+    {
+      "id": "ROBUST_004",
+      "category": "ROBUSTNESS",
+      "name": "Retry Limit",
+      "condition": "retry_count > 3",
+      "action": "VETO",
+      "severity": "HIGH",
+      "message": "Limite de retries atingido. Abortando."
+    },
+    {
+      "id": "ROBUST_005",
+      "category": "ROBUSTNESS",
+      "name": "Circuit Breaker Open",
+      "condition": "circuit_breaker_status == 'open'",
+      "action": "VETO",
+      "severity": "HIGH",
+      "message": "Circuit breaker aberto. Sistema em recuperação."
+    },
+    {
+      "id": "ROBUST_006",
+      "category": "ROBUSTNESS",
+      "name": "Memory Pressure",
+      "condition": "memory_usage_percent > 90",
+      "action": "DEGRADE",
+      "severity": "MEDIUM",
+      "message": "Pressão de memória alta. Limitando operações."
+    },
+    {
+      "id": "ROBUST_007",
+      "category": "ROBUSTNESS",
+      "name": "Cascade Failure Detection",
+      "condition": "consecutive_failures > 5",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Múltiplas falhas consecutivas. Acionando fallback."
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "category": "SECOPS",
+  "metadata": {
+    "name": "Regras SecOps",
+    "description": "Segurança operacional e input validation",
+    "weight": 1.0
+  },
+  "rules": [
+    {
+      "id": "SECOPS_001",
+      "category": "SECOPS",
+      "name": "Payload Inválido",
+      "condition": "trigger.payload.validation_failed == true",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Payload não passou validação. Possível ataque."
+    },
+    {
+      "id": "SECOPS_002",
+      "category": "SECOPS",
+      "name": "Source Desconhecido",
+      "condition": "trigger.source not in ['sentinel', 'oracle', 'manual']",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Fonte do trigger não reconhecida."
+    },
+    {
+      "id": "SECOPS_003",
+      "category": "SECOPS",
+      "name": "Event ID Inválido",
+      "condition": "not trigger.event_id.startswith('evt_')",
+      "action": "ALERT",
+      "severity": "MEDIUM",
+      "message": "Formato de event_id não padrão."
+    },
+    {
+      "id": "SECOPS_004",
+      "category": "SECOPS",
+      "name": "Timestamp Futuro",
+      "condition": "trigger.timestamp > current_time + 60",
+      "action": "VETO",
+      "severity": "HIGH",
+      "message": "Timestamp no futuro. Possível manipulação."
+    },
+    {
+      "id": "SECOPS_005",
+      "category": "SECOPS",
+      "name": "Timestamp Muito Antigo",
+      "condition": "trigger.timestamp < current_time - 3600",
+      "action": "ALERT",
+      "severity": "MEDIUM",
+      "message": "Evento com mais de 1 hora de atraso."
+    },
+    {
+      "id": "SECOPS_006",
+      "category": "SECOPS",
+      "name": "Injection Attempt",
+      "condition": "contains_injection_pattern(trigger.payload)",
+      "action": "VETO",
+      "severity": "BLOCKING",
+      "message": "Padrão de injection detectado. Bloqueado."
+    }
+  ]
+}

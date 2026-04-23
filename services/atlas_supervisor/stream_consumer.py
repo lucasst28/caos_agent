@@ -37,6 +37,12 @@ REJECTED_STREAM = os.environ.get("CAOS_REJECTED_STREAM", "telemetry.rejected")
 READ_BLOCK_MS = int(os.environ.get("CAOS_BLOCK_MS", "5000"))
 READ_COUNT = int(os.environ.get("CAOS_READ_COUNT", "10"))
 
+# Reclaim pending configuration
+RECLAIM_IDLE_MS = int(os.environ.get("CAOS_RECLAIM_IDLE_MS", "60000"))  # 60 seconds
+RECLAIM_COUNT = int(os.environ.get("CAOS_RECLAIM_COUNT", "50"))
+RECLAIM_MAX_BATCHES = int(os.environ.get("CAOS_RECLAIM_MAX_BATCHES", "10"))
+RECLAIM_INTERVAL_CYCLES = int(os.environ.get("CAOS_RECLAIM_INTERVAL", "10"))  # Every N read cycles
+
 # ============================================================
 # Setup
 # ============================================================
@@ -49,6 +55,8 @@ log = logging.getLogger("caos.stream_consumer")
 
 running = True
 supervisor = AtlasSupervisor()
+_warned_no_xautoclaim = False
+_reclaim_counter = 0
 
 
 def shutdown(*_: int) -> None:
@@ -137,6 +145,59 @@ def build_telemetry_event(audit_fields: Dict[str, Any]) -> TelemetryEvent:
     )
 
 
+def reclaim_pending(r: redis.Redis) -> None:
+    """Reclaim orphaned pending messages using XAUTOCLAIM.
+    
+    This handles messages that were read by a previous consumer instance
+    but never ACKed (e.g., due to crash or restart).
+    """
+    global _warned_no_xautoclaim
+    
+    if not hasattr(r, "xautoclaim"):
+        if not _warned_no_xautoclaim:
+            log.warning("Redis client does not support XAUTOCLAIM; skipping reclaim.")
+            _warned_no_xautoclaim = True
+        return
+    
+    start_id = "0-0"
+    total = 0
+    stream_key = INPUT_STREAM.encode() if isinstance(INPUT_STREAM, str) else INPUT_STREAM
+    
+    for _ in range(RECLAIM_MAX_BATCHES):
+        try:
+            result = r.xautoclaim(
+                INPUT_STREAM,
+                INPUT_GROUP,
+                CONSUMER_NAME,
+                min_idle_time=RECLAIM_IDLE_MS,
+                start_id=start_id,
+                count=RECLAIM_COUNT,
+            )
+        except redis.ResponseError as exc:
+            log.error("Redis error during reclaim: %s", exc)
+            return
+        
+        if not result:
+            break
+        
+        # Handle different Redis versions (2 or 3 element tuple)
+        if len(result) == 2:
+            next_start_id, messages = result
+        else:
+            next_start_id, messages, _ = result
+        
+        if not messages:
+            break
+        
+        total += len(messages)
+        # Process reclaimed messages
+        handle_entries(r, [(stream_key, messages)])
+        start_id = next_start_id
+    
+    if total:
+        log.info("♻️ Reclaimed %s pending messages.", total)
+
+
 def handle_entries(
     r: redis.Redis,
     entries: List[Tuple[bytes, List[Tuple[bytes, Dict[bytes, bytes]]]]]
@@ -208,6 +269,10 @@ def main() -> int:
     
     r = redis.from_url(REDIS_URL, decode_responses=False)
     
+    # Setup supervisor with its own Redis client (text mode) because it expects strings
+    r_supervisor = redis.from_url(REDIS_URL, decode_responses=True)
+    supervisor.redis_client = r_supervisor
+    
     log.info("=" * 60)
     log.info("CAOS Stream Filter starting")
     log.info("  Input:    %s (group: %s)", INPUT_STREAM, INPUT_GROUP)
@@ -217,6 +282,12 @@ def main() -> int:
     log.info("=" * 60)
     
     ensure_group(r, INPUT_STREAM, INPUT_GROUP)
+    
+    # Initial reclaim on startup to handle any orphaned messages
+    log.info("Running initial reclaim of pending messages...")
+    reclaim_pending(r)
+    
+    global _reclaim_counter
     
     while running:
         try:
@@ -229,6 +300,13 @@ def main() -> int:
             )
             if entries:
                 handle_entries(r, entries)
+            
+            # Periodically reclaim pending messages
+            _reclaim_counter += 1
+            if _reclaim_counter >= RECLAIM_INTERVAL_CYCLES:
+                _reclaim_counter = 0
+                reclaim_pending(r)
+                
         except redis.ResponseError as exc:
             log.error("Redis error: %s", exc)
             time.sleep(1)

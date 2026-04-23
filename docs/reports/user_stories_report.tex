@@ -1,0 +1,143 @@
+\documentclass[11pt,a4paper]{article}
+
+% ----- Pacotes Essenciais -----
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{background}
+\usepackage{amssymb}
+\usepackage{pifont}
+\usepackage{helvet} % Fonte sans-serif padrão e limpa
+\renewcommand{\familydefault}{\sfdefault} % Todo documento em fonte sans-serif
+
+% ----- Definição de Cores VIVA -----
+\definecolor{vivaBlue}{RGB}{0, 75, 140}
+\definecolor{vivaLightBlue}{RGB}{230, 240, 250}
+\definecolor{vivaGray}{RGB}{80, 80, 80}
+
+% ----- Margens -----
+\geometry{
+    top=5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm,
+    headheight=15pt,
+    footskip=1.5cm
+}
+
+% ----- Marca d'água e Cabeçalho (eso-pic) -----
+\usepackage{eso-pic}
+
+\AddToShipoutPictureBG{%
+  % Marca d'água centralizada (image2.png ou image1.png, que são o 'V' gigante)
+  \AtPageCenter{%
+    \makebox[0pt]{\includegraphics[width=14cm,keepaspectratio]{image2.png}}%
+  }%
+  % Logo Superior Esquerdo e Texto
+  \AtPageUpperLeft{%
+    \put(60,-80){%
+      \parbox[t]{6cm}{%
+        \centering
+        \includegraphics[height=1.8cm,keepaspectratio]{image3.png}\\[0.1cm]
+        \footnotesize\textcolor{black}{Inteligência para o mundo físico.\\Autonomia para o futuro.}%
+      }%
+    }%
+  }%
+}
+
+% ----- Configuração do Header e Footer Padrão -----
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyfoot[C]{\footnotesize\textcolor{vivaGray}{\thepage}}
+
+% ----- Estilo de Seções -----
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{vivaBlue}}
+  {\thesection.}{1em}{}
+  [\vspace{-0.5em}\rule{\textwidth}{0.5pt}]
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{vivaGray}}
+  {\thesubsection.}{1em}{}
+
+% ----- Caixas de Destaque -----
+\newtcolorbox{statusbox}[1][]{
+  colback=vivaLightBlue,
+  colframe=vivaBlue,
+  boxrule=0.5pt,
+  arc=3pt,
+  left=6pt, right=6pt, top=6pt, bottom=6pt,
+  title=#1,
+  fonttitle=\bfseries
+}
+
+% ==========================================
+% INÍCIO DO DOCUMENTO
+% ==========================================
+\begin{document}
+
+\begin{center}
+    \vspace*{1cm}
+    {\Huge \textbf{\color{vivaBlue} Relatório de Sprint: CAOS Agent}}\\[0.5cm]
+    {\large \textbf{Divisão Estratégica de User Stories}}\\[0.2cm]
+    {\normalsize \textcolor{vivaGray}{Data: 20 de Fevereiro de 2026}}\\[1cm]
+\end{center}
+
+\section*{Objetivo do Documento}
+Este documento consolida o planejamento e o status da implementação do projeto \textbf{CAOS (Cognitive Analytics \& Operational Sentinel)}. De forma estratégica, o esforço de engenharia foi dividido em duas Sprints focadas. A \textbf{Sprint 1} (atual) foi dedicada à construção da inteligência fundacional e das tubulações de dados. A \textbf{Sprint 2} (próxima semana) será inteiramente dedicada à robustez, auditoria e restrições de segurança do agente (Guardrails).
+
+\vspace{0.5cm}
+
+\section{Sprint 1: Concluído Esta Semana (Fundação \& Cérebro)}
+Nesta semana, focamos os esforços na construção do núcleo operacional. O objetivo foi estabelecer o tráfego de dados e prover o Agente da capacidade de \textit{raciocínio empático e híbrido}.
+
+\begin{itemize}[label={\color{green}\textbf{\checkmark}}, leftmargin=*]
+    \setlength\itemsep{0.5em}
+    
+    \item \textbf{US040 - Setup do Ambiente Local e Vertex SDK:}\\
+    Configuração do repositório base com as dependências (\textit{langgraph, google-cloud-aiplatform}) e validação da conexão \textit{Hello World} com o Gemini.
+    
+    \item \textbf{US018 - Contratos de Dados (Pydantic):}\\
+    Criação das estruturas rígidas de comunicação do sistema (\texttt{TriggerPayload}, \texttt{JudgeState}, \texttt{ActionSchema}), garantindo que o Agente tenha estrita tipagem em suas interações.
+    
+    \item \textbf{US019 - Grafo Cognitivo (LangGraph):}\\
+    Orquestração do ciclo de raciocínio. Construção da pipeline em formato de Grafo (\texttt{Sense} $\rightarrow$ \texttt{Oracle} $\rightarrow$ \texttt{Cortex} $\rightarrow$ \texttt{Act}), garantindo a autonomia de fluxo e os loops de repensamento.
+    
+    \item \textbf{US020 - Integração com Vertex AI (LLM):}\\
+    Integração direta com o Gemini 1.5 Pro dentro do Nó Cortex. Implementação do raciocínio híbrido (Código Determinístico + Semântica LLM) para propostas de ação e geração de score $A$.
+\end{itemize}
+
+\vspace{0.5cm}
+
+\section{Sprint 2: Planejado (Semana que Vem) (Segurança \& Testes)}
+Com o cérebro estabelecido, o esforço da próxima semana focará nas "travas de segurança" (Guardrails) e em submeter o modelo a baterias de estresse para validação de suas decisões.
+
+\begin{itemize}[label={\color{vivaBlue}\textbf{$\rightarrow$}}, leftmargin=*]
+    \setlength\itemsep{0.5em}
+
+    \item \textbf{US009 - Validação de Guardrails (Motor + Físico):}\\
+    Implementação da camada \textit{Reflex} e \textit{Policy} para vetar autonomias perigosas. Validação contra o arquivo \texttt{physical.json} (Ex: regras \textit{Fire} e \textit{LOTO} bloqueando instâncias agressivas da IA).
+    
+    \item \textbf{US041 - Simulador de Eventos (Mock do Sentinel):}\\
+    Engenharia de injetores complexos de falhas, criando eventos sintéticos que desafiam o Agente (Falso Positivo de Sensores, Múltiplas Falhas Simultâneas e Falhas Paradoxais de Degelo).
+    
+    \item \textbf{US042 - Executor de Console (Mock do CARE):}\\
+    Desenvolvimento de uma interface visual rica em terminal e web para auditar \textit{step-by-step} o raciocínio híbrido do CAOS. Exibirá as dimensões de Risco (Físico, Financeiro, Contratual, Comunicação) de forma formatada.
+\end{itemize}
+
+\vspace{1cm}
+
+\begin{statusbox}[Conclusão Executiva]
+A arquitetura do CAOS está provando ser de extrema eficiência. Ao segregar o desenvolvimento entre "Inteligência" (Sprint 1) e "Segurança/Limites" (Sprint 2), garantimos que o agente jamais tomará decisões nocivas. Todo o código planejado para o foundation (Sprint 1) já se encontra integralmente testado e operacional.
+\end{statusbox}
+
+\end{document}

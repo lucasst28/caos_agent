@@ -6,7 +6,7 @@ FROM python:3.11-slim AS builder
 WORKDIR /app
 
 # Install build dependencies
-COPY pyproject.toml .
+COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir --target=/deps .
 
 # ============================
@@ -19,6 +19,7 @@ RUN groupadd -r caos && useradd -r -g caos caos
 
 # Copy dependencies and source
 COPY --from=builder /deps /usr/local/lib/python3.11/site-packages/
+COPY --from=builder /deps/bin /usr/local/bin/
 COPY src/ ./src/
 
 # Set environment
@@ -35,5 +36,5 @@ USER caos
 
 EXPOSE 8080
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2"]
+CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2"]
 

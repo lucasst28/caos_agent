@@ -51,6 +51,9 @@ async def sense_node(state: JudgeState) -> dict[str, Any]:
     # --- Pre-checks: runtime safety guards ---
     early_violations: list[dict] = []
 
+    severity_val = trigger.severity.value if hasattr(trigger.severity, 'value') else str(trigger.severity)
+    
+    # All checks are synchronous (fast, <1ms each), but we collect them efficiently
     # ROB_005: Backpressure — reject if too many events in-flight
     bp = get_backpressure_guard()
     bp_violation = bp.try_acquire()
@@ -59,7 +62,6 @@ async def sense_node(state: JudgeState) -> dict[str, Any]:
 
     # SO_003/SO_004: Fail-Safe — check if external services are degraded
     failsafe = get_fail_safe()
-    severity_val = trigger.severity.value if hasattr(trigger.severity, 'value') else str(trigger.severity)
     fs_action = failsafe.get_degraded_action(severity_val)
     if fs_action:
         early_violations.append(fs_action)
@@ -92,7 +94,7 @@ async def sense_node(state: JudgeState) -> dict[str, Any]:
     spam_violation = spam.check(
         asset_id=asset_id,
         metric=trigger.metric,
-        severity=trigger.severity.value if hasattr(trigger.severity, 'value') else str(trigger.severity),
+        severity=severity_val,
     )
     if spam_violation:
         early_violations.append(spam_violation)

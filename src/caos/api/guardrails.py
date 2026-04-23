@@ -6,7 +6,7 @@ from typing import Any
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
 
-from caos.safety.engine import GuardrailEngine
+from caos.core.nodes.guardrails import get_guardrail_engine
 
 logger = structlog.get_logger(__name__)
 
@@ -58,7 +58,7 @@ async def list_guardrails(
     category: str | None = Query(default=None, description="Filter by category"),
 ) -> GuardrailListResponse:
     """List all guardrail rules."""
-    engine = GuardrailEngine()
+    engine = get_guardrail_engine()
 
     if category:
         rules = engine.get_rules_by_category(category.upper())
@@ -97,7 +97,7 @@ async def list_guardrails(
 )
 async def get_guardrail_stats() -> GuardrailStatsResponse:
     """Get statistics about guardrail rules."""
-    engine = GuardrailEngine()
+    engine = get_guardrail_engine()
 
     by_category: dict[str, int] = {}
     by_severity: dict[str, int] = {}

@@ -234,27 +234,43 @@ class RedisBackend(CircuitBreakerBackend):
     """Shared Redis backend (production)."""
     def __init__(self, redis_url: str):
         import redis
-        self.client = redis.from_url(redis_url)
-        self._ttl = 86400 # 24h
+        self.client = redis.from_url(
+            redis_url,
+            socket_connect_timeout=3,
+            socket_timeout=5,
+            retry_on_timeout=True,
+        )
+        self._ttl = 86400  # 24h
+        try:
+            self.client.ping()
+        except Exception as e:
+            raise RuntimeError(f"Redis backend initialization failed: {e}") from e
 
     def _get_keys(self) -> tuple[str, str]:
         today = time.strftime("%Y-%m-%d")
         return f"cb:tokens:{today}", f"cb:cost:{today}"
 
     def record(self, tokens: int, cost: float) -> None:
-        k_tok, k_cost = self._get_keys()
-        pipe = self.client.pipeline()
-        pipe.incrby(k_tok, tokens)
-        pipe.expire(k_tok, self._ttl)
-        if cost > 0:
-            pipe.incrbyfloat(k_cost, cost)
-            pipe.expire(k_cost, self._ttl)
-        pipe.execute()
+        try:
+            k_tok, k_cost = self._get_keys()
+            pipe = self.client.pipeline()
+            pipe.incrby(k_tok, tokens)
+            pipe.expire(k_tok, self._ttl)
+            if cost > 0:
+                pipe.incrbyfloat(k_cost, cost)
+                pipe.expire(k_cost, self._ttl)
+            pipe.execute()
+        except Exception as e:
+            logger.warning("circuit_breaker_redis_record_failed", error=str(e))
 
     def get_usage(self) -> tuple[int, float]:
-        k_tok, k_cost = self._get_keys()
-        t, c = self.client.mget(k_tok, k_cost)
-        return int(t or 0), float(c or 0.0)
+        try:
+            k_tok, k_cost = self._get_keys()
+            t, c = self.client.mget(k_tok, k_cost)
+            return int(t or 0), float(c or 0.0)
+        except Exception as e:
+            logger.warning("circuit_breaker_redis_get_usage_failed", error=str(e))
+            return 0, 0.0
 
 
 class CircuitBreaker:
@@ -300,8 +316,13 @@ def get_circuit_breaker() -> CircuitBreaker:
         s = get_settings()
         
         if s.redis_url:
-            backend = RedisBackend(s.redis_url)
-            logger.info("circuit_breaker_backend", type="redis")
+            try:
+                backend = RedisBackend(s.redis_url)
+                logger.info("circuit_breaker_backend", type="redis")
+            except Exception as e:
+                logger.warning("circuit_breaker_redis_unavailable", error=str(e))
+                backend = MemoryBackend()
+                logger.info("circuit_breaker_backend", type="memory", reason="redis_fallback")
         else:
             backend = MemoryBackend()
             logger.info("circuit_breaker_backend", type="memory")

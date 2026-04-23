@@ -5,9 +5,10 @@ import structlog
 from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from caos.api.auth import require_api_key
 from caos.core.brain import process_trigger
 from caos.schemas.enums import DecisionBand, Severity, TriggerSource
 from caos.schemas.trigger import TriggerContext, TriggerPayload
@@ -63,6 +64,7 @@ class EventListResponse(BaseModel):
     summary="Trigger manual CAOS processing",
     description="Manually inject an event into CAOS for processing. "
     "Useful for testing, co-pilot triggers, or API-based integrations.",
+    dependencies=[Depends(require_api_key)],
 )
 async def trigger_event(request: ManualTriggerRequest) -> EventResponse:
     """Process a manually triggered event through the CAOS brain."""
@@ -151,10 +153,17 @@ async def trigger_event(request: ManualTriggerRequest) -> EventResponse:
 )
 async def get_event(event_id: str) -> dict[str, Any]:
     """Get details of a processed event."""
+    # Try reasoning store first
+    from caos.api.reasoning import get_reasoning_store
+    store = get_reasoning_store()
+    entry = store.get_by_id(event_id)
+    if entry:
+        return entry.model_dump(mode="json")
+
     # TODO (E6): Implement Firestore lookup when GCP is available
-    logger.info("get_event", event_id=event_id)
-    return {
-        "event_id": event_id,
-        "status": "not_found",
-        "detail": "Event storage not yet implemented. Requires Google Cloud Firestore (planned for E6).",
-    }
+    logger.info("get_event_not_found", event_id=event_id)
+    from fastapi import HTTPException
+    raise HTTPException(
+        status_code=404,
+        detail=f"Event {event_id} not found. Storage backend not yet available (planned E6).",
+    )

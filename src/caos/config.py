@@ -31,7 +31,7 @@ class Settings(BaseSettings):
 
     # === Vertex AI / Google AI Studio ===
     vertex_ai_location: str = Field(default="us-central1")
-    vertex_ai_model: str = Field(default="gemini-2.0-flash")
+    vertex_ai_model: str = Field(default="gemini-2.5-flash")
     google_api_key: str | None = Field(default=None, description="API key do Google AI Studio")
 
     # === External APIs ===
@@ -43,6 +43,12 @@ class Settings(BaseSettings):
     langchain_tracing_v2: bool = Field(default=True)
     langchain_api_key: str | None = Field(default=None)
     langchain_project: str = Field(default="caos-agent")
+
+    # === Vertex LLM caching ===
+    vertex_system_cache_ttl: str = Field(
+        default="300s",
+        description="Time-to-live for Oracle system prompt cached content in Vertex AI",
+    )
 
     # === Feature Flags ===
     oracle_bypass_enabled: bool = Field(default=True)

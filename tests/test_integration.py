@@ -1,6 +1,6 @@
 """Integration tests for the CAOS Brain pipeline.
 
-Tests the full cognitive flow: Sense → Oracle → Cortex → Guardrails → Act
+Tests the full cognitive flow: Sense → Oracle → Verifier → Guardrails → Act
 using mocked external services.
 """
 
@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch, MagicMock
 
 from caos.schemas.enums import DecisionBand, RiskLevel, Severity, TriggerSource
+from caos.schemas.risk import RiskDimensions
 from caos.schemas.state import JudgeState
 from caos.schemas.trigger import TriggerContext, TriggerPayload
 
@@ -126,12 +127,12 @@ class TestOracleNode:
         assert result["oracle_forecast"]["confidence"] == 0.85
 
 
-class TestCortexNode:
-    """Test Cortex node in isolation."""
+class TestVerifierNode:
+    """Test CAOS Verifier node (cortex) in isolation."""
 
     @pytest.mark.asyncio
-    async def test_cortex_calculates_verdict(self):
-        """Cortex should calculate verdict and risk dimensions."""
+    async def test_verifier_audits_oracle_output(self):
+        """Verifier should produce verification report from Oracle's output."""
         from caos.core.nodes.cortex import cortex_node
 
         trigger = make_trigger(severity=Severity.MEDIUM, value=75.0)
@@ -140,19 +141,39 @@ class TestCortexNode:
             "atlas_context": MOCK_ATLAS,
             "oracle_forecast": MOCK_ORACLE,
             "is_fast_track": False,
+            "risk_dimensions": RiskDimensions(
+                physical=0.3, financial=0.2, contractual=0.1, communication=0.1
+            ),
+            "verdict_score": 0.65,
+            "decision_band": DecisionBand.SUGGEST,
+            "risk_level": RiskLevel.MEDIUM,
+            "llm_analysis": {
+                "analysis": "Test analysis causa raiz identificada",
+                "justification": "Test justification",
+                "thought": "Test thought with hipótese tested and confirmed",
+                "risk_justifications": {
+                    "physical": "R$ physical risk",
+                    "financial": "R$ 1000 potential loss",
+                    "contractual": "SLA ok",
+                    "communication": "Stakeholders notified",
+                },
+                "action": "notification",
+            },
+            "reasoning_trace": ["Oracle: analysis complete"],
         }
 
         result = await cortex_node(state)
 
-        assert "verdict_score" in result
-        assert "decision_band" in result
-        assert "risk_level" in result
-        assert "risk_dimensions" in result
-        assert isinstance(result["verdict_score"], float)
+        assert "verification_report" in result
+        assert "verification_passed" in result
+        assert "verification_score" in result
+        assert isinstance(result["verification_score"], float)
+        assert result["verification_score"] >= 0.0
+        assert result["verification_score"] <= 1.0
 
     @pytest.mark.asyncio
-    async def test_cortex_fast_track_no_oracle(self):
-        """Cortex should work in fast-track mode without Oracle data."""
+    async def test_verifier_works_without_llm_analysis(self):
+        """Verifier should work in code-only mode (no llm_analysis)."""
         from caos.core.nodes.cortex import cortex_node
 
         trigger = make_trigger(severity=Severity.HIGH, value=95.0)
@@ -161,12 +182,19 @@ class TestCortexNode:
             "atlas_context": MOCK_ATLAS,
             "oracle_forecast": None,
             "is_fast_track": True,
+            "risk_dimensions": RiskDimensions(
+                physical=0.7, financial=0.5, contractual=0.2, communication=0.3
+            ),
+            "verdict_score": 0.35,
+            "decision_band": DecisionBand.ALERT,
+            "risk_level": RiskLevel.HIGH,
+            "reasoning_trace": ["Oracle: fast-track mode"],
         }
 
         result = await cortex_node(state)
 
-        assert "verdict_score" in result
-        assert "decision_band" in result
+        assert "verification_report" in result
+        assert "verification_passed" in result
 
 
 class TestGuardrailsNode:

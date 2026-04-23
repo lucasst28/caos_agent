@@ -1,8 +1,9 @@
+"""Test Oracle hybrid CODE+LLM fusion (reasoning moved from cortex to oracle)."""
 
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 from datetime import datetime, timezone
-from caos.core.nodes import cortex
+from caos.core.nodes import oracle as oracle_module
 from caos.schemas.state import JudgeState
 from caos.schemas.trigger import TriggerPayload, TriggerContext, TriggerSource, Severity
 from caos.schemas.risk import RiskDimensions
@@ -41,12 +42,12 @@ async def test_dynamic_fusion_low_confidence():
     mock_llm = AsyncMock()
     mock_llm.ainvoke.return_value = MagicMock(content=make_llm_response(0.2))
     
-    with patch("caos.core.nodes.cortex.get_llm", return_value=mock_llm):
+    with patch("caos.core.nodes.oracle.get_llm", return_value=mock_llm):
         # We also need to mock circuit breaker to avoid 'tripped' check
         mock_cb = MagicMock()
         mock_cb.is_tripped.return_value = False
-        with patch("caos.core.nodes.cortex.get_circuit_breaker", return_value=mock_cb):
-            result = await cortex.cortex_node(state)
+        with patch("caos.core.nodes.oracle.get_circuit_breaker", return_value=mock_cb):
+            result = await oracle_module.oracle_node(state)
 
     # Find reasoning trace about fusion
     trace = result["reasoning_trace"]
@@ -77,11 +78,11 @@ async def test_dynamic_fusion_high_confidence():
     mock_llm = AsyncMock()
     mock_llm.ainvoke.return_value = MagicMock(content=make_llm_response(0.9))
     
-    with patch("caos.core.nodes.cortex.get_llm", return_value=mock_llm):
+    with patch("caos.core.nodes.oracle.get_llm", return_value=mock_llm):
         mock_cb = MagicMock()
         mock_cb.is_tripped.return_value = False
-        with patch("caos.core.nodes.cortex.get_circuit_breaker", return_value=mock_cb):
-            result = await cortex.cortex_node(state)
+        with patch("caos.core.nodes.oracle.get_circuit_breaker", return_value=mock_cb):
+            result = await oracle_module.oracle_node(state)
 
     trace = result["reasoning_trace"]
     fusion_line = next((line for line in trace if "Fusão híbrida" in line), None)

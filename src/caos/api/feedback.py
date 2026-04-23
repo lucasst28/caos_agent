@@ -21,9 +21,11 @@ from enum import Enum
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+
+from caos.api.auth import require_api_key
 
 logger = structlog.get_logger(__name__)
 
@@ -66,8 +68,14 @@ _pending_store: dict[str, PendingAction] = {}
 _feedback_log: list[dict] = []
 _store_lock = threading.Lock()
 
-# Auto-approval timeout (seconds), 0 = disabled
-HITL_TIMEOUT_SECONDS = 1800  # 30 minutes
+# Auto-approval timeout by risk level (seconds), 0 = never auto-approve
+HITL_TIMEOUT_BY_RISK: dict[str, int] = {
+    "LOW": 900,       # 15 min — low risk, auto-approve quickly
+    "MEDIUM": 1800,   # 30 min — standard timeout
+    "HIGH": 0,        # NEVER auto-approve — requires human decision
+    "VETO": 0,        # NEVER auto-approve — safety-critical
+}
+HITL_TIMEOUT_DEFAULT = 1800  # fallback for unknown risk levels
 
 # SSE event queue — listeners subscribe here
 _sse_subscribers: list[asyncio.Queue] = []
@@ -171,34 +179,50 @@ def resolve_pending(action_id: str, approved: bool, resolver: str, notes: str | 
 
 def check_timeouts() -> list[str]:
     """Check for timed-out pending actions and auto-approve them.
+    
+    Uses per-risk-level timeouts: HIGH and VETO never auto-approve.
     Returns list of auto-approved action_ids.
     """
-    if HITL_TIMEOUT_SECONDS <= 0:
-        return []
     now = datetime.now(timezone.utc)
     auto_approved = []
     with _store_lock:
         for action_id, pending in _pending_store.items():
             if pending.state != ApprovalState.PENDING:
                 continue
+            # Determine timeout for this action's risk level
+            timeout = HITL_TIMEOUT_BY_RISK.get(
+                pending.risk_level.upper(), HITL_TIMEOUT_DEFAULT
+            )
+            if timeout <= 0:
+                # This risk level NEVER auto-approves
+                continue
             created = datetime.fromisoformat(pending.created_at)
             elapsed = (now - created).total_seconds()
-            if elapsed >= HITL_TIMEOUT_SECONDS:
+            if elapsed >= timeout:
                 pending.state = ApprovalState.AUTO_APPROVED
                 pending.resolved_at = now.isoformat()
                 pending.resolved_by = "system_timeout"
-                pending.notes = f"Auto-approved after {elapsed:.0f}s (timeout={HITL_TIMEOUT_SECONDS}s)"
+                pending.notes = (
+                    f"Auto-approved after {elapsed:.0f}s "
+                    f"(timeout={timeout}s for risk={pending.risk_level})"
+                )
                 auto_approved.append(action_id)
                 logger.warning(
                     "hitl_auto_approved",
                     action_id=action_id,
+                    risk_level=pending.risk_level,
                     elapsed_seconds=elapsed,
+                    timeout_seconds=timeout,
                 )
     # Notify SSE subscribers for each auto-approval
     for action_id in auto_approved:
         _broadcast_sse("auto_approved", {
             "action_id": action_id,
-            "timeout_seconds": HITL_TIMEOUT_SECONDS,
+            "risk_level": _pending_store.get(action_id, PendingAction(
+                action_id="", event_id="", asset_id="", tenant_id="",
+                decision_band="", risk_level="", action_type="",
+                verdict_score=0.0, justification="",
+            )).risk_level,
         })
     return auto_approved
 
@@ -325,6 +349,7 @@ class HistoryResponse(BaseModel):
     response_model=FeedbackResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Submit feedback on a decision",
+    dependencies=[Depends(require_api_key)],
 )
 async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
     """Record human feedback on a CAOS decision for the learning loop."""
@@ -377,6 +402,7 @@ async def submit_feedback(request: FeedbackRequest) -> FeedbackResponse:
     "/approve",
     response_model=ApprovalResponse,
     summary="Approve or reject a pending action",
+    dependencies=[Depends(require_api_key)],
 )
 async def approve_action(request: ApprovalRequest) -> ApprovalResponse:
     """Approve or reject an action that requires HITL approval."""

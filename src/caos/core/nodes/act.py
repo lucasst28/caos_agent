@@ -89,6 +89,12 @@ def determine_action_type(state: JudgeState) -> ActionType:
     risk_level = state.get("risk_level", RiskLevel.MEDIUM)
     decision_band = state.get("decision_band", DecisionBand.BLOCKED)
     
+    # Operational root cause → OBSERVE (wait and re-check).
+    # This takes precedence over VETO because OBSERVE is inherently
+    # safe — it schedules a re-evaluation instead of acting.
+    if state.get("operational_root_cause"):
+        return ActionType.OBSERVE
+    
     # VETO: system cannot act, only notify
     if risk_level == RiskLevel.VETO:
         return ActionType.NOTIFICATION
@@ -295,33 +301,13 @@ async def act_node(state: JudgeState) -> dict[str, Any]:
     except Exception as e:
         logger.error("worm_append_error", action_id=action.action_id, error=str(e))
     
-    # === RLHF: Record experience for learning (doc §RLHF) ===
-    try:
-        from caos.config import get_settings as _gs
-        if _gs().rlhf_enabled:
-            from caos.core.rlhf import get_rlhf_optimizer, ExperienceRecord
-            exp = ExperienceRecord(
-                action_id=action.action_id,
-                event_id=state["trigger"].event_id,
-                tenant_id=state["trigger"].context.tenant_id,
-                asset_id=state["trigger"].context.asset_id,
-                atlas_score=state.get("atlas_confidence", 0.0),
-                oracle_score=state.get("oracle_confidence", 0.0),
-                severity_score=state.get("severity_score", 0.0),
-                risk_physical=state.get("risk_physical", 0.0),
-                risk_financial=state.get("risk_financial", 0.0),
-                risk_contractual=state.get("risk_contractual", 0.0),
-                risk_communication=state.get("risk_communication", 0.0),
-                guardrail_penalty=state.get("guardrail_penalty", 0.0),
-                verdict_score=state.get("verdict_score", 0.0),
-                decision_band=decision_band.value,
-                risk_level=risk_level.value,
-                action_type=action_type.value,
-            )
-            get_rlhf_optimizer().record_experience(exp)
-            logger.debug("rlhf_experience_recorded", action_id=action.action_id)
-    except Exception as e:
-        logger.error("rlhf_record_error", action_id=action.action_id, error=str(e))
+    # === RLHF: Experience already recorded by oracle_node with accurate risk data.
+    # act_node only logs the final action outcome for traceability (no duplicate recording). ===
+    logger.debug(
+        "rlhf_experience_skip_act",
+        action_id=action.action_id,
+        reason="oracle_node already recorded with correct risk dimensions",
+    )
     
     # === OBSERVE: Schedule re-evaluation instead of acting (doc §OBSERVE) ===
     if action_type == ActionType.OBSERVE:

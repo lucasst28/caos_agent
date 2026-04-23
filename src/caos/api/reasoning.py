@@ -6,6 +6,7 @@ Persists to a JSON file to survive server restarts.
 """
 
 import json
+import os
 import structlog
 from collections import deque
 from datetime import datetime, timezone
@@ -13,8 +14,10 @@ from pathlib import Path
 from threading import Lock
 from typing import Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
+
+from caos.api.auth import require_api_key
 
 logger = structlog.get_logger(__name__)
 
@@ -22,6 +25,10 @@ router = APIRouter(prefix="/reasoning", tags=["reasoning"])
 
 # Persistence file path (project root / .caos_reasoning.json)
 _PERSISTENCE_FILE = Path(__file__).resolve().parent.parent.parent.parent / ".caos_reasoning.json"
+
+# Configurable limits via environment variables
+_MAX_ENTRIES = int(os.environ.get("CAOS_REASONING_MAX_ENTRIES", "200"))
+_MAX_FILE_SIZE_BYTES = int(os.environ.get("CAOS_REASONING_MAX_FILE_MB", "5")) * 1024 * 1024
 
 
 class ReasoningEntry(BaseModel):
@@ -36,11 +43,15 @@ class ReasoningEntry(BaseModel):
     # Step 1 - Sense
     sense: dict[str, Any] = {}
     
-    # Step 2 - Oracle (optional)
+    # Step 2 - Oracle (Reasoning Engine)
     oracle: dict[str, Any] = {}
     
-    # Step 3 - Cortex
+    # Step 3 - Oracle Decision (risk dimensions, verdict, LLM analysis)
+    # JSON key kept as 'cortex' for backward compat with persisted data
     cortex: dict[str, Any] = {}
+    
+    # Step 3b - Verifier (CAOS Checklist Audit)
+    verifier: dict[str, Any] = {}
     
     # Step 4 - Guardrails
     guardrails: dict[str, Any] = {}
@@ -68,9 +79,13 @@ class ReasoningStore:
     
     Keeps entries in memory (deque) and persists to a JSON file
     so data survives uvicorn --reload and server restarts.
+    
+    Size caps (configurable via env):
+    - CAOS_REASONING_MAX_ENTRIES: max entries in deque (default 200)
+    - CAOS_REASONING_MAX_FILE_MB: max JSON file size in MB (default 5)
     """
     
-    def __init__(self, max_size: int = 100):
+    def __init__(self, max_size: int = _MAX_ENTRIES):
         self.max_size = max_size
         self.entries: deque[ReasoningEntry] = deque(maxlen=max_size)
         self.lock = Lock()
@@ -80,18 +95,44 @@ class ReasoningStore:
         """Load entries from JSON file on startup."""
         try:
             if _PERSISTENCE_FILE.exists():
-                data = json.loads(_PERSISTENCE_FILE.read_text(encoding="utf-8"))
+                raw = _PERSISTENCE_FILE.read_text(encoding="utf-8")
+                data = json.loads(raw)
                 for item in data[-self.max_size:]:
                     self.entries.append(ReasoningEntry(**item))
-                logger.info("reasoning_store_loaded", count=len(self.entries), path=str(_PERSISTENCE_FILE))
+                logger.info(
+                    "reasoning_store_loaded",
+                    count=len(self.entries),
+                    file_size_kb=round(len(raw) / 1024, 1),
+                    path=str(_PERSISTENCE_FILE),
+                )
         except Exception as e:
             logger.warning("reasoning_store_load_error", error=str(e))
     
     def _save_to_disk(self) -> None:
-        """Persist all entries to JSON file."""
+        """Persist all entries to JSON file, with file-size rotation."""
         try:
             data = [entry.model_dump(mode="json") for entry in self.entries]
-            _PERSISTENCE_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+            payload = json.dumps(data, ensure_ascii=False, indent=2)
+
+            # H11: If serialized JSON exceeds max file size, trim oldest half
+            if len(payload.encode("utf-8")) > _MAX_FILE_SIZE_BYTES:
+                keep = max(10, len(data) // 2)
+                trimmed = len(data) - keep
+                data = data[-keep:]
+                payload = json.dumps(data, ensure_ascii=False, indent=2)
+                # Sync in-memory deque with trimmed data
+                self.entries = deque(
+                    (ReasoningEntry(**item) for item in data),
+                    maxlen=self.max_size,
+                )
+                logger.warning(
+                    "reasoning_store_trimmed",
+                    trimmed_entries=trimmed,
+                    remaining=keep,
+                    file_size_kb=round(len(payload.encode("utf-8")) / 1024, 1),
+                )
+
+            _PERSISTENCE_FILE.write_text(payload, encoding="utf-8")
         except Exception as e:
             logger.warning("reasoning_store_save_error", error=str(e))
     
@@ -132,7 +173,7 @@ _reasoning_store: ReasoningStore | None = None
 def get_reasoning_store() -> ReasoningStore:
     global _reasoning_store
     if _reasoning_store is None:
-        _reasoning_store = ReasoningStore(max_size=100)
+        _reasoning_store = ReasoningStore(max_size=_MAX_ENTRIES)
     return _reasoning_store
 
 
@@ -174,6 +215,8 @@ def store_reasoning_from_state(final_state: dict[str, Any], processing_time_ms: 
             "under_maintenance": atlas_ctx.get("under_maintenance", False),
             "manual_excerpts": atlas_ctx.get("manual_excerpts", []),
             "simulation_data": atlas_ctx.get("simulation_data", {}),
+            "financial_data": atlas_ctx.get("financial_data", {}),
+            "location": atlas_ctx.get("location"),
         },
         "sentinel_alert": _safe_dict(sentinel_alert) if sentinel_alert else None,
     }
@@ -187,7 +230,7 @@ def store_reasoning_from_state(final_state: dict[str, Any], processing_time_ms: 
         "forecast": _safe_dict(oracle_forecast) if oracle_forecast else None,
     }
     
-    # Extract Cortex info
+    # Extract Oracle reasoning info (risk + verdict + LLM)
     risk_dims = final_state.get("risk_dimensions")
     cortex_info = {
         "risk_dimensions": {
@@ -203,6 +246,17 @@ def store_reasoning_from_state(final_state: dict[str, Any], processing_time_ms: 
         "decision_band": _enum_val(final_state.get("decision_band")),
         "risk_level": _enum_val(final_state.get("risk_level")),
         "llm_analysis": final_state.get("llm_analysis"),
+    }
+    
+    # Extract Verifier (CAOS LLM Auditor + Checklist) info
+    verifier_info = {
+        "verification_passed": final_state.get("verification_passed"),
+        "verification_score": final_state.get("verification_score"),
+        "verification_issues": final_state.get("verification_issues", []),
+        "verification_adjustments": final_state.get("verification_adjustments"),
+        "verification_report": final_state.get("verification_report"),
+        "verifier_feedback": final_state.get("verifier_feedback"),
+        "verifier_retry_count": final_state.get("verifier_retry_count", 0),
     }
     
     # Extract Guardrails info
@@ -236,6 +290,7 @@ def store_reasoning_from_state(final_state: dict[str, Any], processing_time_ms: 
         sense=sense_info,
         oracle=oracle_info,
         cortex=cortex_info,
+        verifier=verifier_info,
         guardrails=guardrails_info,
         act=act_info,
         verdict_score=final_state.get("verdict_score"),
@@ -299,6 +354,7 @@ async def get_reasoning(event_id: str) -> ReasoningEntry:
 @router.delete(
     "/",
     summary="Clear reasoning store",
+    dependencies=[Depends(require_api_key)],
 )
 async def clear_reasoning() -> dict[str, str]:
     """Clear all stored reasoning chains."""

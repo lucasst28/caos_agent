@@ -5,7 +5,11 @@
 =============================================================================
 
   Este script envia o alerta para o servidor CAOS REAL e espera o resultado
-  do pipeline completo (Sense → Oracle → Cortex → Guardrails → Act).
+  do pipeline completo (Sense → Oracle → CAOS Verifier → Guardrails → Act).
+
+  O Oracle é o cérebro que raciocina (LLM + CODE + Verdict).
+  O CAOS Verifier audita com LLM própria + checklist de 30 verificações.
+  Se o CAOS rejeitar, envia feedback estruturado ao Oracle para retry.
 
   O resultado aparece na página de raciocínio do frontend:
       http://localhost:8080/dashboard/reasoning
@@ -88,7 +92,7 @@ def send_freezer_alert():
     print(f"   Severidade: {payload['severity']}")
     
     try:
-        resp = httpx.post(TRIGGER_URL, json=payload, timeout=30.0)
+        resp = httpx.post(TRIGGER_URL, json=payload, timeout=120.0)
         if resp.status_code != 201:
             print(f"  ❌ Erro ao enviar: {resp.status_code} - {resp.text}")
             return None
@@ -173,29 +177,107 @@ def display_full_reasoning(reasoning_data: dict):
             for m in manuals[:6]:
                 print(f"        📖 {m[:100]}{'...' if len(m) > 100 else ''}")
     
-    # Oracle
+    # Oracle (ML Prediction)
     oracle = reasoning_data.get("oracle", {})
     if oracle and oracle.get("forecast"):
         forecast = oracle["forecast"]
-        print(f"\n  🔮 [ORACLE] Previsão:")
+        print(f"\n  🔮 [ORACLE ML] Previsão Preditiva:")
         print(f"     Prob. falha:   {forecast.get('failure_probability', 'N/A')}")
         print(f"     Confiança:     {forecast.get('confidence', 'N/A')}")
         print(f"     Recomendação:  {forecast.get('recommendation', 'N/A')}")
     
-    # Cortex (LLM)
+    # Oracle Reasoning (cortex key — backward compat with reasoning store)
     cortex = reasoning_data.get("cortex", {})
     if cortex:
-        print(f"\n  🤖 [CORTEX] Análise Híbrida (CODE + LLM):")
+        print(f"\n  🧠 [ORACLE] Raciocínio Completo (CODE + LLM):")
+        risk = cortex.get("risk_dimensions", {})
+        if risk:
+            print(f"     R_Físico:      {risk.get('physical', 'N/A')}")
+            print(f"     R_Financeiro:  {risk.get('financial', 'N/A')}")
+            print(f"     R_Contratual:  {risk.get('contractual', 'N/A')}")
+            print(f"     R_Comunicação: {risk.get('communication', 'N/A')}")
+        print(f"     Atlas Score:   {cortex.get('atlas_score', 'N/A')}")
+        print(f"     Verdict:       {cortex.get('verdict_score', 'N/A')}")
+        print(f"     Banda:         {cortex.get('decision_band', 'N/A')}")
+        print(f"     Risco:         {cortex.get('risk_level', 'N/A')}")
         llm = cortex.get("llm_analysis", {})
         if isinstance(llm, dict):
-            print(f"     Análise:     {llm.get('analysis', 'N/A')}")
-            print(f"     Ação:        {llm.get('action', 'N/A')}")
-            print(f"     Justificativa: {llm.get('justification', 'N/A')}")
-            print(f"     Confiança:   {llm.get('confidence', 'N/A')}")
-            print(f"     R_Físico:    {llm.get('physical', 'N/A')}")
-            print(f"     R_Financeiro: {llm.get('financial', 'N/A')}")
-        elif llm:
-            print(f"     → {llm}")
+            print(f"\n     📝 Análise LLM:")
+            print(f"        Análise:      {llm.get('analysis', 'N/A')}")
+            print(f"        Ação:         {llm.get('action', 'N/A')}")
+            print(f"        Justificativa: {llm.get('justification', 'N/A')}")
+            print(f"        Confiança:    {llm.get('confidence', 'N/A')}")
+    
+    # Verifier (CAOS LLM Auditor + Checklist)
+    verifier = reasoning_data.get("verifier", {})
+    if verifier:
+        passed = verifier.get("verification_passed", None)
+        score = verifier.get("verification_score", None)
+        icon = "✅" if passed else "❌"
+        retry_count = verifier.get("verifier_retry_count", 0)
+        print(f"\n  {icon} [CAOS VERIFIER] Auditoria (LLM + Checklist):")
+        print(f"     Aprovado:      {icon} {'Sim' if passed else 'Não'}")
+        print(f"     Score:         {score}")
+        if retry_count > 0:
+            print(f"     Retries:       {retry_count}")
+        
+        report = verifier.get("verification_report", {})
+        if report:
+            total = report.get("total_checks", 0)
+            passed_n = report.get("passed_checks", 0)
+            failed_n = report.get("failed_checks", 0)
+            print(f"     Checks:        {passed_n}/{total} passaram, {failed_n} falharam")
+            
+            # CAOS LLM Audit section
+            caos_llm = report.get("caos_llm", {})
+            if caos_llm and caos_llm.get("available"):
+                llm_verdict = caos_llm.get("verdict", "N/A")
+                llm_score = caos_llm.get("score", "N/A")
+                llm_icon = "✅" if llm_verdict == "APROVADO" else "❌"
+                print(f"\n     🧠 CAOS LLM AUDIT:")
+                print(f"        Veredicto:  {llm_icon} {llm_verdict}")
+                print(f"        Score LLM:  {llm_score}")
+                llm_analysis = caos_llm.get("analysis", "")
+                if llm_analysis:
+                    print(f"\n        📝 Análise do CAOS:")
+                    for line in llm_analysis.split("\n"):
+                        print(f"           {line}")
+                llm_issues = caos_llm.get("issues", [])
+                if llm_issues:
+                    print(f"\n        ❌ Problemas (CAOS LLM):")
+                    for issue in llm_issues:
+                        print(f"           • {issue}")
+                llm_feedback = caos_llm.get("feedback", "")
+                if llm_feedback and llm_feedback.strip() and llm_feedback.upper().strip() != "N/A":
+                    print(f"\n        ♻️ Feedback para Oracle:")
+                    for line in llm_feedback.split("\n"):
+                        print(f"           {line}")
+            else:
+                print(f"\n     ⚠️ CAOS LLM: indisponível (auditoria somente por checklist)")
+            
+            checklist = report.get("checklist", [])
+            if checklist:
+                print(f"\n     📋 CHECKLIST DETALHADO:")
+                for item in checklist:
+                    st = "✅" if item.get("passed") else "❌"
+                    cat = item.get("category", "")
+                    desc = item.get("description", "")
+                    detail = item.get("details", "")
+                    print(f"        {st} [{cat}] {desc}")
+                    if detail:
+                        print(f"           → {detail[:120]}")
+        
+        issues = verifier.get("verification_issues", [])
+        if issues:
+            print(f"\n     ⚠️  PROBLEMAS ENCONTRADOS:")
+            for issue in issues:
+                print(f"        • {issue}")
+        
+        adjustments = verifier.get("verification_adjustments")
+        if adjustments:
+            print(f"\n     🔧 AJUSTES APLICADOS PELO CAOS:")
+            for k, v in adjustments.items():
+                print(f"        • {k}: {v}")
     
     # Guardrails
     guardrails = reasoning_data.get("guardrails", {})
@@ -274,10 +356,17 @@ def run_analysis(event_data: dict, reasoning_data: dict | None):
         found_weather,
     ))
     
-    # 4. Risco NÃO é CRITICAL (porque não é falha técnica)
+    # 4. Oracle avaliou risco como MEDIUM (antes do guardrail override)
+    # O guardrail PHYS_008 pode escalar para VETO (correto — segurança alimentar),
+    # mas o Oracle em si deve ter avaliado como MEDIUM/HIGH, não CRITICAL.
+    oracle_risk = ""
+    if reasoning_data:
+        cortex = reasoning_data.get("cortex", {})
+        oracle_risk = cortex.get("risk_level", risk_level)
+    display_risk = oracle_risk or risk_level
     checks.append((
-        f"Risco não é CRITICAL (foi: {risk_level})",
-        risk_level != "VETO",
+        f"Oracle avaliou risco ≤ HIGH (foi: {display_risk}, final: {risk_level})",
+        display_risk in ["LOW", "MEDIUM", "HIGH", ""],
     ))
     
     # 5. Manual técnico foi consultado?
@@ -288,11 +377,41 @@ def run_analysis(event_data: dict, reasoning_data: dict | None):
         has_manual,
     ))
     
-    # 6. Pipeline completo executou
+    # 6. Pipeline completo executou (Oracle raciocinou)
     has_cortex = reasoning_data.get("cortex", {}) if reasoning_data else {}
     checks.append((
-        "Pipeline completo executou (Cortex processou)",
+        "Pipeline completo executou (Oracle raciocinou)",
         bool(has_cortex),
+    ))
+    
+    # 7. Verifier auditou a decisão do Oracle
+    verifier = reasoning_data.get("verifier", {}) if reasoning_data else {}
+    verifier_passed = verifier.get("verification_passed") if verifier else None
+    checks.append((
+        f"Verifier auditou decisão (passed={verifier_passed})",
+        verifier_passed is not None,
+    ))
+    
+    # 8. Verifier checklist executou com score
+    verifier_score = verifier.get("verification_score") if verifier else None
+    checks.append((
+        f"Verifier score calculado ({verifier_score})",
+        verifier_score is not None and verifier_score > 0,
+    ))
+    
+    # 9. Ação final é OBSERVE (causa operacional → aguardar estabilização)
+    act_data = reasoning_data.get("act", {}) if reasoning_data else {}
+    # reasoning store uses command_type (ActionType.value) and workflow_name
+    action_type = act_data.get("command_type", "") or ""
+    workflow = act_data.get("workflow_name", "") or event_data.get("workflow", "") or ""
+    is_observe = (
+        str(action_type).upper() == "OBSERVE"
+        or "observe" in str(action_type).lower()
+        or "ObserveWorkflow" in str(workflow)
+    )
+    checks.append((
+        f"Ação é OBSERVE (aguardar estabilização) — command_type={action_type}, workflow={workflow}",
+        is_observe,
     ))
     
     passed = 0
@@ -317,7 +436,7 @@ def main():
     print()
     print("╔" + "═" * 63 + "╗")
     print("║" + " CAOS Agent — Teste REAL: Cenário Freezer".center(63) + "║")
-    print("║" + " Pipeline Completo + Raciocínio no Frontend".center(63) + "║")
+    print("║" + " Oracle ↔ CAOS Verifier (LLM Audit + Feedback Loop)".center(63) + "║")
     print("╚" + "═" * 63 + "╝")
     
     # 1. Verificar servidores

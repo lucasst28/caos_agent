@@ -631,6 +631,16 @@
       box-shadow: 0 8px 32px rgba(255, 51, 102, 0.12);
     }
 
+    .step-verifier .pipeline-step-header {
+      background: linear-gradient(135deg, rgba(224, 64, 251, 0.15), rgba(224, 64, 251, 0.03));
+      color: #E040FB;
+      border-bottom: 2px solid rgba(224, 64, 251, 0.4);
+    }
+
+    .step-verifier:hover {
+      box-shadow: 0 8px 32px rgba(224, 64, 251, 0.12);
+    }
+
     .step-guardrails .pipeline-step-header {
       background: linear-gradient(135deg, rgba(255, 201, 60, 0.15), rgba(255, 201, 60, 0.03));
       color: var(--sentinel-yellow);
@@ -947,6 +957,15 @@
 
     .header-cortex::before {
       background: linear-gradient(90deg, rgba(255, 51, 102, 0.3), transparent);
+    }
+
+    .header-verifier {
+      color: #E040FB;
+      background: linear-gradient(135deg, rgba(224, 64, 251, 0.08), transparent);
+    }
+
+    .header-verifier::before {
+      background: linear-gradient(90deg, rgba(224, 64, 251, 0.3), transparent);
     }
 
     .header-guardrails {
@@ -1617,6 +1636,626 @@
     }
 
     /* ============================================
+       CAOS VERIFIER COMPONENTS
+       ============================================ */
+    .verifier-verdict-banner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .verifier-verdict-banner.verdict-approved {
+      background: linear-gradient(135deg, rgba(0, 245, 181, 0.1), rgba(0, 245, 181, 0.02));
+      border: 1px solid rgba(0, 245, 181, 0.25);
+    }
+
+    .verifier-verdict-banner.verdict-rejected {
+      background: linear-gradient(135deg, rgba(255, 51, 102, 0.1), rgba(255, 51, 102, 0.02));
+      border: 1px solid rgba(255, 51, 102, 0.25);
+    }
+
+    .verifier-verdict-icon {
+      font-size: 32px;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+    }
+
+    .verdict-approved .verifier-verdict-icon {
+      background: rgba(0, 245, 181, 0.15);
+      color: var(--care-green);
+    }
+
+    .verdict-rejected .verifier-verdict-icon {
+      background: rgba(255, 51, 102, 0.15);
+      color: var(--caos-red);
+    }
+
+    .verifier-verdict-info {
+      flex: 1;
+    }
+
+    .verifier-verdict-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .verdict-approved .verifier-verdict-title { color: var(--care-green); }
+    .verdict-rejected .verifier-verdict-title { color: var(--caos-red); }
+
+    .verifier-verdict-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .verifier-scores-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .verifier-score-card {
+      background: rgba(21, 28, 36, 0.6);
+      border: 1px solid var(--border-normal);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .verifier-score-card:hover {
+      border-color: var(--border-strong);
+      background: rgba(21, 28, 36, 0.8);
+    }
+
+    .verifier-score-label {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .verifier-score-value {
+      font-size: 22px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .verifier-score-value.score-good { color: var(--care-green); }
+    .verifier-score-value.score-warn { color: var(--sentinel-yellow); }
+    .verifier-score-value.score-bad { color: var(--caos-red); }
+
+    .verifier-section-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #E040FB;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin: 20px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(224, 64, 251, 0.15);
+    }
+
+    .verifier-section-label i { font-size: 14px; }
+
+    .checklist-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .checklist-item:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .checklist-item.cl-passed {
+      border-left: 3px solid rgba(0, 245, 181, 0.3);
+    }
+
+    .checklist-item.cl-failed {
+      border-left: 3px solid rgba(255, 51, 102, 0.4);
+      background: rgba(255, 51, 102, 0.03);
+    }
+
+    .checklist-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .cl-passed .checklist-icon {
+      background: rgba(0, 245, 181, 0.15);
+      color: var(--care-green);
+    }
+
+    .cl-failed .checklist-icon {
+      background: rgba(255, 51, 102, 0.15);
+      color: var(--caos-red);
+    }
+
+    .checklist-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .checklist-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .checklist-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+
+    .checklist-category-tag {
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid;
+    }
+
+    .checklist-severity {
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .checklist-severity.sev-critical {
+      background: rgba(255, 51, 102, 0.15);
+      color: var(--caos-red);
+    }
+
+    .checklist-severity.sev-warning {
+      background: rgba(255, 201, 60, 0.15);
+      color: var(--sentinel-yellow);
+    }
+
+    .checklist-severity.sev-info {
+      background: rgba(0, 195, 255, 0.15);
+      color: var(--atlas-blue);
+    }
+
+    .checklist-detail {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    .verifier-llm-block {
+      background: rgba(224, 64, 251, 0.04);
+      border: 1px solid rgba(224, 64, 251, 0.12);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+
+    .verifier-llm-block:hover {
+      border-color: rgba(224, 64, 251, 0.25);
+    }
+
+    .verifier-llm-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #E040FB;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .verifier-llm-label i { font-size: 12px; }
+
+    .verifier-llm-text {
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+    }
+
+    .verifier-feedback-box {
+      background: linear-gradient(135deg, rgba(255, 201, 60, 0.06), rgba(255, 51, 102, 0.04));
+      border: 1px solid rgba(255, 201, 60, 0.2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-top: 16px;
+    }
+
+    .verifier-feedback-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--sentinel-yellow);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .verifier-feedback-text {
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+    }
+
+    .verifier-retry-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      margin-top: 12px;
+    }
+
+    .verifier-retry-badge.retry-active {
+      background: rgba(255, 201, 60, 0.12);
+      border: 1px solid rgba(255, 201, 60, 0.25);
+      color: var(--sentinel-yellow);
+    }
+
+    .verifier-retry-badge.retry-none {
+      background: rgba(0, 245, 181, 0.08);
+      border: 1px solid rgba(0, 245, 181, 0.2);
+      color: var(--care-green);
+    }
+
+    /* ============================================
+       CAOS VERIFIER COMPONENTS
+       ============================================ */
+    .verifier-verdict-banner {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .verdict-approved {
+      background: linear-gradient(135deg, rgba(0, 245, 181, 0.12), rgba(0, 245, 181, 0.03));
+      border: 1px solid rgba(0, 245, 181, 0.3);
+    }
+
+    .verdict-rejected {
+      background: linear-gradient(135deg, rgba(255, 51, 102, 0.12), rgba(255, 51, 102, 0.03));
+      border: 1px solid rgba(255, 51, 102, 0.3);
+    }
+
+    .verifier-verdict-icon {
+      font-size: 28px;
+    }
+
+    .verdict-approved .verifier-verdict-icon {
+      color: var(--care-green);
+      filter: drop-shadow(0 0 8px rgba(0, 245, 181, 0.5));
+    }
+
+    .verdict-rejected .verifier-verdict-icon {
+      color: var(--caos-red);
+      filter: drop-shadow(0 0 8px rgba(255, 51, 102, 0.5));
+    }
+
+    .verifier-verdict-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .verdict-approved .verifier-verdict-title { color: var(--care-green); }
+    .verdict-rejected .verifier-verdict-title { color: var(--caos-red); }
+
+    .verifier-verdict-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .verifier-scores-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .verifier-score-card {
+      text-align: center;
+      padding: 16px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-normal);
+      transition: all 0.2s ease;
+    }
+
+    .verifier-score-card:hover {
+      border-color: var(--border-strong);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .verifier-score-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .verifier-score-value {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .score-good { color: var(--care-green); }
+    .score-warn { color: var(--sentinel-yellow); }
+    .score-bad { color: var(--caos-red); }
+
+    .verifier-retry-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .retry-active {
+      background: linear-gradient(135deg, rgba(255, 201, 60, 0.1), rgba(255, 201, 60, 0.02));
+      border: 1px solid rgba(255, 201, 60, 0.25);
+      color: var(--sentinel-yellow);
+    }
+
+    .retry-none {
+      background: linear-gradient(135deg, rgba(0, 245, 181, 0.06), rgba(0, 245, 181, 0.01));
+      border: 1px solid rgba(0, 245, 181, 0.15);
+      color: rgba(0, 245, 181, 0.6);
+    }
+
+    .verifier-section-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      margin-top: 16px;
+      color: #E040FB;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .verifier-section-label i {
+      font-size: 16px;
+      filter: drop-shadow(0 0 4px rgba(224, 64, 251, 0.4));
+    }
+
+    .verifier-llm-block {
+      background: rgba(224, 64, 251, 0.04);
+      border: 1px solid rgba(224, 64, 251, 0.12);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+
+    .verifier-llm-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: rgba(224, 64, 251, 0.7);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .verifier-llm-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .checklist-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .checklist-item:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .cl-passed {
+      border-color: rgba(0, 245, 181, 0.1);
+    }
+
+    .cl-failed {
+      border-color: rgba(255, 51, 102, 0.15);
+      background: rgba(255, 51, 102, 0.03);
+    }
+
+    .checklist-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .cl-passed .checklist-icon {
+      background: rgba(0, 245, 181, 0.15);
+      color: var(--care-green);
+      border: 1px solid rgba(0, 245, 181, 0.25);
+    }
+
+    .cl-failed .checklist-icon {
+      background: rgba(255, 51, 102, 0.15);
+      color: var(--caos-red);
+      border: 1px solid rgba(255, 51, 102, 0.25);
+    }
+
+    .checklist-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .checklist-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    .checklist-id {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .checklist-category-tag {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid;
+    }
+
+    .checklist-severity {
+      font-size: 9px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .checklist-severity.sev-critical {
+      background: rgba(255, 51, 102, 0.15);
+      color: var(--caos-red);
+    }
+
+    .checklist-severity.sev-warning {
+      background: rgba(255, 201, 60, 0.15);
+      color: var(--sentinel-yellow);
+    }
+
+    .checklist-severity.sev-info {
+      background: rgba(0, 195, 255, 0.12);
+      color: var(--atlas-blue);
+    }
+
+    .checklist-detail {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+
+    .verifier-feedback-box {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(255, 51, 102, 0.06), rgba(255, 51, 102, 0.02));
+      border: 1px solid rgba(255, 51, 102, 0.2);
+    }
+
+    .verifier-feedback-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--caos-red);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .verifier-feedback-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      white-space: pre-wrap;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    /* ============================================
        GUARDRAIL ITEMS
        ============================================ */
     .guardrail-list {
@@ -1987,6 +2626,10 @@
 
     .timeline-segment.ts-cortex {
       background: rgba(255, 201, 60, 0.25);
+    }
+
+    .timeline-segment.ts-verifier {
+      background: rgba(224, 64, 251, 0.25);
     }
 
     .timeline-segment.ts-guardrails {
@@ -2829,10 +3472,11 @@
         // Estimate step durations from reasoning trace timestamps or distribute proportionally
         const steps = [
           { key: 'trigger', label: 'Trigger', icon: 'ph-fill ph-lightning', cls: 'ts-trigger', pct: 5 },
-          { key: 'sense', label: 'Sense', icon: 'ph-fill ph-eye', cls: 'ts-sense', pct: 15 },
-          { key: 'oracle', label: 'Oracle', icon: 'ph-fill ph-brain', cls: 'ts-oracle', pct: entry.oracle?.bypassed ? 5 : 25 },
-          { key: 'cortex', label: 'Cortex', icon: 'ph-fill ph-shield-warning', cls: 'ts-cortex', pct: entry.cortex?.llm_analysis ? 40 : 30 },
-          { key: 'guardrails', label: 'Guard.', icon: 'ph-fill ph-shield-check', cls: 'ts-guardrails', pct: 10 },
+          { key: 'sense', label: 'Sense', icon: 'ph-fill ph-eye', cls: 'ts-sense', pct: 12 },
+          { key: 'oracle', label: 'Oracle ML', icon: 'ph-fill ph-brain', cls: 'ts-oracle', pct: entry.oracle?.bypassed ? 5 : 20 },
+          { key: 'cortex', label: 'Oracle Decision', icon: 'ph-fill ph-shield-warning', cls: 'ts-cortex', pct: entry.cortex?.llm_analysis ? 28 : 22 },
+          { key: 'verifier', label: 'Verifier', icon: 'ph-fill ph-seal-check', cls: 'ts-verifier', pct: entry.verifier?.verification_report?.caos_llm?.available ? 22 : 10 },
+          { key: 'guardrails', label: 'Guard.', icon: 'ph-fill ph-shield-check', cls: 'ts-guardrails', pct: 8 },
           { key: 'act', label: 'Act', icon: 'ph-fill ph-paper-plane-tilt', cls: 'ts-act', pct: 5 },
         ];
 
@@ -2878,27 +3522,51 @@
         senseText += '.';
         stepsNarrative.push(senseText);
 
-        // Step 3: Oracle prediction
+        // Step 3: Oracle ML prediction
         if (entry.oracle?.bypassed) {
-          stepsNarrative.push(`O <strong>Oracle</strong> foi ${nv('ignorado', 'n-purple')} (fast-track por severidade alta/baixa).`);
+          stepsNarrative.push(`O <strong>Oracle ML</strong> foi ${nv('ignorado', 'n-purple')} (fast-track por severidade alta/baixa).`);
         } else {
           const forecast = entry.oracle?.forecast;
           if (forecast?.predicted_value !== undefined) {
-            stepsNarrative.push(`O <strong>Oracle</strong> previu ${nv((forecast.predicted_value * 100).toFixed(1) + '%', 'n-purple')} de probabilidade de falha` +
+            stepsNarrative.push(`O <strong>Oracle ML</strong> previu ${nv((forecast.predicted_value * 100).toFixed(1) + '%', 'n-purple')} de probabilidade de falha` +
               (forecast.financial_impact ? ` com impacto financeiro de ${nv('R$' + forecast.financial_impact.toLocaleString('pt-BR'), 'n-yellow')}` : '') + '.');
           } else {
-            stepsNarrative.push(`O <strong>Oracle</strong> não retornou predição para este cenário.`);
+            stepsNarrative.push(`O <strong>Oracle ML</strong> não retornou predição para este cenário.`);
           }
         }
 
-        // Step 4: Cortex decision
+        // Step 4: Oracle Decision
         const sevScore = c.severity_score !== undefined ? c.severity_score.toFixed(2) : '?';
         const verdictScore = c.verdict_score !== undefined ? c.verdict_score.toFixed(3) : '?';
         const riskLevel = c.risk_level || '?';
         const method = c.llm_analysis ? 'LLM (Gemini) + Código' : 'Código apenas';
-        stepsNarrative.push(`O <strong>Cortex</strong> calculou severidade ${nv('S=' + sevScore, 'n-yellow')} e verdict ${nv('V=' + verdictScore, 'n-blue')} via <strong>${method}</strong>. Nível de risco: ${nv(riskLevel, riskLevel === 'HIGH' || riskLevel === 'CRITICAL' ? 'n-red' : 'n-yellow')}.`);
+        stepsNarrative.push(`O <strong>Oracle</strong> calculou severidade ${nv('S=' + sevScore, 'n-yellow')} e verdict ${nv('V=' + verdictScore, 'n-blue')} via <strong>${method}</strong>. Nível de risco: ${nv(riskLevel, riskLevel === 'HIGH' || riskLevel === 'CRITICAL' ? 'n-red' : 'n-yellow')}.`);
 
-        // Step 5: Guardrails
+        // Step 5: CAOS Verifier audit
+        const ver = entry.verifier || {};
+        const verReport = ver.verification_report || {};
+        const verLlm = verReport.caos_llm || {};
+        const verPassed = ver.verification_passed;
+        const verScore = ver.verification_score;
+        const retryCount = ver.verifier_retry_count || 0;
+        
+        if (verPassed === true) {
+          let verText = `O <strong>CAOS Verifier</strong> auditou a decisão com ${nv('dual-layer', 'n-purple')} (LLM + Checklist)`;
+          verText += verScore !== undefined ? ` e ${nv('APROVOU', 'n-green')} com score ${nv(verScore.toFixed(3), 'n-green')}` : ` e ${nv('APROVOU', 'n-green')}`;
+          verText += `. Checks: ${nv((verReport.passed_checks || '?') + '/' + (verReport.total_checks || '?'), 'n-blue')}.`;
+          if (retryCount > 0) verText += ` ⟲ Oracle re-analisou ${nv(retryCount + '×', 'n-yellow')} após feedback.`;
+          stepsNarrative.push(verText);
+        } else if (verPassed === false) {
+          let verText = `O <strong>CAOS Verifier</strong> ${nv('REJEITOU', 'n-red')} a decisão do Oracle`;
+          verText += verScore !== undefined ? ` (score ${nv(verScore.toFixed(3), 'n-red')})` : '';
+          verText += `. Checks: ${nv((verReport.passed_checks || '?') + '/' + (verReport.total_checks || '?'), 'n-yellow')}.`;
+          if (retryCount > 0) verText += ` ⟲ Após ${nv(retryCount + ' retry(s)', 'n-yellow')}, ainda rejeitado.`;
+          stepsNarrative.push(verText);
+        } else {
+          stepsNarrative.push(`O <strong>CAOS Verifier</strong> não retornou resultado para este cenário.`);
+        }
+
+        // Step 6: Guardrails
         const violations = g.violations || [];
         const checked = g.checked || [];
         if (violations.length > 0) {
@@ -2908,7 +3576,7 @@
           stepsNarrative.push(`Os <strong>Guardrails</strong> verificaram ${nv(checked.length + ' regras', 'n-green')} — ${nv('Todas aprovadas', 'n-green')}, sem penalidade.`);
         }
 
-        // Step 6: Final decision
+        // Step 7: Final decision
         const decColor = { BLOCKED: 'n-red', ALERT: 'n-yellow', SUGGEST: 'n-blue', EXECUTE: 'n-green' }[decision] || 'n-blue';
         let actText = `Decisão final: ${nv(decision, decColor)}.`;
         if (a.workflow_name) actText += ` Workflow ${nv(a.workflow_name, 'n-blue')} despachado para o CARE.`;
@@ -2965,7 +3633,7 @@
           },
           {
             key: 'oracle',
-            label: 'Oracle',
+            label: 'Oracle ML',
             icon: 'ph-fill ph-brain',
             cls: 'step-oracle' + (oracleBypassed ? ' step-bypassed' : ''),
             badge: oracleBypassed ? 'skip' : 'ok',
@@ -2975,11 +3643,19 @@
           },
           {
             key: 'cortex',
-            label: 'Cortex',
+            label: 'Oracle Decision',
             icon: 'ph-fill ph-shield-warning',
             cls: 'step-cortex',
             badge: 'ok',
             summary: buildCortexSummary(entry)
+          },
+          {
+            key: 'verifier',
+            label: 'CAOS Verifier',
+            icon: 'ph-fill ph-seal-check',
+            cls: 'step-verifier',
+            badge: entry.verifier?.verification_passed === false ? 'error' : entry.verifier?.verification_passed === true ? 'ok' : 'warn',
+            summary: buildVerifierSummary(entry)
           },
           {
             key: 'guardrails',
@@ -3001,7 +3677,7 @@
 
         const badgeIcons = { ok: '✓', warn: '⚠', error: '✗', skip: '⊘' };
         const svgArrow = `<svg viewBox="0 0 32 24"><line x1="2" y1="12" x2="24" y2="12"/><polygon points="22,7 30,12 22,17"/></svg>`;
-        const annotations = ['Alerta', 'Contexto', 'Predição', 'Verdict', 'Validação'];
+        const annotations = ['Alerta', 'Contexto', 'Predição', 'Verdict', 'Auditoria', 'Validação'];
 
         let html = '<div class="pipeline">';
         steps.forEach((step, i) => {
@@ -3055,6 +3731,21 @@
         return `Verdict: ${v}<br>${band} / ${risk}<br>${llm}`;
       }
 
+      function buildVerifierSummary(entry) {
+        const ver = entry.verifier || {};
+        const report = ver.verification_report || {};
+        const llm = report.caos_llm || {};
+        const passed = ver.verification_passed;
+        const score = ver.verification_score !== undefined ? ver.verification_score.toFixed(3) : '?';
+        const checklist = `${report.passed_checks || '?'}/${report.total_checks || '?'}`;
+        const verdict = llm.available ? (llm.verdict || '?') : 'N/A';
+        const statusIcon = passed === true ? '<span style="color:var(--care-green)">✓ APROVADO</span>' :
+                           passed === false ? '<span style="color:var(--caos-red)">✗ REJEITADO</span>' :
+                           '<span style="color:var(--text-muted)">Pendente</span>';
+        const retry = ver.verifier_retry_count > 0 ? `<br>🔄 Retry ${ver.verifier_retry_count}` : '';
+        return `${statusIcon}<br>Score: ${score} • Checks: ${checklist}${retry}`;
+      }
+
       function buildGuardrailsSummary(entry) {
         const g = entry.guardrails || {};
         const violations = g.violations || [];
@@ -3092,8 +3783,11 @@
         // Oracle detail
         html += renderOracleDetail(entry);
 
-        // Cortex detail with risk bars
+        // Oracle detail with risk bars
         html += renderCortexDetail(entry);
+
+        // CAOS Verifier detail
+        html += renderVerifierDetail(entry);
 
         // Guardrails detail
         html += renderGuardrailsDetail(entry);
@@ -3229,13 +3923,13 @@
           <div class="detail-card">
             <div class="detail-card-header header-oracle">
               <i class="ph-fill ph-brain"></i>
-              Oracle — Predição <span class="status-dot bypassed" style="margin-left:8px;"></span>
+              Oracle ML — Predição <span class="status-dot bypassed" style="margin-left:8px;"></span>
             </div>
             <div class="detail-card-body" style="opacity:0.6;">
               ${detailRow('Status', 'Bypass (Fast-Track)', '')}
               ${detailRow('Motivo', o.reason || 'Severidade CRITICAL/LOW')}
               <p style="margin-top:12px;font-size:11px;color:var(--text-muted);font-style:italic;">
-                Oracle é pulado em eventos CRITICAL (prioridade de latência) ou LOW (otimização de custo).
+                Oracle ML é pulado em eventos CRITICAL (prioridade de latência) ou LOW (otimização de custo).
               </p>
             </div>
           </div>
@@ -3247,7 +3941,7 @@
           <div class="detail-card">
             <div class="detail-card-header header-oracle">
               <i class="ph-fill ph-brain"></i>
-              Oracle — Predição
+              Oracle ML — Predição
             </div>
             <div class="detail-card-body">
               ${detailRow('Status', 'Sem predição disponível', 'value-warn')}
@@ -3260,7 +3954,7 @@
         <div class="detail-card">
           <div class="detail-card-header header-oracle">
             <i class="ph-fill ph-brain"></i>
-            Oracle — Predição <span class="status-dot passed" style="margin-left:8px;"></span>
+            Oracle ML — Predição <span class="status-dot passed" style="margin-left:8px;"></span>
           </div>
           <div class="detail-card-body">
             ${detailRow('Métrica', forecast.forecast_metric || forecast.metric || 'N/A')}
@@ -3435,7 +4129,7 @@
         <div class="detail-card full-width">
           <div class="detail-card-header header-cortex">
             <i class="ph-fill ph-shield-warning"></i>
-            Cortex — Raciocínio Híbrido & Veredito
+            Oracle — Raciocínio Híbrido & Veredito
           </div>
           <div class="detail-card-body">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
@@ -3559,6 +4253,169 @@
         'SECOPS_005': { name: 'Timestamp Antigo', cat: 'SECOPS', sev: 'MEDIUM', act: 'ALERT', msg: 'Evento com mais de 1 hora de atraso.' },
         'SECOPS_006': { name: 'Injection Attempt', cat: 'SECOPS', sev: 'BLOCKING', act: 'VETO', msg: 'Padrão de injection detectado. Bloqueado.' },
       };
+
+      function renderVerifierDetail(entry) {
+        const ver = entry.verifier || {};
+        const report = ver.verification_report || {};
+        const llm = report.caos_llm || {};
+        const checklist = report.checklist || [];
+        const passed = ver.verification_passed;
+        const combinedScore = ver.verification_score;
+        const checklistScore = report.score;
+        const llmScore = llm.score;
+        const retryCount = ver.verifier_retry_count || 0;
+
+        // Score color helper
+        function scoreColor(s) { return s >= 0.8 ? 'score-good' : s >= 0.5 ? 'score-warn' : 'score-bad'; }
+
+        // Verdict banner
+        const bannerClass = passed ? 'verdict-approved' : 'verdict-rejected';
+        const bannerIcon = passed ? '<i class="ph-fill ph-check-circle"></i>' : '<i class="ph-fill ph-x-circle"></i>';
+        const bannerTitle = passed ? 'APROVADO PELO CAOS' : 'REJEITADO PELO CAOS';
+        const bannerSubtitle = passed
+          ? 'A decisão do Oracle passou na auditoria dual (LLM + Checklist)'
+          : 'A decisão do Oracle foi rejeitada — feedback enviado para retry';
+
+        // Scores grid
+        const combinedScoreHtml = combinedScore !== undefined && combinedScore !== null
+          ? `<div class="verifier-score-value ${scoreColor(combinedScore)}">${combinedScore.toFixed(3)}</div>`
+          : '<div class="verifier-score-value" style="color:var(--text-muted)">N/A</div>';
+        const llmScoreHtml = llmScore !== undefined && llmScore !== null
+          ? `<div class="verifier-score-value ${scoreColor(llmScore)}">${llmScore.toFixed(2)}</div>`
+          : '<div class="verifier-score-value" style="color:var(--text-muted)">N/A</div>';
+        const checklistScoreHtml = checklistScore !== undefined && checklistScore !== null
+          ? `<div class="verifier-score-value ${scoreColor(checklistScore)}">${checklistScore.toFixed(3)}</div>`
+          : '<div class="verifier-score-value" style="color:var(--text-muted)">N/A</div>';
+
+        // Checklist items
+        let checklistHtml = '';
+        if (checklist.length > 0) {
+          const catColorMap = {
+            'Fontes de Dados': '#00C3FF',
+            'Avaliação de Risco': '#FFC93C',
+            'Ação Proposta': '#00F5B5',
+            'Raciocínio': '#7C3AED',
+            'Segurança': '#FF3366',
+            'Temporal': '#E040FB',
+            'Fatores Externos': '#00C3FF',
+            'Fórmula': '#FFC93C',
+          };
+          checklist.forEach(item => {
+            const itemClass = item.passed ? 'cl-passed' : 'cl-failed';
+            const icon = item.passed ? '✓' : '✗';
+            const sevClass = item.severity === 'CRITICAL' ? 'sev-critical' : item.severity === 'WARNING' ? 'sev-warning' : 'sev-info';
+            const catColor = catColorMap[item.category] || '#ffffff';
+            checklistHtml += `
+            <div class="checklist-item ${itemClass}">
+              <div class="checklist-icon">${icon}</div>
+              <div class="checklist-content">
+                <div class="checklist-title">
+                  <span class="checklist-id">${item.id}</span>
+                  <span>${escapeHtml(item.description)}</span>
+                  <span class="checklist-category-tag" style="color:${catColor};border-color:${catColor};background:color-mix(in srgb, ${catColor} 8%, transparent)">${escapeHtml(item.category)}</span>
+                  <span class="checklist-severity ${sevClass}">${item.severity}</span>
+                </div>
+                ${item.details ? `<div class="checklist-detail">${escapeHtml(item.details)}</div>` : ''}
+              </div>
+            </div>`;
+          });
+        }
+
+        // LLM Audit section
+        let llmAuditHtml = '';
+        if (llm.available) {
+          const llmVerdictColor = llm.verdict === 'APROVADO' ? 'var(--care-green)' : 'var(--caos-red)';
+          llmAuditHtml = `
+          <div class="verifier-section-label"><i class="ph-fill ph-sparkle"></i> Auditoria CAOS LLM (Gemini)</div>
+          <div class="verifier-llm-block">
+            <div class="verifier-llm-label"><i class="ph-bold ph-seal-check"></i> Veredicto</div>
+            <div class="verifier-llm-text" style="font-weight:700;font-size:14px;color:${llmVerdictColor}">${escapeHtml(llm.verdict || 'N/A')}</div>
+          </div>
+          ${llm.analysis ? `
+          <div class="verifier-llm-block">
+            <div class="verifier-llm-label"><i class="ph-bold ph-magnifying-glass"></i> Análise Profunda</div>
+            <div class="verifier-llm-text">${escapeHtml(llm.analysis)}</div>
+          </div>` : ''}
+          ${llm.issues && llm.issues.length > 0 ? `
+          <div class="verifier-llm-block">
+            <div class="verifier-llm-label"><i class="ph-bold ph-warning"></i> Problemas Identificados</div>
+            <div class="verifier-llm-text">${llm.issues.map(i => '• ' + escapeHtml(i)).join('\n')}</div>
+          </div>` : ''}`;
+        } else {
+          llmAuditHtml = `
+          <div class="verifier-section-label"><i class="ph-fill ph-sparkle"></i> Auditoria CAOS LLM</div>
+          <div class="verifier-llm-block" style="opacity:0.5;">
+            <div class="verifier-llm-label"><i class="ph-bold ph-x"></i> Indisponível</div>
+            <div class="verifier-llm-text">LLM não estava disponível. Usando apenas checklist automático.</div>
+          </div>`;
+        }
+
+        // Feedback section (if verifier rejected and sent feedback)
+        let feedbackHtml = '';
+        if (ver.verifier_feedback) {
+          feedbackHtml = `
+          <div class="verifier-feedback-box">
+            <div class="verifier-feedback-label"><i class="ph-bold ph-arrow-u-up-left"></i> Feedback Enviado ao Oracle</div>
+            <div class="verifier-feedback-text">${escapeHtml(ver.verifier_feedback)}</div>
+          </div>`;
+        }
+
+        // Retry badge
+        let retryHtml = '';
+        if (retryCount > 0) {
+          retryHtml = `<div class="verifier-retry-badge retry-active"><i class="ph-bold ph-arrow-clockwise"></i> Oracle re-analisou ${retryCount}× após feedback do CAOS</div>`;
+        } else {
+          retryHtml = `<div class="verifier-retry-badge retry-none"><i class="ph-bold ph-check"></i> Aprovado na primeira tentativa</div>`;
+        }
+
+        return `
+        <div class="detail-card full-width">
+          <div class="detail-card-header header-verifier">
+            <i class="ph-fill ph-seal-check"></i>
+            CAOS Verifier — Auditoria Dual (LLM + Checklist)
+          </div>
+          <div class="detail-card-body">
+            <div class="verifier-verdict-banner ${bannerClass}">
+              <div class="verifier-verdict-icon">${bannerIcon}</div>
+              <div class="verifier-verdict-info">
+                <div class="verifier-verdict-title">${bannerTitle}</div>
+                <div class="verifier-verdict-subtitle">${bannerSubtitle}</div>
+              </div>
+            </div>
+
+            <div class="verifier-scores-grid">
+              <div class="verifier-score-card">
+                <div class="verifier-score-label">Score Combinado</div>
+                ${combinedScoreHtml}
+                <div style="font-size:9px;color:var(--text-muted);margin-top:4px;">LLM 60% + Check 40%</div>
+              </div>
+              <div class="verifier-score-card">
+                <div class="verifier-score-label">CAOS LLM</div>
+                ${llmScoreHtml}
+                <div style="font-size:9px;color:var(--text-muted);margin-top:4px;">Auditoria Profunda</div>
+              </div>
+              <div class="verifier-score-card">
+                <div class="verifier-score-label">Checklist</div>
+                ${checklistScoreHtml}
+                <div style="font-size:9px;color:var(--text-muted);margin-top:4px;">${report.passed_checks || '?'}/${report.total_checks || '?'} checks</div>
+              </div>
+            </div>
+
+            ${retryHtml}
+
+            ${llmAuditHtml}
+
+            ${checklist.length > 0 ? `
+            <div class="verifier-section-label"><i class="ph-fill ph-list-checks"></i> Checklist de Verificação (${report.passed_checks}/${report.total_checks})</div>
+            <div class="checklist-grid">
+              ${checklistHtml}
+            </div>` : ''}
+
+            ${feedbackHtml}
+          </div>
+        </div>
+      `;
+      }
 
       function renderGuardrailsDetail(entry) {
         const g = entry.guardrails || {};
@@ -3709,9 +4566,13 @@
       }
 
       function escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
-        return div.innerHTML;
+        let html = div.innerHTML;
+        html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        html = html.replace(/\n/g, '<br/>');
+        return html;
       }
 
       // Auto-refresh events list

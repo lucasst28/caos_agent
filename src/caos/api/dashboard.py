@@ -88,8 +88,8 @@ async def dashboard_stats() -> dict[str, Any]:
 async def list_clients() -> dict[str, Any]:
     """Return the list of tenants configured in tenants.json."""
     try:
-        from caos.safety.engine import GuardrailEngine
-        engine = GuardrailEngine()
+        from caos.core.nodes.guardrails import get_guardrail_engine
+        engine = get_guardrail_engine()
         tenants = list(engine._tenant_profiles.keys()) if hasattr(engine, '_tenant_profiles') else []
     except Exception:
         tenants = []
@@ -144,8 +144,8 @@ async def circuit_breakers() -> dict[str, Any]:
 async def get_rules() -> dict[str, Any]:
     """Return guardrail rules in the format the dashboard expects."""
     try:
-        from caos.safety.engine import GuardrailEngine
-        engine = GuardrailEngine()
+        from caos.core.nodes.guardrails import get_guardrail_engine
+        engine = get_guardrail_engine()
         rules = []
         for r in engine.rules:
             rules.append({

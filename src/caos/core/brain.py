@@ -3,10 +3,21 @@
 This is the cognitive orchestrator that coordinates all nodes
 in the CAOS decision loop.
 
+Architecture:
+    - Oracle: Full reasoning engine (LLM + CODE risk + verdict)
+    - CAOS Verifier (cortex): LLM Auditor + Checklist — audits Oracle's decision
+    - Guardrails: Safety validation (3-layer defense)
+
 Flow:
-    Trigger → Sense → [Oracle?] → Cortex → Guardrails → Act
-                ↑                              |
-                └──────── Recycle (if veto) ───┘
+    Trigger → Sense → Oracle → CAOS Verifier ─┬─ (APPROVED) → Guardrails → Act
+                ↑                               │
+                ├── (REJECTED + feedback) ──────┘
+                ↑                              
+                └──────── Recycle (if guardrail veto) ───┘
+    
+    Two feedback loops:
+    1. CAOS → Oracle: When CAOS rejects (max 1 retry)
+    2. Guardrails → Oracle: When guardrails veto (max 1 recycle)
 """
 
 import structlog
@@ -15,41 +26,44 @@ from typing import Literal
 from langgraph.graph import END, StateGraph
 
 from caos.core.nodes.sense import sense_node
-from caos.core.nodes.oracle import oracle_node, should_bypass_oracle
-from caos.core.nodes.cortex import cortex_node
+from caos.core.nodes.oracle import oracle_node
+from caos.core.nodes.cortex import cortex_node  # CAOS Verifier
 from caos.core.nodes.guardrails import guardrails_node
 from caos.core.nodes.act import act_node
-from caos.schemas.enums import Severity
 from caos.schemas.state import JudgeState
 
 logger = structlog.get_logger(__name__)
 
 
-def should_call_oracle(state: JudgeState) -> Literal["oracle", "cortex"]:
-    """Conditional edge: decide if Oracle should be called.
-    
-    Bypass Oracle for:
-    - CRITICAL severity (latency priority)
-    - LOW severity (cost optimization)
-    """
-    if should_bypass_oracle(state):
-        return "cortex"
-    return "oracle"
-
-
-def should_recycle(state: JudgeState) -> Literal["cortex", "act"]:
+def should_recycle(state: JudgeState) -> Literal["oracle", "act"]:
     """Conditional edge: decide if we need to re-plan after guardrail check.
     
     If guardrails vetoed the action AND we haven't recycled yet,
-    return to cortex for re-planning with tighter constraints.
-    Max 1 recycle to prevent infinite loops (Livelock prevention).
+    return to Oracle for re-planning with tighter constraints.
+    
+    Safety caps:
+    - Max 1 recycle to prevent livelock
+    - Global pipeline pass cap: verifier_retry + recycle ≤ 2 total Oracle calls
+      (prevents compound loops: retry → verifier → guardrail veto → recycle → ...)
     """
     recycle_count = state.get("recycle_count", 0)
+    verifier_retry_count = state.get("verifier_retry_count", 0)
     violations = state.get("guardrail_violations", [])
     risk_level = state.get("risk_level")
     
     # Never recycle if sense_node already blocked
     if state.get("sense_blocked"):
+        return "act"
+    
+    # Global pipeline cap: total Oracle invocations ≤ 2
+    total_oracle_passes = verifier_retry_count + recycle_count + 1  # +1 for initial
+    if total_oracle_passes >= 2:
+        logger.warning(
+            "brain_global_pass_cap",
+            total_oracle_passes=total_oracle_passes,
+            verifier_retry_count=verifier_retry_count,
+            recycle_count=recycle_count,
+        )
         return "act"
     
     # Hard safety cap — never recycle more than once
@@ -70,9 +84,39 @@ def should_recycle(state: JudgeState) -> Literal["cortex", "act"]:
             recycle_count=recycle_count,
             violations=violations,
         )
-        return "cortex"
+        return "oracle"
     
     return "act"
+
+
+def should_retry_after_verifier(state: JudgeState) -> Literal["oracle", "guardrails"]:
+    """Conditional edge: decide if CAOS rejection should route back to Oracle.
+    
+    When the CAOS Verifier rejects the Oracle's decision:
+    - If this is the first attempt (verifier_retry_count < 1): route to Oracle with feedback
+    - If already retried: proceed to Guardrails (accept current decision)
+    
+    Max 1 retry to prevent infinite loops between CAOS and Oracle.
+    """
+    # Never retry if blocked
+    if state.get("sense_blocked"):
+        return "guardrails"
+    
+    verification_passed = state.get("verification_passed", True)
+    verifier_retry_count = state.get("verifier_retry_count", 0)
+    verifier_feedback = state.get("verifier_feedback")
+    
+    if (not verification_passed 
+            and verifier_retry_count < 1
+            and verifier_feedback):
+        logger.info(
+            "brain_caos_retry",
+            verifier_retry_count=verifier_retry_count,
+            feedback_length=len(verifier_feedback) if verifier_feedback else 0,
+        )
+        return "oracle"
+    
+    return "guardrails"
 
 
 def create_brain() -> StateGraph:
@@ -89,18 +133,16 @@ def create_brain() -> StateGraph:
        │  sense  │  ← Data Fusion (Atlas + Sentinel)
        └────┬────┘
             ▼
-       ┌─────────┐    ┌─────────┐
-       │ oracle? │───▶│  oracle │  ← Prediction (optional)
-       └────┬────┘    └────┬────┘
-            │              │
-            └──────┬───────┘
-                   ▼
        ┌─────────────────┐
-       │     cortex      │  ← Reasoning + Verdict
+       │     oracle      │  ← Full Reasoning (LLM + CODE + Verdict)
        └────────┬────────┘
                 ▼
        ┌─────────────────┐
-       │   guardrails    │  ← Safety Validation
+       │    verifier     │  ← CAOS Checklist Audit
+       └────────┬────────┘
+                ▼
+       ┌─────────────────┐
+       │   guardrails    │  ← Safety Validation (3-layer)
        └────────┬────────┘
                 ▼
        ┌─────────────────┐
@@ -120,37 +162,36 @@ def create_brain() -> StateGraph:
     
     # Add all nodes
     workflow.add_node("sense", sense_node)
-    workflow.add_node("oracle", oracle_node)
-    workflow.add_node("cortex", cortex_node)
+    workflow.add_node("oracle", oracle_node)          # Reasoning engine
+    workflow.add_node("verifier", cortex_node)        # CAOS Verifier (LLM + checklist)
     workflow.add_node("guardrails", guardrails_node)
     workflow.add_node("act", act_node)
     
     # Set entry point
     workflow.set_entry_point("sense")
     
-    # Add edges
-    # Sense → Oracle (conditional)
+    # Add edges — Oracle ALWAYS runs (no conditional bypass)
+    workflow.add_edge("sense", "oracle")
+    
+    # Oracle → Verifier
+    workflow.add_edge("oracle", "verifier")
+    
+    # Verifier → Guardrails OR back to Oracle (if CAOS rejected)
     workflow.add_conditional_edges(
-        "sense",
-        should_call_oracle,
+        "verifier",
+        should_retry_after_verifier,
         {
-            "oracle": "oracle",
-            "cortex": "cortex",
+            "oracle": "oracle",       # CAOS rejected → retry Oracle with feedback
+            "guardrails": "guardrails",  # CAOS approved → proceed to guardrails
         },
     )
     
-    # Oracle → Cortex
-    workflow.add_edge("oracle", "cortex")
-    
-    # Cortex → Guardrails
-    workflow.add_edge("cortex", "guardrails")
-    
-    # Guardrails → Act (could be conditional for recycle)
+    # Guardrails → Act (or recycle to Oracle if vetoed)
     workflow.add_conditional_edges(
         "guardrails",
         should_recycle,
         {
-            "cortex": "cortex",  # Recycle (not used yet)
+            "oracle": "oracle",    # Recycle through Oracle → Verifier again
             "act": "act",
         },
     )
@@ -158,7 +199,7 @@ def create_brain() -> StateGraph:
     # Act → END
     workflow.add_edge("act", END)
     
-    logger.info("brain_created", nodes=["sense", "oracle", "cortex", "guardrails", "act"])
+    logger.info("brain_created", nodes=["sense", "oracle", "verifier", "guardrails", "act"])
     
     return workflow.compile()
 
@@ -240,6 +281,14 @@ async def process_trigger(trigger_data: dict) -> JudgeState:
             }
     except Exception:
         metrics.record_error()
+        # H7+H8: Release backpressure slot and mutex to prevent resource leaks
+        # on crashes between sense_node (acquire) and act_node (release)
+        try:
+            from caos.safety.runtime import get_backpressure_guard, get_asset_mutex
+            get_backpressure_guard().release()
+            get_asset_mutex().release(trigger.context.asset_id)
+        except Exception:
+            pass  # Best-effort cleanup
         raise
     
     action = final_state.get("proposed_action")

@@ -74,17 +74,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     else:
         logger.info("pubsub_consumer_disabled", hint="Set PUBSUB_ENABLED=true to enable")
 
-    # Start HITL background timeout timer
-    from caos.api.feedback import start_hitl_timer, stop_hitl_timer
-    start_hitl_timer(interval_seconds=30.0)
-    logger.info("hitl_timer_enabled")
-
     yield
 
     # --- Shutdown ---
-    stop_hitl_timer()
-    logger.info("hitl_timer_stopped")
-
     if _pubsub_consumer is not None:
         _pubsub_consumer.stop()
         logger.info("pubsub_consumer_stopped")
@@ -128,8 +120,6 @@ from caos.api.dashboard import router as dashboard_router
 from caos.observability.metrics import router as metrics_router
 from caos.observability.logs import router as logs_router
 from caos.api.reasoning import router as reasoning_router
-from caos.api.audit import router as audit_router
-from caos.api.rlhf_api import router as rlhf_router
 
 app.include_router(events_router, prefix="/v1")
 app.include_router(traces_router, prefix="/v1")
@@ -138,8 +128,6 @@ app.include_router(guardrails_router, prefix="/v1")
 app.include_router(metrics_router, prefix="/v1")
 app.include_router(logs_router, prefix="/v1")
 app.include_router(reasoning_router, prefix="/v1")
-app.include_router(audit_router, prefix="/v1")
-app.include_router(rlhf_router, prefix="/v1")
 app.include_router(dashboard_router)  # Root level: /stats, /clients, /circuit-breakers, /rules, /streams
 
 

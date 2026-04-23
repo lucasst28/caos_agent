@@ -24,9 +24,12 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
-      - VERTEX_AI_MODEL=${VERTEX_AI_MODEL:-gemini-2.0-flash-exp}
+      - VERTEX_AI_MODEL=${VERTEX_AI_MODEL:-gemini-2.5-flash}
       - LOG_LEVEL=INFO
       - RAG_PERSISTENCE_PATH=/data/rag
+      - ATLAS_API_URL=http://host.docker.internal:9000/atlas/
+      - ORACLE_API_URL=http://host.docker.internal:9000/oracle/
+      - SENTINEL_API_URL=http://host.docker.internal:9000/sentinel/
     volumes:
       - rag_data:/data/rag
       - .:/app  # Hot reload for dev

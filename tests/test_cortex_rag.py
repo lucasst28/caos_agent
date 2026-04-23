@@ -1,8 +1,9 @@
+"""Test Oracle RAG integration (reasoning moved from cortex to oracle)."""
 
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 from datetime import datetime, timezone
-from caos.core.nodes import cortex
+from caos.core.nodes import oracle as oracle_module
 from caos.schemas.state import JudgeState
 from caos.schemas.trigger import TriggerPayload, TriggerContext, TriggerSource, Severity
 
@@ -20,8 +21,8 @@ JUSTIFICATIVA: RAG helped.
 """
 
 @pytest.mark.asyncio
-async def test_cortex_uses_rag_context():
-    """Verify Cortex queries RAG and injects result into prompt."""
+async def test_oracle_uses_rag_context():
+    """Verify Oracle queries RAG and injects result into prompt."""
     state = JudgeState(
         trigger=TriggerPayload(
             event_id="evt_rag_test",
@@ -45,14 +46,14 @@ async def test_cortex_uses_rag_context():
     mock_llm = AsyncMock()
     mock_llm.ainvoke.return_value = MagicMock(content=make_llm_response())
 
-    with patch("caos.core.nodes.cortex.get_rag_engine", return_value=mock_rag) as p_rag:
-        with patch("caos.core.nodes.cortex.get_llm", return_value=mock_llm) as p_llm:
+    with patch("caos.core.nodes.oracle.get_rag_engine", return_value=mock_rag) as p_rag:
+        with patch("caos.core.nodes.oracle.get_llm", return_value=mock_llm) as p_llm:
             # Mock CB
             mock_cb = MagicMock()
             mock_cb.is_tripped.return_value = False
             
-            with patch("caos.core.nodes.cortex.get_circuit_breaker", return_value=mock_cb):
-                await cortex.cortex_node(state)
+            with patch("caos.core.nodes.oracle.get_circuit_breaker", return_value=mock_cb):
+                await oracle_module.oracle_node(state)
     
     # Debug checks
     assert mock_cb.is_tripped.called, "Circuit breaker check skipped"
